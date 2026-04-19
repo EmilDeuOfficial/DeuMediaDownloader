@@ -70,20 +70,20 @@ class CustomDropdown(ctk.CTkFrame):
     """Dropdown styled to match CTkEntry fields."""
 
     def __init__(self, parent, variable: ctk.StringVar, values: list,
-                 width: int = 210, **kwargs):
-        # Outer frame = border color (always fully visible)
+                 width: int = 210, accent: str = None, accent_dim: str = None, **kwargs):
         super().__init__(parent, width=width, height=34,
                          fg_color=C["border"], corner_radius=6,
                          border_width=0, **kwargs)
         self.pack_propagate(False)
         self.grid_propagate(False)
 
-        self._var    = variable
-        self._values = values
-        self._width  = width
-        self._popup  = None
+        self._var       = variable
+        self._values    = values
+        self._width     = width
+        self._popup     = None
+        self._accent     = accent     or C["accent"]
+        self._accent_dim = accent_dim or C["accent_dim"]
 
-        # Inner frame = actual background (1px inset = border effect)
         self._inner = ctk.CTkFrame(self, fg_color=C["bg_input"], corner_radius=5)
         self._inner.pack(fill="both", expand=True, padx=1, pady=1)
 
@@ -97,7 +97,7 @@ class CustomDropdown(ctk.CTkFrame):
 
         self._arrow = ctk.CTkLabel(
             self._inner, text="∨", font=(FONT_FAMILY, 11, "bold"),
-            text_color=C["accent"], fg_color="transparent",
+            text_color=self._accent, fg_color="transparent",
             width=20, cursor="hand2",
         )
         self._arrow.pack(side="right", padx=(0, 10))
@@ -112,7 +112,7 @@ class CustomDropdown(ctk.CTkFrame):
     def _set_hover(self, on: bool):
         if self._popup and self._popup.winfo_exists():
             return
-        border = C["accent"] if on else C["border"]
+        border = self._accent if on else C["border"]
         bg     = C["bg_card"] if on else C["bg_input"]
         self.configure(fg_color=border)
         self._inner.configure(fg_color=bg)
@@ -125,7 +125,7 @@ class CustomDropdown(ctk.CTkFrame):
 
     def _open_popup(self):
         self._arrow.configure(text="∧")
-        self.configure(fg_color=C["accent"])
+        self.configure(fg_color=self._accent)
         self._inner.configure(fg_color=C["bg_card"])
 
         self.update_idletasks()
@@ -144,7 +144,7 @@ class CustomDropdown(ctk.CTkFrame):
         popup.update_idletasks()
         _apply_win11_rounded(popup.winfo_id())
 
-        outer = tk.Frame(popup, bg=C["accent"], bd=0)
+        outer = tk.Frame(popup, bg=self._accent, bd=0)
         outer.pack(fill="both", expand=True, padx=1, pady=1)
 
         inner = tk.Frame(outer, bg=C["bg_card"], bd=0)
@@ -154,13 +154,13 @@ class CustomDropdown(ctk.CTkFrame):
 
         for val in self._values:
             is_sel = val == self._var.get()
-            row_bg = C["accent_dim"] if is_sel else C["bg_card"]
-            row_fg = C["accent"]     if is_sel else C["text_primary"]
+            row_bg = self._accent_dim if is_sel else C["bg_card"]
+            row_fg = self._accent     if is_sel else C["text_primary"]
 
             row = tk.Frame(inner, bg=row_bg, cursor="hand2")
             row.pack(fill="x", padx=6)
 
-            bar = tk.Frame(row, bg=C["accent"] if is_sel else row_bg, width=3)
+            bar = tk.Frame(row, bg=self._accent if is_sel else row_bg, width=3)
             bar.pack(side="left", fill="y")
 
             lbl = tk.Label(row, text=val, font=(FONT_FAMILY, 12),
@@ -175,12 +175,12 @@ class CustomDropdown(ctk.CTkFrame):
                 def _enter(e=None):
                     r.configure(bg=C["bg_secondary"])
                     l.configure(bg=C["bg_secondary"])
-                    b.configure(bg=C["bg_secondary"] if v != self._var.get() else C["accent"])
+                    b.configure(bg=C["bg_secondary"] if v != self._var.get() else self._accent)
                 def _leave(e=None):
                     sel = v == self._var.get()
-                    rb = C["accent_dim"] if sel else C["bg_card"]
+                    rb = self._accent_dim if sel else C["bg_card"]
                     r.configure(bg=rb); l.configure(bg=rb)
-                    b.configure(bg=C["accent"] if sel else rb)
+                    b.configure(bg=self._accent if sel else rb)
                 for w in (r, l):
                     w.bind("<Button-1>", _sel)
                     w.bind("<Enter>",    _enter)
@@ -833,6 +833,7 @@ class DeuDownloaderApp:
         CustomDropdown(frame, variable=self._format_var,
                        values=fmt_keys,
                        width=270,
+                       accent=C["accent"], accent_dim=C["accent_dim"],
                        ).grid(row=0, column=1, sticky="w", padx=(0,20), pady=8)
 
         ctk.CTkLabel(frame, text=T("save_to"), font=(FONT_FAMILY, 12),
@@ -1711,7 +1712,8 @@ class YouTubeDownloaderApp:
         self._format_var = ctk.StringVar(value=saved_fmt)
         self._format_var.trace_add("write", lambda *_: self._save_ui_prefs())
         self._format_dropdown = CustomDropdown(frame, variable=self._format_var,
-                                               values=fmt_values, width=220)
+                                               values=fmt_values, width=220,
+                                               accent="#CC2222", accent_dim="#3a0a0a")
         self._format_dropdown.grid(row=0, column=3, sticky="w", padx=(0, 16), pady=(12, 4))
 
         # Apply saved media type appearance
@@ -2235,7 +2237,8 @@ class TikTokDownloaderApp:
         self._format_var = ctk.StringVar(value=saved_fmt)
         self._format_var.trace_add("write", lambda *_: self._save_ui_prefs())
         self._format_dropdown = CustomDropdown(frame, variable=self._format_var,
-                                               values=fmt_values, width=220)
+                                               values=fmt_values, width=220,
+                                               accent="#EE1D52", accent_dim="#3d0617")
         self._format_dropdown.grid(row=0, column=3, sticky="w", padx=(0, 16), pady=(12, 4))
 
         ctk.CTkLabel(frame, text=T("save_to"), font=(FONT_FAMILY, 12),
