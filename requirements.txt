@@ -1,0 +1,7 @@
+customtkinter>=5.2.0
+spotipy>=2.23.0
+yt-dlp>=2024.1.0
+mutagen>=1.47.0
+requests>=2.31.0
+Pillow>=10.0.0
+aggdraw>=1.4.0

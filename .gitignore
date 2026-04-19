@@ -1,0 +1,9 @@
+dist/
+build/
+*.spec
+__pycache__/
+*.pyc
+.venv/
+.cache
+test_aggdraw.png
+.claude/settings.local.json
