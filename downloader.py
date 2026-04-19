@@ -622,12 +622,33 @@ def is_tiktok_url(url: str) -> bool:
     return "tiktok.com" in url
 
 
+def _tiktok_title(info: dict) -> str:
+    """Build a meaningful filename from TikTok metadata."""
+    uploader = (info.get("uploader") or info.get("creator") or "").strip()
+    desc  = (info.get("description") or "").strip()
+    title = (info.get("title") or "").strip()
+    vid_id = info.get("id", "video")
+
+    # yt-dlp falls back to "TikTok video #ID" when no real title exists
+    def _generic(s: str) -> bool:
+        return s.startswith("TikTok video #") or s == vid_id
+
+    text = desc if desc and not _generic(desc) else (
+           title if title and not _generic(title) else vid_id)
+
+    text = text[:80].strip()
+    return f"{uploader} - {text}" if uploader else text
+
+
 def extract_tiktok_entries(url: str) -> List[Dict[str, Any]]:
     """Return [{url, title}] for a TikTok video or user/hashtag URL."""
+    is_playlist = ("/tag/" in url or "/music/" in url or
+                   ("/@" in url and "/video/" not in url))
+
     ydl_opts = {
         "quiet":         True,
         "no_warnings":   True,
-        "extract_flat":  True,
+        "extract_flat":  is_playlist,
         "skip_download": True,
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -646,11 +667,11 @@ def extract_tiktok_entries(url: str) -> List[Dict[str, Any]]:
                 or entry.get("webpage_url")
                 or f"https://www.tiktok.com/video/{entry.get('id', '')}"
             )
-            entries.append({"url": vid_url, "title": entry.get("title") or "Unknown"})
+            entries.append({"url": vid_url, "title": _tiktok_title(entry)})
     else:
         entries.append({
             "url":   info.get("webpage_url") or url,
-            "title": info.get("title") or "Unknown",
+            "title": _tiktok_title(info),
         })
     return entries
 
