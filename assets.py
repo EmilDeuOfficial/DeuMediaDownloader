@@ -20,21 +20,44 @@ def _transform_path(d: str, tx: float, ty: float,
     sx = size / vw
     sy = size / vh
 
-    def tp(x, y):
+    def ta(x, y):  # absolute coords: translate + scale
         return (x + tx - vx) * sx, (y + ty - vy) * sy
 
+    def ts(x, y):  # relative coords: scale only
+        return x * sx, y * sy
+
     out = []
-    for seg in re.findall(r'[MLCZmlcz][^MLCZmlcz]*', d):
+    _CMD = 'MLCSQTHVZmlcsqthvz'
+    for seg in re.findall(rf'[{_CMD}][^{_CMD}]*', d):
         cmd = seg[0]
         nums = [float(n) for n in re.findall(
             r'[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?', seg[1:])]
         out.append(cmd)
-        if cmd in 'ML':
-            for i in range(0, len(nums), 2):
-                out.append('{:.3f},{:.3f}'.format(*tp(nums[i], nums[i + 1])))
-        elif cmd == 'C':
-            for i in range(0, len(nums), 2):
-                out.append('{:.3f},{:.3f}'.format(*tp(nums[i], nums[i + 1])))
+        if cmd in ('M', 'L', 'T'):
+            for i in range(0, len(nums) - 1, 2):
+                out.append('{:.3f},{:.3f}'.format(*ta(nums[i], nums[i + 1])))
+        elif cmd in ('m', 'l', 't'):
+            for i in range(0, len(nums) - 1, 2):
+                out.append('{:.3f},{:.3f}'.format(*ts(nums[i], nums[i + 1])))
+        elif cmd in ('C', 'S', 'Q'):
+            for i in range(0, len(nums) - 1, 2):
+                out.append('{:.3f},{:.3f}'.format(*ta(nums[i], nums[i + 1])))
+        elif cmd in ('c', 's', 'q'):
+            for i in range(0, len(nums) - 1, 2):
+                out.append('{:.3f},{:.3f}'.format(*ts(nums[i], nums[i + 1])))
+        elif cmd == 'H':
+            for n in nums:
+                out.append('{:.3f}'.format((n + tx - vx) * sx))
+        elif cmd == 'h':
+            for n in nums:
+                out.append('{:.3f}'.format(n * sx))
+        elif cmd == 'V':
+            for n in nums:
+                out.append('{:.3f}'.format((n + ty - vy) * sy))
+        elif cmd == 'v':
+            for n in nums:
+                out.append('{:.3f}'.format(n * sy))
+        # Z/z: no coords, already appended
     return ' '.join(out)
 
 
