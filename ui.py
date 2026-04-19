@@ -2461,7 +2461,7 @@ class LauncherApp:
         self._root   = ctk.CTk()
         self._root.title(T("launcher_title"))
         _lpos = self._cfg.get("launcher_pos", "")
-        self._root.geometry(f"720x310{_lpos}")
+        self._root.geometry(f"720x360{_lpos}")
         self._root.resizable(False, False)
         self._root.configure(fg_color=C["bg_primary"])
         self._root.overrideredirect(True)
@@ -2554,7 +2554,7 @@ class LauncherApp:
         card = ctk.CTkFrame(parent, fg_color=C["bg_card"], corner_radius=12,
                             border_width=1, border_color=C["border"])
         card.grid(row=0, column=col, sticky="nsew",
-                  padx=(0 if col > 0 else 0, 8 if col == 0 else 0))
+                  padx=(0 if col == 0 else 8, 0))
 
         if isinstance(icon, ctk.CTkImage):
             ctk.CTkLabel(card, image=icon, text="").pack(pady=(24, 4))
