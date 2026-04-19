@@ -625,18 +625,22 @@ def is_tiktok_url(url: str) -> bool:
 def _tiktok_title(info: dict) -> str:
     """Build a meaningful filename from TikTok metadata."""
     uploader = (info.get("uploader") or info.get("creator") or "").strip()
-    desc  = (info.get("description") or "").strip()
-    title = (info.get("title") or "").strip()
-    vid_id = info.get("id", "video")
+    desc     = (info.get("description") or "").strip()
+    title    = (info.get("title") or "").strip()
+    vid_id   = info.get("id", "video")
 
-    # yt-dlp falls back to "TikTok video #ID" when no real title exists
     def _generic(s: str) -> bool:
         return s.startswith("TikTok video #") or s == vid_id
 
-    text = desc if desc and not _generic(desc) else (
-           title if title and not _generic(title) else vid_id)
+    if desc and not _generic(desc):
+        text = desc[:80].strip()
+    elif title and not _generic(title):
+        text = title[:80].strip()
+    else:
+        # No caption — use upload date so filename stays readable
+        raw = info.get("upload_date") or ""  # "20240115"
+        text = f"{raw[:4]}-{raw[4:6]}-{raw[6:]}" if len(raw) == 8 else vid_id[:20]
 
-    text = text[:80].strip()
     return f"{uploader} - {text}" if uploader else text
 
 
