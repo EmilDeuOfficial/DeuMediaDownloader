@@ -53,7 +53,7 @@ def main():
         print("          Download FFmpeg from https://ffmpeg.org/download.html")
         print("          and add it to your system PATH.")
 
-    from ui import LauncherApp, DeuDownloaderApp, YouTubeDownloaderApp
+    from ui import LauncherApp, DeuDownloaderApp, YouTubeDownloaderApp, TikTokDownloaderApp
 
     while True:
         choice = LauncherApp().run()
@@ -61,8 +61,10 @@ def main():
             break
         if choice == "spotify":
             went_back = DeuDownloaderApp(ffmpeg_available=ffmpeg_ok, show_back=True).run()
-        else:
+        elif choice == "youtube":
             went_back = YouTubeDownloaderApp(ffmpeg_available=ffmpeg_ok, show_back=True).run()
+        else:
+            went_back = TikTokDownloaderApp(ffmpeg_available=ffmpeg_ok, show_back=True).run()
         if not went_back:
             break
 

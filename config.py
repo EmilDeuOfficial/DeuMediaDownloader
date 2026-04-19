@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 APP_NAME = "DeuDownloader"
-APP_VERSION = "1.0.0"
+APP_VERSION = "1.1.0"
 CONFIG_FILE   = Path.home() / ".spotify_downloader" / "config.json"
 LANGUAGE_FILE = Path.home() / ".spotify_downloader" / "language"
 
@@ -79,6 +79,13 @@ DEFAULT_CONFIG = {
     "yt_subtitle_langs":     "en",
     "yt_sponsorblock":       False,
     "yt_rate_limit":         "",
+    # TikTok-specific settings
+    "tt_format_video":       "MP4 1080p",
+    "tt_format_audio":       "MP3 256 kbps",
+    "tt_media_type":         "Video",
+    "tt_concurrent":         2,
+    "tt_embed_thumbnail":    True,
+    "tt_win_geo":            "820x720",
 }
 
 # ---------------------------------------------------------------------------
@@ -136,9 +143,12 @@ STRINGS: dict[str, dict[str, str]] = {
         "youtube_desc":        "Videos and\nplaylists",
         "open_spotify":        "Open Spotify",
         "open_youtube":        "Open YouTube",
+        "open_tiktok":         "Open TikTok",
+        "tiktok_desc":         "Videos and\naudio",
         # Window titles
         "spotify_win_title":   f"{APP_NAME}  v{APP_VERSION}",
         "youtube_win_title":   "YouTube Downloader",
+        "tiktok_win_title":    "TikTok Downloader",
         # Log / status messages
         "no_credentials":      "No Spotify API credentials. Open Settings to configure them.",
         "spotify_init":        "Spotify client initialised.",
@@ -146,6 +156,7 @@ STRINGS: dict[str, dict[str, str]] = {
         "settings_saved":      "Settings saved.",
         "fetching_spotify":    "Fetching {} info from Spotify\u2026",
         "fetching_youtube":    "Fetching YouTube info\u2026",
+        "fetching_tiktok":     "Fetching TikTok info\u2026",
         "queued_n_tracks":     "Queued {} track(s)  [{}]",
         "queued_n_videos":     "Queued {} video(s)  [{}]",
         "err_resolving":       "Error resolving URL: {}",
@@ -158,6 +169,7 @@ STRINGS: dict[str, dict[str, str]] = {
         "mb_no_url_title":     "No URL",
         "mb_no_url_spotify":   "Please paste a Spotify URL first.",
         "mb_no_url_youtube":   "Please paste a YouTube URL first.",
+        "mb_no_url_tiktok":    "Please paste a TikTok URL first.",
         "mb_no_outdir_title":  "No Output Directory",
         "mb_no_outdir":        "Please choose an output directory.",
         "mb_api_title":        "API Credentials Required",
@@ -256,9 +268,12 @@ STRINGS: dict[str, dict[str, str]] = {
         "youtube_desc":        "Videos und\nPlaylisten",
         "open_spotify":        "Spotify \u00f6ffnen",
         "open_youtube":        "YouTube \u00f6ffnen",
+        "open_tiktok":         "TikTok \u00f6ffnen",
+        "tiktok_desc":         "Videos und\nAudio",
         # Window titles
         "spotify_win_title":   f"{APP_NAME}  v{APP_VERSION}",
         "youtube_win_title":   "YouTube Downloader",
+        "tiktok_win_title":    "TikTok Downloader",
         # Log / status messages
         "no_credentials":      "Keine Spotify-API-Zugangsdaten. Einstellungen \u00f6ffnen.",
         "spotify_init":        "Spotify-Client initialisiert.",
@@ -266,6 +281,7 @@ STRINGS: dict[str, dict[str, str]] = {
         "settings_saved":      "Einstellungen gespeichert.",
         "fetching_spotify":    "{}-Info von Spotify wird geladen\u2026",
         "fetching_youtube":    "YouTube-Info wird geladen\u2026",
+        "fetching_tiktok":     "TikTok-Info wird geladen\u2026",
         "queued_n_tracks":     "{} Track(s) in Warteschlange  [{}]",
         "queued_n_videos":     "{} Video(s) in Warteschlange  [{}]",
         "err_resolving":       "Fehler beim Laden der URL: {}",
@@ -278,6 +294,7 @@ STRINGS: dict[str, dict[str, str]] = {
         "mb_no_url_title":     "Keine URL",
         "mb_no_url_spotify":   "Bitte zuerst eine Spotify-URL einf\u00fcgen.",
         "mb_no_url_youtube":   "Bitte zuerst eine YouTube-URL einf\u00fcgen.",
+        "mb_no_url_tiktok":    "Bitte zuerst eine TikTok-URL einf\u00fcgen.",
         "mb_no_outdir_title":  "Kein Ausgabeordner",
         "mb_no_outdir":        "Bitte einen Ausgabeordner w\u00e4hlen.",
         "mb_api_title":        "API-Zugangsdaten erforderlich",

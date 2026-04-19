@@ -89,6 +89,11 @@ def _youtube_pil(size: int) -> Image.Image:
     return _svg_to_pil(_IMG_DIR / "youtube-icon.svg", "#FF0000", size)
 
 
+@lru_cache(maxsize=None)
+def _tiktok_pil(size: int) -> Image.Image:
+    return _svg_to_pil(_IMG_DIR / "tiktok-icon.svg", "#EE1D52", size)
+
+
 def spotify_icon(size: int = 20) -> ctk.CTkImage:
     pil = _spotify_pil(size)
     return ctk.CTkImage(light_image=pil, dark_image=pil, size=(size, size))
@@ -99,9 +104,15 @@ def youtube_icon(size: int = 20) -> ctk.CTkImage:
     return ctk.CTkImage(light_image=pil, dark_image=pil, size=(size, size))
 
 
+def tiktok_icon(size: int = 20) -> ctk.CTkImage:
+    pil = _tiktok_pil(size)
+    return ctk.CTkImage(light_image=pil, dark_image=pil, size=(size, size))
+
+
 def warmup_icons() -> None:
     """Pre-render all PIL bitmaps used by the UI into the lru_cache.
     Call this in a background thread right after the launcher appears."""
     for size in (18, 22, 44):
         _spotify_pil(size)
         _youtube_pil(size)
+        _tiktok_pil(size)

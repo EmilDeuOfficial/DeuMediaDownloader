@@ -9,7 +9,7 @@ from typing import Optional, Dict
 
 import customtkinter as ctk
 
-from assets import spotify_icon, youtube_icon, warmup_icons
+from assets import spotify_icon, youtube_icon, tiktok_icon, warmup_icons
 from config import (
     AUDIO_FORMATS, VIDEO_FORMATS, COLORS, FONT_FAMILY, APP_NAME, APP_VERSION,
     load_config, save_config, T,
@@ -17,6 +17,7 @@ from config import (
 from downloader import (
     SpotifyClient, DownloadManager, DownloadTask, DownloadStatus, TrackInfo,
     YouTubeTask, YouTubeDownloadManager, extract_youtube_entries,
+    extract_tiktok_entries,
 )
 
 # Global CustomTkinter appearance
@@ -1934,6 +1935,522 @@ class YouTubeDownloaderApp:
 
 
 # ---------------------------------------------------------------------------
+# TikTok queue item widget
+# ---------------------------------------------------------------------------
+
+class TikTokQueueItemWidget(ctk.CTkFrame):
+    TT_PINK = "#EE1D52"
+    STATUS_COLORS = {
+        DownloadStatus.QUEUED:      C["text_secondary"],
+        DownloadStatus.DOWNLOADING: TT_PINK,
+        DownloadStatus.CONVERTING:  C["warning"],
+        DownloadStatus.DONE:        C["success"],
+        DownloadStatus.ERROR:       C["error"],
+    }
+
+    def __init__(self, parent, task: YouTubeTask, **kwargs):
+        super().__init__(parent, fg_color=C["bg_card"], corner_radius=8, **kwargs)
+        self._task = task
+        self._build()
+
+    def _build(self):
+        self.grid_columnconfigure(1, weight=1)
+
+        ctk.CTkLabel(self, text="♪", font=(FONT_FAMILY, 18),
+                     text_color=self.TT_PINK, width=32).grid(row=0, column=0, rowspan=2,
+                     padx=(12, 6), pady=10)
+
+        name = self._task.display_name()
+        if len(name) > 60:
+            name = name[:57] + "…"
+        self._name_lbl = ctk.CTkLabel(self, text=name, font=(FONT_FAMILY, 13, "bold"),
+                                       text_color=C["text_primary"], anchor="w")
+        self._name_lbl.grid(row=0, column=1, sticky="ew", padx=(0, 12), pady=(8, 2))
+
+        self._status_lbl = ctk.CTkLabel(self, text=self._task.status.value,
+                                         font=(FONT_FAMILY, 11),
+                                         text_color=C["text_secondary"], anchor="w")
+        self._status_lbl.grid(row=1, column=1, sticky="ew", padx=(0, 12), pady=(0, 4))
+
+        self._bar = ctk.CTkProgressBar(self, height=6, corner_radius=3,
+                                        fg_color=C["bg_secondary"],
+                                        progress_color=self.TT_PINK)
+        self._bar.set(0)
+        self._bar.grid(row=2, column=0, columnspan=3, sticky="ew", padx=12, pady=(0, 10))
+
+    def update_status(self, status: DownloadStatus, error_msg: str = ""):
+        color = self.STATUS_COLORS.get(status, C["text_secondary"])
+        label = status.value
+        if status == DownloadStatus.ERROR and error_msg:
+            short_err = error_msg[:60] + ("…" if len(error_msg) > 60 else "")
+            label = f"Error: {short_err}"
+        self._status_lbl.configure(text=label, text_color=color)
+
+    def update_progress(self, pct: float):
+        self._bar.set(pct)
+        if pct >= 1.0:
+            self._bar.configure(progress_color=C["success"])
+
+
+def _tt_status_log_line(task: YouTubeTask) -> str:
+    name = task.display_name()
+    if task.status == DownloadStatus.DONE:
+        return T("log_done").format(name)
+    if task.status == DownloadStatus.ERROR:
+        return T("log_error").format(name, task.error_msg)
+    return f"{task.status.value}: {name}"
+
+
+# ---------------------------------------------------------------------------
+# TikTok Downloader App
+# ---------------------------------------------------------------------------
+
+class TikTokDownloaderApp:
+    TT_PINK      = "#EE1D52"
+    TT_PINK_HOV  = "#C71542"
+
+    def __init__(self, ffmpeg_available: bool = True, show_back: bool = False):
+        self._ffmpeg_ok  = ffmpeg_available
+        self._show_back  = show_back
+        self._went_back  = False
+        self._config     = load_config()
+        self._manager    = YouTubeDownloadManager(
+            self._config.get("tt_concurrent", 2), ffmpeg_available
+        )
+        self._task_widgets: Dict[str, TikTokQueueItemWidget] = {}
+
+        self._root = ctk.CTk()
+        self._root.title(T("tiktok_win_title"))
+        _tt_geo = self._config.get("tt_win_geo", "820x720")
+        self._root.geometry(_tt_geo)
+        self._root.minsize(700, 600)
+        self._root.configure(fg_color=C["bg_primary"])
+        self._root.overrideredirect(True)
+
+        self._drag_x = 0
+        self._drag_y = 0
+        self._maximized = False
+        self._restore_geometry = _tt_geo
+
+        self._build_ui()
+        self._root.bind("<Destroy>", lambda e: self._save_geo() if e.widget is self._root else None)
+        self._root.after(100, lambda: _apply_win11_rounded(self._root.winfo_id()))
+        self._root.after(100, lambda: _apply_taskbar_button(self._root))
+
+    def run(self) -> bool:
+        self._root.mainloop()
+        return self._went_back
+
+    def _save_geo(self):
+        geo = self._restore_geometry if self._maximized else self._root.geometry()
+        self._config["tt_win_geo"] = geo
+        save_config(self._config)
+
+    def _go_back(self):
+        self._went_back = True
+        self._root.destroy()
+
+    def _build_ui(self):
+        self._root.grid_rowconfigure(3, weight=1)
+        self._root.grid_rowconfigure(4, weight=1)
+        self._root.grid_columnconfigure(0, weight=1)
+        self._build_header()
+        self._build_input_panel()
+        self._build_options_panel()
+        self._build_queue_panel()
+        self._build_log_panel()
+
+    def _build_header(self):
+        bar = ctk.CTkFrame(self._root, fg_color=C["bg_secondary"],
+                           corner_radius=0, height=46)
+        bar.grid(row=0, column=0, sticky="ew")
+        bar.grid_propagate(False)
+        bar.bind("<ButtonPress-1>",   self._titlebar_press)
+        bar.bind("<B1-Motion>",       self._titlebar_drag)
+        bar.bind("<Double-Button-1>", self._toggle_maximize)
+
+        col = 0
+        if self._show_back:
+            ctk.CTkButton(bar, text="←", width=36, height=28,
+                          fg_color="transparent", hover_color=C["bg_card"],
+                          font=(FONT_FAMILY, 15), text_color=C["text_secondary"],
+                          command=self._go_back).grid(row=0, column=col, padx=(6, 0), pady=(6, 0))
+            col += 1
+
+        PY = (6, 0)
+
+        dot = ctk.CTkLabel(bar, image=tiktok_icon(22), text="", cursor="fleur")
+        dot.grid(row=0, column=col, padx=(14, 4), pady=PY)
+        dot.bind("<ButtonPress-1>", self._titlebar_press)
+        dot.bind("<B1-Motion>",     self._titlebar_drag)
+        col += 1
+
+        title_lbl = ctk.CTkLabel(bar, text=T("tiktok_win_title"),
+                                  font=(FONT_FAMILY, 14, "bold"),
+                                  text_color=C["text_primary"], cursor="fleur")
+        title_lbl.grid(row=0, column=col, sticky="w", pady=PY)
+        title_lbl.bind("<ButtonPress-1>",   self._titlebar_press)
+        title_lbl.bind("<B1-Motion>",       self._titlebar_drag)
+        title_lbl.bind("<Double-Button-1>", self._toggle_maximize)
+        col += 1
+
+        bar.grid_columnconfigure(col, weight=1)
+        col += 1
+
+        ffmpeg_color = C["success"] if self._ffmpeg_ok else C["error"]
+        ffmpeg_text  = T("ffmpeg_ok") if self._ffmpeg_ok else T("ffmpeg_fail")
+        ctk.CTkLabel(bar, text=ffmpeg_text, font=(FONT_FAMILY, 10),
+                     text_color=ffmpeg_color).grid(row=0, column=col, padx=(0, 8), pady=PY)
+        col += 1
+
+        ctk.CTkButton(bar, text="─", width=36, height=28,
+                      fg_color="transparent", hover_color=C["bg_card"],
+                      font=(FONT_FAMILY, 13), text_color=C["text_secondary"],
+                      command=self._minimize).grid(row=0, column=col, padx=0, pady=PY)
+        col += 1
+
+        self._max_btn = ctk.CTkButton(bar, text="□", width=36, height=28,
+                      fg_color="transparent", hover_color=C["bg_card"],
+                      font=(FONT_FAMILY, 13), text_color=C["text_secondary"],
+                      command=self._toggle_maximize)
+        self._max_btn.grid(row=0, column=col, padx=0, pady=PY)
+        col += 1
+
+        ctk.CTkButton(bar, text="✕", width=36, height=28,
+                      fg_color="transparent", hover_color=C["error"],
+                      font=(FONT_FAMILY, 13), text_color=C["text_secondary"],
+                      command=self._root.destroy).grid(row=0, column=col, padx=(0, 6), pady=PY)
+
+    def _titlebar_press(self, event):
+        self._drag_x = event.x_root - self._root.winfo_x()
+        self._drag_y = event.y_root - self._root.winfo_y()
+
+    def _titlebar_drag(self, event):
+        if self._maximized:
+            self._restore_maximize()
+            self._drag_x = self._root.winfo_width() // 2
+            self._drag_y = 20
+        self._root.geometry(f"+{event.x_root - self._drag_x}+{event.y_root - self._drag_y}")
+
+    def _minimize(self):
+        import ctypes
+        child = self._root.winfo_id()
+        hwnd  = ctypes.windll.user32.GetAncestor(child, 2) or child
+        ctypes.windll.user32.ShowWindow(hwnd, 6)
+
+    def _toggle_maximize(self, event=None):
+        if self._maximized:
+            self._restore_maximize()
+        else:
+            self._restore_geometry = self._root.geometry()
+            sw = self._root.winfo_screenwidth()
+            sh = self._root.winfo_screenheight()
+            self._root.geometry(f"{sw}x{sh}+0+0")
+            self._maximized = True
+            self._max_btn.configure(text="❐")
+
+    def _restore_maximize(self):
+        self._root.geometry(self._restore_geometry)
+        self._maximized = False
+        self._max_btn.configure(text="□")
+
+    def _build_input_panel(self):
+        frame = ctk.CTkFrame(self._root, fg_color=C["bg_secondary"], corner_radius=10)
+        frame.grid(row=1, column=0, sticky="ew", padx=16, pady=(12, 6))
+        frame.grid_columnconfigure(0, weight=1)
+
+        ctk.CTkLabel(frame, text="TikTok URL", font=(FONT_FAMILY, 12),
+                     text_color=C["text_secondary"]).grid(row=0, column=0, sticky="w",
+                     padx=16, pady=(10, 2))
+
+        inner = ctk.CTkFrame(frame, fg_color="transparent")
+        inner.grid(row=1, column=0, sticky="ew", padx=12, pady=(0, 12))
+        inner.grid_columnconfigure(0, weight=1)
+
+        self._url_var = ctk.StringVar()
+        self._url_entry = ctk.CTkEntry(
+            inner, textvariable=self._url_var, height=38,
+            font=(FONT_FAMILY, 13), fg_color=C["bg_input"],
+            placeholder_text="Paste a TikTok video URL\u2026",
+            border_color=C["border"],
+        )
+        self._url_entry.grid(row=0, column=0, sticky="ew", padx=(0, 8))
+        self._url_entry.bind("<Return>", lambda _: self._start_download())
+
+        ctk.CTkButton(inner, text=T("paste"), width=72, height=38,
+                      fg_color=C["bg_card"], hover_color=C["border"],
+                      command=self._paste_url).grid(row=0, column=1, padx=(0, 8))
+
+        ctk.CTkButton(inner, text=T("clear"), width=66, height=38,
+                      fg_color=C["bg_card"], hover_color=C["border"],
+                      command=lambda: self._url_var.set("")).grid(row=0, column=2)
+
+    def _build_options_panel(self):
+        frame = ctk.CTkFrame(self._root, fg_color=C["bg_secondary"], corner_radius=10)
+        frame.grid(row=2, column=0, sticky="ew", padx=16, pady=6)
+        frame.grid_columnconfigure(3, weight=1)
+
+        ctk.CTkLabel(frame, text=T("type"), font=(FONT_FAMILY, 12),
+                     text_color=C["text_secondary"]).grid(row=0, column=0, padx=(16, 8), pady=(12, 4))
+
+        saved_media = self._config.get("tt_media_type", "Video")
+
+        toggle_frame = ctk.CTkFrame(frame, fg_color=C["bg_card"], corner_radius=8)
+        toggle_frame.grid(row=0, column=1, sticky="w", padx=(0, 16), pady=(12, 4))
+
+        self._audio_btn = ctk.CTkButton(
+            toggle_frame, text=T("audio_btn"), width=90, height=28,
+            font=(FONT_FAMILY, 12), corner_radius=6,
+            fg_color="transparent", hover_color=C["bg_secondary"],
+            text_color=C["text_secondary"], command=lambda: self._set_media_type("Audio"),
+        )
+        self._audio_btn.pack(side="left", padx=3, pady=3)
+
+        self._video_btn = ctk.CTkButton(
+            toggle_frame, text=T("video_btn"), width=90, height=28,
+            font=(FONT_FAMILY, 12), corner_radius=6,
+            fg_color=self.TT_PINK, hover_color=self.TT_PINK_HOV,
+            text_color="white", command=lambda: self._set_media_type("Video"),
+        )
+        self._video_btn.pack(side="left", padx=(0, 3), pady=3)
+
+        ctk.CTkLabel(frame, text=T("format"), font=(FONT_FAMILY, 12),
+                     text_color=C["text_secondary"]).grid(row=0, column=2, padx=(0, 8), pady=(12, 4))
+
+        if saved_media == "Audio":
+            fmt_values = list(AUDIO_FORMATS.keys())
+            saved_fmt  = self._config.get("tt_format_audio", "MP3 256 kbps")
+            if saved_fmt not in AUDIO_FORMATS:
+                saved_fmt = "MP3 256 kbps"
+            self._audio_btn.configure(fg_color=C["accent"], text_color="white")
+            self._video_btn.configure(fg_color="transparent", text_color=C["text_secondary"])
+        else:
+            fmt_values = list(VIDEO_FORMATS.keys())
+            saved_fmt  = self._config.get("tt_format_video", "MP4 1080p")
+            if saved_fmt not in VIDEO_FORMATS:
+                saved_fmt = "MP4 1080p"
+
+        self._format_var = ctk.StringVar(value=saved_fmt)
+        self._format_var.trace_add("write", lambda *_: self._save_ui_prefs())
+        self._format_dropdown = CustomDropdown(frame, variable=self._format_var,
+                                               values=fmt_values, width=220)
+        self._format_dropdown.grid(row=0, column=3, sticky="w", padx=(0, 16), pady=(12, 4))
+
+        ctk.CTkLabel(frame, text=T("save_to"), font=(FONT_FAMILY, 12),
+                     text_color=C["text_secondary"]).grid(row=1, column=0, padx=(16, 8), pady=(4, 12))
+
+        self._outdir_var = ctk.StringVar(value=self._config.get("output_dir", ""))
+        self._outdir_var.trace_add("write", lambda *_: self._save_ui_prefs())
+        ctk.CTkEntry(frame, textvariable=self._outdir_var,
+                     height=34, font=(FONT_FAMILY, 12),
+                     fg_color=C["bg_input"], border_color=C["border"]
+                     ).grid(row=1, column=1, columnspan=2, sticky="ew", padx=(0, 8), pady=(4, 12))
+
+        ctk.CTkButton(frame, text=T("browse"), width=80, height=34,
+                      fg_color=C["bg_card"], hover_color=C["border"],
+                      command=self._browse_outdir).grid(row=1, column=3, sticky="w", padx=(0, 8), pady=(4, 12))
+
+        self._dl_btn = ctk.CTkButton(
+            frame, text=T("download"), width=130, height=38,
+            font=(FONT_FAMILY, 14, "bold"),
+            fg_color=self.TT_PINK, hover_color=self.TT_PINK_HOV,
+            command=self._start_download,
+        )
+        self._dl_btn.grid(row=0, column=4, rowspan=2, padx=(4, 16))
+
+        self._media_type = ctk.StringVar(value=saved_media)
+
+    def _set_media_type(self, kind: str):
+        self._media_type.set(kind)
+        if kind == "Audio":
+            self._audio_btn.configure(fg_color=C["accent"], text_color="white")
+            self._video_btn.configure(fg_color="transparent", text_color=C["text_secondary"])
+            self._format_dropdown._values = list(AUDIO_FORMATS.keys())
+            saved = self._config.get("tt_format_audio", "MP3 256 kbps")
+            if saved not in AUDIO_FORMATS:
+                saved = "MP3 256 kbps"
+            self._format_var.set(saved)
+        else:
+            self._video_btn.configure(fg_color=self.TT_PINK, text_color="white")
+            self._audio_btn.configure(fg_color="transparent", text_color=C["text_secondary"])
+            self._format_dropdown._values = list(VIDEO_FORMATS.keys())
+            saved = self._config.get("tt_format_video", "MP4 1080p")
+            if saved not in VIDEO_FORMATS:
+                saved = "MP4 1080p"
+            self._format_var.set(saved)
+        self._config["tt_media_type"] = kind
+        save_config(self._config)
+
+    def _build_queue_panel(self):
+        frame = ctk.CTkFrame(self._root, fg_color=C["bg_secondary"], corner_radius=10)
+        frame.grid(row=3, column=0, sticky="nsew", padx=16, pady=6)
+        frame.grid_rowconfigure(1, weight=1)
+        frame.grid_columnconfigure(0, weight=1)
+
+        hdr = ctk.CTkFrame(frame, fg_color="transparent")
+        hdr.grid(row=0, column=0, sticky="ew", padx=12, pady=(10, 4))
+        ctk.CTkLabel(hdr, text=T("download_queue"), font=(FONT_FAMILY, 13, "bold"),
+                     text_color=C["text_primary"]).pack(side="left")
+        self._queue_count_lbl = ctk.CTkLabel(hdr, text="", font=(FONT_FAMILY, 11),
+                                              text_color=C["text_secondary"])
+        self._queue_count_lbl.pack(side="left", padx=8)
+        ctk.CTkButton(hdr, text=T("clear_done"), width=90, height=26,
+                      fg_color=C["bg_card"], hover_color=C["border"],
+                      font=(FONT_FAMILY, 11),
+                      command=self._clear_done).pack(side="right")
+
+        self._queue_scroll = ctk.CTkScrollableFrame(
+            frame, fg_color="transparent",
+            scrollbar_button_color=C["bg_card"],
+            scrollbar_button_hover_color=C["border"],
+        )
+        self._queue_scroll.grid(row=1, column=0, sticky="nsew", padx=8, pady=(0, 8))
+        self._queue_scroll.grid_columnconfigure(0, weight=1)
+        self._queue_row = 0
+
+    def _build_log_panel(self):
+        frame = ctk.CTkFrame(self._root, fg_color=C["bg_secondary"], corner_radius=10)
+        frame.grid(row=4, column=0, sticky="nsew", padx=16, pady=(6, 14))
+        frame.grid_rowconfigure(1, weight=1)
+        frame.grid_columnconfigure(0, weight=1)
+
+        hdr = ctk.CTkFrame(frame, fg_color="transparent")
+        hdr.grid(row=0, column=0, sticky="ew", padx=12, pady=(8, 4))
+        ctk.CTkLabel(hdr, text=T("log_panel"), font=(FONT_FAMILY, 13, "bold"),
+                     text_color=C["text_primary"]).pack(side="left")
+        ctk.CTkButton(hdr, text=T("clear_log"), width=60, height=24,
+                      fg_color=C["bg_card"], hover_color=C["border"],
+                      font=(FONT_FAMILY, 11),
+                      command=self._clear_log).pack(side="right")
+
+        self._log_box = ctk.CTkTextbox(
+            frame, font=("Consolas", 11), fg_color=C["bg_input"],
+            text_color=C["text_secondary"], state="disabled",
+            border_color=C["border"], border_width=1,
+        )
+        self._log_box.grid(row=1, column=0, sticky="nsew", padx=8, pady=(0, 8))
+
+    def _log(self, msg: str):
+        ts = datetime.now().strftime("%H:%M:%S")
+        self._log_box.configure(state="normal")
+        self._log_box.insert("end", f"[{ts}] {msg}\n")
+        self._log_box.see("end")
+        self._log_box.configure(state="disabled")
+
+    def _clear_log(self):
+        self._log_box.configure(state="normal")
+        self._log_box.delete("1.0", "end")
+        self._log_box.configure(state="disabled")
+
+    def _save_ui_prefs(self):
+        fmt   = self._format_var.get()
+        media = self._media_type.get() if hasattr(self, "_media_type") else "Video"
+        if media == "Audio":
+            self._config["tt_format_audio"] = fmt
+        else:
+            self._config["tt_format_video"] = fmt
+        self._config["tt_media_type"] = media
+        self._config["output_dir"]    = self._outdir_var.get()
+        save_config(self._config)
+
+    def _paste_url(self):
+        try:
+            self._url_var.set(self._root.clipboard_get().strip())
+        except Exception:
+            pass
+
+    def _browse_outdir(self):
+        d = filedialog.askdirectory(title=T("select_outdir"),
+                                    initialdir=self._outdir_var.get())
+        if d:
+            self._outdir_var.set(d)
+
+    def _clear_done(self):
+        done_ids = [tid for tid, w in list(self._task_widgets.items())
+                    if w._task.status in (DownloadStatus.DONE, DownloadStatus.ERROR)]
+        for tid in done_ids:
+            self._task_widgets.pop(tid).destroy()
+        self._update_queue_count()
+
+    def _update_queue_count(self):
+        n = len(self._task_widgets)
+        self._queue_count_lbl.configure(
+            text=f"({n} item{'s' if n != 1 else ''})" if n else ""
+        )
+
+    def _start_download(self):
+        url = self._url_var.get().strip()
+        if not url:
+            messagebox.showwarning(T("mb_no_url_title"), T("mb_no_url_tiktok"))
+            return
+        out_dir = self._outdir_var.get().strip()
+        if not out_dir:
+            messagebox.showwarning(T("mb_no_outdir_title"), T("mb_no_outdir"))
+            return
+
+        self._dl_btn.configure(state="disabled", text=T("loading"))
+        self._url_var.set("")
+        threading.Thread(target=self._resolve_and_queue, args=(url, out_dir), daemon=True).start()
+
+    def _resolve_and_queue(self, url: str, out_dir: str):
+        try:
+            self._root.after(0, lambda: self._log(T("fetching_tiktok")))
+            entries = extract_tiktok_entries(url)
+            fmt = self._format_var.get()
+            self._root.after(0, lambda: self._log(T("queued_n_videos").format(len(entries), fmt)))
+            for entry in entries:
+                self._root.after(0, lambda e=entry: self._queue_entry(e, out_dir, fmt))
+        except Exception as exc:
+            msg = str(exc)
+            self._root.after(0, lambda m=msg: (
+                self._log(T("err_resolving").format(m)),
+                messagebox.showerror(T("mb_error_title"), m),
+            ))
+        finally:
+            self._root.after(0, lambda: self._dl_btn.configure(
+                state="normal", text=T("download")
+            ))
+
+    def _queue_entry(self, entry: dict, out_dir: str, fmt: str):
+        task_id = str(uuid.uuid4())
+        task = YouTubeTask(
+            task_id     = task_id,
+            url         = entry["url"],
+            title       = entry["title"],
+            output_dir  = out_dir,
+            format_name = fmt,
+        )
+
+        def on_progress(t: YouTubeTask):
+            self._root.after(0, lambda: widget.update_progress(t.progress))
+
+        def on_status(t: YouTubeTask):
+            self._root.after(0, lambda: (
+                widget.update_status(t.status, t.error_msg),
+                self._log(_tt_status_log_line(t)),
+            ))
+
+        def on_done(t: YouTubeTask):
+            self._root.after(0, lambda: (
+                widget.update_status(t.status, t.error_msg),
+                widget.update_progress(t.progress),
+            ))
+
+        task.on_progress = on_progress
+        task.on_status   = on_status
+        task.on_done     = on_done
+
+        widget = TikTokQueueItemWidget(self._queue_scroll, task)
+        widget.grid(row=self._queue_row, column=0, sticky="ew", padx=4, pady=4)
+        self._queue_row += 1
+        self._task_widgets[task_id] = widget
+        self._update_queue_count()
+
+        self._log(T("log_queued").format(task.display_name()))
+        self._manager.submit(task)
+
+
+# ---------------------------------------------------------------------------
 # Launcher – choose downloader on startup
 # ---------------------------------------------------------------------------
 
@@ -1944,7 +2461,7 @@ class LauncherApp:
         self._root   = ctk.CTk()
         self._root.title(T("launcher_title"))
         _lpos = self._cfg.get("launcher_pos", "")
-        self._root.geometry(f"480x340{_lpos}")
+        self._root.geometry(f"720x310{_lpos}")
         self._root.resizable(False, False)
         self._root.configure(fg_color=C["bg_primary"])
         self._root.overrideredirect(True)
@@ -1999,6 +2516,7 @@ class LauncherApp:
         cards.pack(fill="both", expand=True)
         cards.grid_columnconfigure(0, weight=1)
         cards.grid_columnconfigure(1, weight=1)
+        cards.grid_columnconfigure(2, weight=1)
 
         self._build_card(cards, col=0,
                          icon=spotify_icon(44),
@@ -2019,6 +2537,16 @@ class LauncherApp:
                          btn_hover="#AA1111",
                          btn_text=T("open_youtube"),
                          choice="youtube")
+
+        self._build_card(cards, col=2,
+                         icon=tiktok_icon(44),
+                         icon_color="#EE1D52",
+                         title="TikTok",
+                         desc=T("tiktok_desc"),
+                         btn_color="#EE1D52",
+                         btn_hover="#C71542",
+                         btn_text=T("open_tiktok"),
+                         choice="tiktok")
 
     def _build_card(self, parent, col: int, icon, icon_color: str,
                     title: str, desc: str, btn_color: str, btn_hover: str,

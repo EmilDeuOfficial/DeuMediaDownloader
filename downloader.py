@@ -614,6 +614,47 @@ def download_youtube_task(task: "YouTubeTask", ffmpeg_ok: bool) -> None:
             task.on_done(task)
 
 
+# ---------------------------------------------------------------------------
+# TikTok client
+# ---------------------------------------------------------------------------
+
+def is_tiktok_url(url: str) -> bool:
+    return "tiktok.com" in url
+
+
+def extract_tiktok_entries(url: str) -> List[Dict[str, Any]]:
+    """Return [{url, title}] for a TikTok video or user/hashtag URL."""
+    ydl_opts = {
+        "quiet":         True,
+        "no_warnings":   True,
+        "extract_flat":  True,
+        "skip_download": True,
+    }
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        info = ydl.extract_info(url, download=False)
+
+    if info is None:
+        raise ValueError("Could not extract info from URL.")
+
+    entries: List[Dict[str, Any]] = []
+    if info.get("_type") == "playlist":
+        for entry in info.get("entries") or []:
+            if not entry:
+                continue
+            vid_url = (
+                entry.get("url")
+                or entry.get("webpage_url")
+                or f"https://www.tiktok.com/video/{entry.get('id', '')}"
+            )
+            entries.append({"url": vid_url, "title": entry.get("title") or "Unknown"})
+    else:
+        entries.append({
+            "url":   info.get("webpage_url") or url,
+            "title": info.get("title") or "Unknown",
+        })
+    return entries
+
+
 class YouTubeDownloadManager:
     def __init__(self, max_workers: int = 2, ffmpeg_ok: bool = True):
         self._max_workers = max_workers
