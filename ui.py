@@ -1139,11 +1139,12 @@ def _yt_status_log_line(task: YouTubeTask) -> str:
 # ---------------------------------------------------------------------------
 
 class YouTubeQueueItemWidget(ctk.CTkFrame):
+    YT_RED = "#FF4444"
     STATUS_COLORS = {
         DownloadStatus.QUEUED:      C["text_secondary"],
-        DownloadStatus.DOWNLOADING: C["accent"],
+        DownloadStatus.DOWNLOADING: "#FF4444",
         DownloadStatus.CONVERTING:  C["warning"],
-        DownloadStatus.DONE:        C["success"],
+        DownloadStatus.DONE:        "#FF4444",
         DownloadStatus.ERROR:       C["error"],
     }
 
@@ -1188,7 +1189,7 @@ class YouTubeQueueItemWidget(ctk.CTkFrame):
     def update_progress(self, pct: float):
         self._bar.set(pct)
         if pct >= 1.0:
-            self._bar.configure(progress_color=C["success"])
+            self._bar.configure(progress_color=self.YT_RED)
 
 
 # ---------------------------------------------------------------------------
@@ -1679,8 +1680,8 @@ class YouTubeDownloaderApp:
         self._audio_btn = ctk.CTkButton(
             toggle_frame, text=T("audio_btn"), width=90, height=28,
             font=(FONT_FAMILY, 12), corner_radius=6,
-            fg_color=C["accent"], hover_color=C["accent_hover"],
-            text_color="white", command=lambda: self._set_media_type("Audio"),
+            fg_color="transparent", hover_color=C["bg_secondary"],
+            text_color=C["text_secondary"], command=lambda: self._set_media_type("Audio"),
         )
         self._audio_btn.pack(side="left", padx=3, pady=3)
 
@@ -1713,10 +1714,11 @@ class YouTubeDownloaderApp:
                                                values=fmt_values, width=220)
         self._format_dropdown.grid(row=0, column=3, sticky="w", padx=(0, 16), pady=(12, 4))
 
-        # Apply saved media type appearance (without triggering save)
+        # Apply saved media type appearance
         if saved_media == "Video":
             self._video_btn.configure(fg_color="#CC2222", text_color="white")
-            self._audio_btn.configure(fg_color="transparent", text_color=C["text_secondary"])
+        else:
+            self._audio_btn.configure(fg_color="#CC2222", text_color="white")
 
         # --- Row 1: Save to + Browse + Download ---
         ctk.CTkLabel(frame, text=T("save_to"), font=(FONT_FAMILY, 12),
@@ -1747,7 +1749,7 @@ class YouTubeDownloaderApp:
     def _set_media_type(self, kind: str):
         self._media_type.set(kind)
         if kind == "Audio":
-            self._audio_btn.configure(fg_color=C["accent"], text_color="white")
+            self._audio_btn.configure(fg_color="#CC2222", text_color="white")
             self._video_btn.configure(fg_color="transparent", text_color=C["text_secondary"])
             self._format_dropdown._values = list(AUDIO_FORMATS.keys())
             saved = self._config.get("yt_format_audio", "MP3 256 kbps")
@@ -1942,9 +1944,9 @@ class TikTokQueueItemWidget(ctk.CTkFrame):
     TT_PINK = "#EE1D52"
     STATUS_COLORS = {
         DownloadStatus.QUEUED:      C["text_secondary"],
-        DownloadStatus.DOWNLOADING: TT_PINK,
+        DownloadStatus.DOWNLOADING: "#EE1D52",
         DownloadStatus.CONVERTING:  C["warning"],
-        DownloadStatus.DONE:        C["success"],
+        DownloadStatus.DONE:        "#EE1D52",
         DownloadStatus.ERROR:       C["error"],
     }
 
@@ -1989,7 +1991,7 @@ class TikTokQueueItemWidget(ctk.CTkFrame):
     def update_progress(self, pct: float):
         self._bar.set(pct)
         if pct >= 1.0:
-            self._bar.configure(progress_color=C["success"])
+            self._bar.configure(progress_color=self.TT_PINK)
 
 
 def _tt_status_log_line(task: YouTubeTask) -> str:
@@ -2222,7 +2224,7 @@ class TikTokDownloaderApp:
             saved_fmt  = self._config.get("tt_format_audio", "MP3 256 kbps")
             if saved_fmt not in AUDIO_FORMATS:
                 saved_fmt = "MP3 256 kbps"
-            self._audio_btn.configure(fg_color=C["accent"], text_color="white")
+            self._audio_btn.configure(fg_color=self.TT_PINK, text_color="white")
             self._video_btn.configure(fg_color="transparent", text_color=C["text_secondary"])
         else:
             fmt_values = list(VIDEO_FORMATS.keys())
@@ -2263,7 +2265,7 @@ class TikTokDownloaderApp:
     def _set_media_type(self, kind: str):
         self._media_type.set(kind)
         if kind == "Audio":
-            self._audio_btn.configure(fg_color=C["accent"], text_color="white")
+            self._audio_btn.configure(fg_color=self.TT_PINK, text_color="white")
             self._video_btn.configure(fg_color="transparent", text_color=C["text_secondary"])
             self._format_dropdown._values = list(AUDIO_FORMATS.keys())
             saved = self._config.get("tt_format_audio", "MP3 256 kbps")
