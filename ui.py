@@ -162,7 +162,8 @@ class CustomDropdown(ctk.CTkFrame):
             row_bg = self._accent_dim if is_sel else C["bg_card"]
             row_fg = self._accent     if is_sel else C["text_primary"]
 
-            row = tk.Frame(inner, bg=row_bg, cursor="hand2")
+            row = tk.Frame(inner, bg=row_bg, cursor="hand2", height=item_h)
+            row.pack_propagate(False)
             row.pack(fill="x", padx=6)
 
             bar = tk.Frame(row, bg=self._accent if is_sel else row_bg, width=3)
@@ -170,7 +171,7 @@ class CustomDropdown(ctk.CTkFrame):
 
             lbl = tk.Label(row, text=val, font=(FONT_FAMILY, 12),
                            bg=row_bg, fg=row_fg, anchor="w",
-                           padx=10, pady=0, height=2, cursor="hand2")
+                           padx=10, pady=0, cursor="hand2")
             lbl.pack(side="left", fill="both", expand=True)
 
             def _bind(v, r, l, b):
