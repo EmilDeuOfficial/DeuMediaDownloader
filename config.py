@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 APP_NAME = "DeuDownloader"
-APP_VERSION = "1.1.6"
+APP_VERSION = "1.2.0"
 CONFIG_FILE   = Path.home() / ".spotify_downloader" / "config.json"
 LANGUAGE_FILE = Path.home() / ".spotify_downloader" / "language"
 
@@ -85,6 +85,7 @@ DEFAULT_CONFIG = {
     "tt_media_type":         "Video",
     "tt_concurrent":         2,
     "tt_embed_thumbnail":    True,
+    "tt_rate_limit":         "",
     "tt_win_geo":            "820x720",
 }
 
@@ -217,6 +218,15 @@ STRINGS: dict[str, dict[str, str]] = {
         "yt_rate_5m":             "5 MB/s",
         "yt_rate_10m":            "10 MB/s",
         "yt_rate_50m":            "50 MB/s",
+        # TikTok settings dialog
+        "tt_settings_title":      "TikTok Settings",
+        "tt_sec_downloads":       "Downloads",
+        "tt_concurrent_lbl":      "Parallel Downloads",
+        "tt_sec_media":           "Media Processing",
+        "tt_embed_thumb_lbl":     "Embed Thumbnail",
+        "tt_embed_thumb_desc":    "Embed the video cover into audio files",
+        "tt_sec_network":         "Network",
+        "tt_rate_limit_lbl":      "Speed Limit",
     },
     "de": {
         # Labels
@@ -342,6 +352,15 @@ STRINGS: dict[str, dict[str, str]] = {
         "yt_rate_5m":             "5 MB/s",
         "yt_rate_10m":            "10 MB/s",
         "yt_rate_50m":            "50 MB/s",
+        # TikTok settings dialog
+        "tt_settings_title":      "TikTok Einstellungen",
+        "tt_sec_downloads":       "Downloads",
+        "tt_concurrent_lbl":      "Parallele Downloads",
+        "tt_sec_media":           "Medienverarbeitung",
+        "tt_embed_thumb_lbl":     "Thumbnail einbetten",
+        "tt_embed_thumb_desc":    "Video-Cover in Audiodateien einbetten",
+        "tt_sec_network":         "Netzwerk",
+        "tt_rate_limit_lbl":      "Geschwindigkeitsbegrenzung",
     },
 }
 

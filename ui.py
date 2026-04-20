@@ -136,7 +136,7 @@ class CustomDropdown(ctk.CTkFrame):
         popup.overrideredirect(True)
         popup.configure(bg=C["bg_card"])
 
-        item_h   = 36
+        item_h   = 40
         padding  = 8
         p_height = len(self._values) * item_h + padding * 2 + 28
         popup.geometry(f"{self._width}x{p_height}+{x}+{y}")
@@ -952,6 +952,9 @@ class DeuDownloaderApp:
         for tid in done_ids:
             w = self._task_widgets.pop(tid)
             w.destroy()
+        for row, (_, w) in enumerate(self._task_widgets.items()):
+            w.grid(row=row, column=0, sticky="ew", padx=4, pady=4)
+        self._queue_row = len(self._task_widgets)
         self._update_queue_count()
 
     def _update_queue_count(self):
@@ -1858,6 +1861,9 @@ class YouTubeDownloaderApp:
                     if w._task.status in (DownloadStatus.DONE, DownloadStatus.ERROR)]
         for tid in done_ids:
             self._task_widgets.pop(tid).destroy()
+        for row, (_, w) in enumerate(self._task_widgets.items()):
+            w.grid(row=row, column=0, sticky="ew", padx=4, pady=4)
+        self._queue_row = len(self._task_widgets)
         self._update_queue_count()
 
     def _update_queue_count(self):
@@ -2006,6 +2012,245 @@ def _tt_status_log_line(task: YouTubeTask) -> str:
 
 
 # ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# TikTok Settings Dialog
+# ---------------------------------------------------------------------------
+
+class TikTokSettingsDialog(ctk.CTkToplevel):
+    TT_PINK     = "#EE1D52"
+    TT_PINK_HOV = "#C71542"
+
+    RATE_LABELS = ["yt_rate_no_limit", "yt_rate_1m", "yt_rate_5m", "yt_rate_10m", "yt_rate_50m"]
+    RATE_VALUES = ["", "1M", "5M", "10M", "50M"]
+
+    def __init__(self, parent, config: dict, on_save: callable, on_quit: callable = None):
+        super().__init__(parent)
+        self.title(T("tt_settings_title"))
+        self.geometry("520x480")
+        self.resizable(False, False)
+        self.overrideredirect(True)
+        self.configure(fg_color=C["bg_primary"])
+        self._config  = dict(config)
+        self._on_save = on_save
+        self._on_quit = on_quit
+        self._drag_x  = 0
+        self._drag_y  = 0
+        self.after(10,  lambda: _apply_win11_rounded(self.winfo_id()))
+        self._build_titlebar()
+        self._build()
+        self.after(30,  self._center_on_parent)
+        self.after(100, self.grab_set)
+
+    def _center_on_parent(self):
+        self.update_idletasks()
+        px, py = self.master.winfo_x(), self.master.winfo_y()
+        pw, ph = self.master.winfo_width(), self.master.winfo_height()
+        w,  h  = self.winfo_width(), self.winfo_height()
+        self.geometry(f"+{px + (pw - w) // 2}+{py + (ph - h) // 2}")
+
+    def _build_titlebar(self):
+        bar = ctk.CTkFrame(self, fg_color=C["bg_secondary"], corner_radius=0, height=40)
+        bar.pack(fill="x")
+        bar.pack_propagate(False)
+        bar.bind("<ButtonPress-1>", self._titlebar_press)
+        bar.bind("<B1-Motion>",     self._titlebar_drag)
+
+        icon = ctk.CTkLabel(bar, image=tiktok_icon(18), text="")
+        icon.pack(side="left", padx=(12, 4))
+        icon.bind("<ButtonPress-1>", self._titlebar_press)
+        icon.bind("<B1-Motion>",     self._titlebar_drag)
+
+        lbl = ctk.CTkLabel(bar, text=T("tt_settings_title"), font=(FONT_FAMILY, 13, "bold"),
+                           text_color=C["text_primary"])
+        lbl.pack(side="left")
+        lbl.bind("<ButtonPress-1>", self._titlebar_press)
+        lbl.bind("<B1-Motion>",     self._titlebar_drag)
+
+        ctk.CTkButton(bar, text="✕", width=36, height=28,
+                      fg_color="transparent", hover_color=C["error"],
+                      font=(FONT_FAMILY, 13), text_color=C["text_secondary"],
+                      command=self.destroy).pack(side="right", padx=6)
+
+    def _titlebar_press(self, event):
+        self._drag_x = event.x_root - self.winfo_x()
+        self._drag_y = event.y_root - self.winfo_y()
+
+    def _titlebar_drag(self, event):
+        self.geometry(f"+{event.x_root - self._drag_x}+{event.y_root - self._drag_y}")
+
+    def _build(self):
+        tabs = ctk.CTkTabview(self, fg_color=C["bg_secondary"],
+                              segmented_button_fg_color=C["bg_card"],
+                              segmented_button_selected_color=self.TT_PINK,
+                              segmented_button_selected_hover_color=self.TT_PINK_HOV,
+                              segmented_button_unselected_color=C["bg_card"],
+                              segmented_button_unselected_hover_color=C["border"],
+                              text_color=C["text_primary"])
+        tabs.pack(fill="both", expand=True, padx=12, pady=(8, 0))
+
+        settings_tab  = tabs.add(T("tab_settings"))
+        uninstall_tab = tabs.add(T("tab_uninstall"))
+
+        scroll = ctk.CTkScrollableFrame(settings_tab, fg_color="transparent",
+                                        scrollbar_button_color=C["bg_card"],
+                                        scrollbar_button_hover_color=C["border"])
+        scroll.pack(fill="both", expand=True)
+        scroll.grid_columnconfigure(0, weight=1)
+        self._build_section_downloads(scroll)
+        self._build_section_media(scroll)
+        self._build_section_network(scroll)
+
+        btn_frame = ctk.CTkFrame(settings_tab, fg_color="transparent")
+        btn_frame.pack(fill="x", pady=(8, 4))
+        ctk.CTkButton(btn_frame, text=T("cancel_btn"), fg_color=C["bg_card"],
+                      hover_color=C["bg_secondary"], command=self.destroy).pack(side="right", padx=(8, 0))
+        ctk.CTkButton(btn_frame, text=T("save_btn"), fg_color=self.TT_PINK,
+                      hover_color=self.TT_PINK_HOV, command=self._save).pack(side="right")
+
+        self._build_section_uninstall(uninstall_tab)
+
+    def _section_card(self, parent, title: str) -> ctk.CTkFrame:
+        card = ctk.CTkFrame(parent, fg_color=C["bg_secondary"], corner_radius=10)
+        card.pack(fill="x", pady=(0, 8))
+        ctk.CTkLabel(card, text=title, font=(FONT_FAMILY, 12, "bold"),
+                     text_color=C["text_secondary"]).pack(anchor="w", padx=14, pady=(10, 4))
+        return card
+
+    def _toggle_row(self, parent, label: str, desc: str, cfg_key: str) -> ctk.CTkSwitch:
+        row = ctk.CTkFrame(parent, fg_color="transparent")
+        row.pack(fill="x", padx=14, pady=(2, 8))
+        row.grid_columnconfigure(0, weight=1)
+
+        text_col = ctk.CTkFrame(row, fg_color="transparent")
+        text_col.grid(row=0, column=0, sticky="ew")
+        ctk.CTkLabel(text_col, text=label, font=(FONT_FAMILY, 12),
+                     text_color=C["text_primary"], anchor="w").pack(anchor="w")
+        ctk.CTkLabel(text_col, text=desc, font=(FONT_FAMILY, 10),
+                     text_color=C["text_secondary"], anchor="w", wraplength=330).pack(anchor="w")
+
+        var = ctk.BooleanVar(value=self._config.get(cfg_key, False))
+        sw  = ctk.CTkSwitch(row, text="", variable=var, width=44,
+                             progress_color=self.TT_PINK,
+                             button_color=C["text_primary"])
+        sw.grid(row=0, column=1, padx=(8, 0))
+        setattr(self, f"_var_{cfg_key}", var)
+        return sw
+
+    def _build_section_downloads(self, parent):
+        card = self._section_card(parent, T("tt_sec_downloads"))
+        row = ctk.CTkFrame(card, fg_color="transparent")
+        row.pack(fill="x", padx=14, pady=(0, 12))
+        row.grid_columnconfigure(1, weight=1)
+
+        ctk.CTkLabel(row, text=T("tt_concurrent_lbl"), font=(FONT_FAMILY, 12),
+                     text_color=C["text_primary"]).grid(row=0, column=0, sticky="w", padx=(0, 12))
+
+        self._conc_var = ctk.IntVar(value=self._config.get("tt_concurrent", 2))
+        self._conc_lbl = ctk.CTkLabel(row, text=str(self._conc_var.get()),
+                                       font=(FONT_FAMILY, 12, "bold"),
+                                       text_color=self.TT_PINK, width=20)
+        self._conc_lbl.grid(row=0, column=2, padx=(8, 0))
+
+        def _update_lbl(val):
+            self._conc_lbl.configure(text=str(int(float(val))))
+
+        ctk.CTkSlider(row, from_=1, to=5, number_of_steps=4,
+                      variable=self._conc_var, width=200,
+                      progress_color=self.TT_PINK,
+                      button_color=self.TT_PINK,
+                      command=_update_lbl).grid(row=0, column=1, sticky="ew")
+
+    def _build_section_media(self, parent):
+        card = self._section_card(parent, T("tt_sec_media"))
+        sw = self._toggle_row(card, T("tt_embed_thumb_lbl"), T("tt_embed_thumb_desc"), "tt_embed_thumbnail")
+        self._var_tt_embed_thumbnail.set(self._config.get("tt_embed_thumbnail", True))
+
+    def _build_section_network(self, parent):
+        card = self._section_card(parent, T("tt_sec_network"))
+        row = ctk.CTkFrame(card, fg_color="transparent")
+        row.pack(fill="x", padx=14, pady=(0, 12))
+        row.grid_columnconfigure(1, weight=1)
+
+        ctk.CTkLabel(row, text=T("tt_rate_limit_lbl"), font=(FONT_FAMILY, 12),
+                     text_color=C["text_primary"]).grid(row=0, column=0, sticky="w", padx=(0, 12))
+
+        rate_labels = [T(k) for k in self.RATE_LABELS]
+        cur_val = self._config.get("tt_rate_limit", "")
+        cur_idx = self.RATE_VALUES.index(cur_val) if cur_val in self.RATE_VALUES else 0
+        self._rate_var = ctk.StringVar(value=rate_labels[cur_idx])
+        CustomDropdown(row, variable=self._rate_var, values=rate_labels, width=200,
+                       accent=self.TT_PINK, accent_dim="#3d0617"
+                       ).grid(row=0, column=1, sticky="w")
+
+    def _build_section_uninstall(self, parent):
+        ctk.CTkLabel(parent, text=T("uninstall_section"),
+                     font=(FONT_FAMILY, 13, "bold"),
+                     text_color=C["error"]).pack(anchor="w", padx=4, pady=(8, 4))
+        self._uninstall_row(parent, "🗑", T("clear_data_btn"),      T("clear_data_desc"),      self._do_clear_data)
+        self._uninstall_row(parent, "⚙", T("uninstall_ffmpeg_btn"), T("uninstall_ffmpeg_desc"), self._do_uninstall_ffmpeg)
+        self._uninstall_row(parent, "✕", T("uninstall_app_btn"),    T("uninstall_app_desc"),    self._do_uninstall_app, danger=True)
+
+    def _uninstall_row(self, parent, icon, title, desc, action, danger=False):
+        row = ctk.CTkFrame(parent, fg_color=C["bg_card"], corner_radius=8)
+        row.pack(fill="x", padx=14, pady=4)
+        row.grid_columnconfigure(1, weight=1)
+        ctk.CTkLabel(row, text=icon, font=(FONT_FAMILY, 18),
+                     text_color=C["error"] if danger else C["text_secondary"],
+                     width=36).grid(row=0, column=0, rowspan=2, padx=(10, 4), pady=8)
+        ctk.CTkLabel(row, text=title, font=(FONT_FAMILY, 12, "bold"),
+                     text_color=C["text_primary"], anchor="w").grid(row=0, column=1, sticky="ew", padx=(0, 8), pady=(6, 0))
+        ctk.CTkLabel(row, text=desc, font=(FONT_FAMILY, 10),
+                     text_color=C["text_secondary"], anchor="w").grid(row=1, column=1, sticky="ew", padx=(0, 8), pady=(0, 6))
+        ctk.CTkButton(row, text=title, width=180, height=28, font=(FONT_FAMILY, 11),
+                      fg_color=C["error"] if danger else C["bg_secondary"],
+                      hover_color="#c0392b" if danger else C["border"],
+                      command=action).grid(row=0, column=2, rowspan=2, padx=(0, 10))
+
+    def _confirm(self, msg):
+        return messagebox.askyesno(T("tt_settings_title"), msg, icon="warning", parent=self)
+
+    def _do_clear_data(self):
+        if not self._confirm(T("confirm_clear_data")):
+            return
+        import shutil
+        from config import CONFIG_FILE
+        shutil.rmtree(CONFIG_FILE.parent, ignore_errors=True)
+        self.destroy()
+
+    def _do_uninstall_ffmpeg(self):
+        if not self._confirm(T("confirm_uninstall_ffmpeg")):
+            return
+        import subprocess
+        subprocess.Popen(["winget", "uninstall", "yt-dlp.FFmpeg", "--accept-source-agreements"],
+                         creationflags=subprocess.CREATE_NO_WINDOW)
+        messagebox.showinfo(T("tt_settings_title"), T("uninstall_started"), parent=self)
+        self.destroy()
+
+    def _do_uninstall_app(self):
+        if not self._confirm(T("confirm_uninstall_app")):
+            return
+        uninstaller = SettingsDialog._find_uninstaller()
+        if not uninstaller:
+            messagebox.showerror(T("tt_settings_title"), T("no_uninstaller"), parent=self)
+            return
+        import ctypes
+        ctypes.windll.shell32.ShellExecuteW(None, "runas", uninstaller, None, None, 1)
+        self.destroy()
+        if self._on_quit:
+            self._on_quit()
+
+    def _save(self):
+        self._config["tt_concurrent"]      = int(self._conc_var.get())
+        self._config["tt_embed_thumbnail"] = self._var_tt_embed_thumbnail.get()
+        label = self._rate_var.get()
+        labels = [T(k) for k in self.RATE_LABELS]
+        idx = labels.index(label) if label in labels else 0
+        self._config["tt_rate_limit"] = self.RATE_VALUES[idx]
+        self._on_save(self._config)
+        self.destroy()
+
+
+# ---------------------------------------------------------------------------
 # TikTok Downloader App
 # ---------------------------------------------------------------------------
 
@@ -2105,6 +2350,12 @@ class TikTokDownloaderApp:
         ffmpeg_text  = T("ffmpeg_ok") if self._ffmpeg_ok else T("ffmpeg_fail")
         ctk.CTkLabel(bar, text=ffmpeg_text, font=(FONT_FAMILY, 10),
                      text_color=ffmpeg_color).grid(row=0, column=col, padx=(0, 8), pady=PY)
+        col += 1
+
+        ctk.CTkButton(bar, text="⚙", width=36, height=28,
+                      fg_color="transparent", hover_color=C["bg_card"],
+                      font=(FONT_FAMILY, 14), text_color=C["text_secondary"],
+                      command=self._open_settings).grid(row=0, column=col, padx=(0, 2), pady=PY)
         col += 1
 
         ctk.CTkButton(bar, text="─", width=36, height=28,
@@ -2358,6 +2609,17 @@ class TikTokDownloaderApp:
         self._config["output_dir"]    = self._outdir_var.get()
         save_config(self._config)
 
+    def _open_settings(self):
+        def on_save(cfg):
+            self._config.update(cfg)
+            save_config(self._config)
+
+        TikTokSettingsDialog(
+            self._root, self._config,
+            on_save=on_save,
+            on_quit=self._root.destroy,
+        )
+
     def _paste_url(self):
         try:
             self._url_var.set(self._root.clipboard_get().strip())
@@ -2375,6 +2637,9 @@ class TikTokDownloaderApp:
                     if w._task.status in (DownloadStatus.DONE, DownloadStatus.ERROR)]
         for tid in done_ids:
             self._task_widgets.pop(tid).destroy()
+        for row, (_, w) in enumerate(self._task_widgets.items()):
+            w.grid(row=row, column=0, sticky="ew", padx=4, pady=4)
+        self._queue_row = len(self._task_widgets)
         self._update_queue_count()
 
     def _update_queue_count(self):
