@@ -380,6 +380,31 @@ class SettingsDialog(ctk.CTkToplevel):
         self._sp_toggle(card_opts, "sp_normalize",     False)
         self._sp_toggle(card_opts, "sp_open_folder",   False)
 
+        # --- Filename template ---
+        ctk.CTkLabel(scroll, text=T("filename_template_lbl"),
+                     font=(FONT_FAMILY, 13, "bold"),
+                     text_color=C["text_secondary"]).pack(anchor="w", padx=14, pady=(2, 2))
+        card_fn = ctk.CTkFrame(scroll, fg_color=C["bg_secondary"], corner_radius=10)
+        card_fn.pack(fill="x", pady=(0, 8))
+        fn_row = ctk.CTkFrame(card_fn, fg_color="transparent")
+        fn_row.pack(fill="x", padx=14, pady=10)
+        fn_row.grid_columnconfigure(1, weight=1)
+        ctk.CTkLabel(fn_row, text=T("filename_template_desc"), font=(FONT_FAMILY, 10),
+                     text_color=C["text_secondary"]).grid(row=0, column=0, columnspan=2,
+                     sticky="w", pady=(0, 6))
+        from config import SP_FILENAME_TEMPLATES
+        _sp_tmpl_labels = [T(v) for v in SP_FILENAME_TEMPLATES.values()]
+        _sp_tmpl_keys   = list(SP_FILENAME_TEMPLATES.keys())
+        cur_sp_tmpl = self._config.get("sp_filename_template", "{artist} - {title}")
+        cur_sp_idx  = _sp_tmpl_keys.index(cur_sp_tmpl) if cur_sp_tmpl in _sp_tmpl_keys else 0
+        self._sp_tmpl_var = ctk.StringVar(value=_sp_tmpl_labels[cur_sp_idx])
+        CustomDropdown(fn_row, variable=self._sp_tmpl_var,
+                       values=_sp_tmpl_labels, width=280,
+                       accent=C["accent"], accent_dim=C["accent_dim"]
+                       ).grid(row=1, column=0, columnspan=2, sticky="w")
+        self._sp_tmpl_keys = _sp_tmpl_keys
+        self._sp_tmpl_labels = _sp_tmpl_labels
+
         # --- Buttons ---
         btn_frame = ctk.CTkFrame(frame, fg_color="transparent")
         btn_frame.pack(fill="x", pady=(6, 4))
@@ -416,6 +441,9 @@ class SettingsDialog(ctk.CTkToplevel):
         self._config["sp_embed_cover"]        = self._var_sp_embed_cover.get()
         self._config["sp_normalize"]          = self._var_sp_normalize.get()
         self._config["sp_open_folder"]        = self._var_sp_open_folder.get()
+        lbl = self._sp_tmpl_var.get()
+        idx = self._sp_tmpl_labels.index(lbl) if lbl in self._sp_tmpl_labels else 0
+        self._config["sp_filename_template"]  = self._sp_tmpl_keys[idx]
         self._on_save(self._config)
         self.destroy()
 
@@ -1333,7 +1361,7 @@ class YouTubeSettingsDialog(ctk.CTkToplevel):
     def _build_section_downloads(self, parent):
         card = self._section_card(parent, T("yt_sec_downloads"))
         row = ctk.CTkFrame(card, fg_color="transparent")
-        row.pack(fill="x", padx=14, pady=(0, 12))
+        row.pack(fill="x", padx=14, pady=(0, 8))
         row.grid_columnconfigure(1, weight=1)
 
         ctk.CTkLabel(row, text=T("yt_concurrent_lbl"), font=(FONT_FAMILY, 12),
@@ -1353,6 +1381,23 @@ class YouTubeSettingsDialog(ctk.CTkToplevel):
                       progress_color=self.YT_RED,
                       button_color=self.YT_RED,
                       command=_update_lbl).grid(row=0, column=1, sticky="ew")
+
+        # Filename template
+        fn_row = ctk.CTkFrame(card, fg_color="transparent")
+        fn_row.pack(fill="x", padx=14, pady=(4, 12))
+        ctk.CTkLabel(fn_row, text=T("filename_template_lbl"), font=(FONT_FAMILY, 12),
+                     text_color=C["text_primary"]).pack(anchor="w")
+        ctk.CTkLabel(fn_row, text=T("filename_template_desc"), font=(FONT_FAMILY, 10),
+                     text_color=C["text_secondary"]).pack(anchor="w", pady=(0, 4))
+        from config import YT_FILENAME_TEMPLATES
+        self._yt_tmpl_labels = [T(v) for v in YT_FILENAME_TEMPLATES.values()]
+        self._yt_tmpl_keys   = list(YT_FILENAME_TEMPLATES.keys())
+        cur = self._config.get("yt_filename_template", "{title}")
+        cur_idx = self._yt_tmpl_keys.index(cur) if cur in self._yt_tmpl_keys else 0
+        self._yt_tmpl_var = ctk.StringVar(value=self._yt_tmpl_labels[cur_idx])
+        CustomDropdown(fn_row, variable=self._yt_tmpl_var,
+                       values=self._yt_tmpl_labels, width=280,
+                       accent=self.YT_RED, accent_dim="#3a0a0a").pack(anchor="w")
 
     def _build_section_media(self, parent):
         card = self._section_card(parent, T("yt_sec_media"))
@@ -1464,11 +1509,13 @@ class YouTubeSettingsDialog(ctk.CTkToplevel):
         self._config["yt_sponsorblock"]    = self._var_yt_sponsorblock.get()
         self._config["yt_write_subtitles"] = self._var_yt_write_subtitles.get()
         self._config["yt_subtitle_langs"]  = self._subtitle_langs_var.get().strip()
-        # Map label back to value
         label = self._rate_var.get()
         labels = [T(k) for k in self.RATE_LABELS]
         idx = labels.index(label) if label in labels else 0
         self._config["yt_rate_limit"] = self.RATE_VALUES[idx]
+        lbl = self._yt_tmpl_var.get()
+        tidx = self._yt_tmpl_labels.index(lbl) if lbl in self._yt_tmpl_labels else 0
+        self._config["yt_filename_template"] = self._yt_tmpl_keys[tidx]
         self._on_save(self._config)
         self.destroy()
 
@@ -2165,6 +2212,23 @@ class TikTokSettingsDialog(ctk.CTkToplevel):
                       button_color=self.TT_PINK,
                       command=_update_lbl).grid(row=0, column=1, sticky="ew")
 
+        # Filename template
+        fn_row = ctk.CTkFrame(card, fg_color="transparent")
+        fn_row.pack(fill="x", padx=14, pady=(4, 12))
+        ctk.CTkLabel(fn_row, text=T("filename_template_lbl"), font=(FONT_FAMILY, 12),
+                     text_color=C["text_primary"]).pack(anchor="w")
+        ctk.CTkLabel(fn_row, text=T("filename_template_desc"), font=(FONT_FAMILY, 10),
+                     text_color=C["text_secondary"]).pack(anchor="w", pady=(0, 4))
+        from config import TT_FILENAME_TEMPLATES
+        self._tt_tmpl_labels = [T(v) for v in TT_FILENAME_TEMPLATES.values()]
+        self._tt_tmpl_keys   = list(TT_FILENAME_TEMPLATES.keys())
+        cur = self._config.get("tt_filename_template", "{title}")
+        cur_idx = self._tt_tmpl_keys.index(cur) if cur in self._tt_tmpl_keys else 0
+        self._tt_tmpl_var = ctk.StringVar(value=self._tt_tmpl_labels[cur_idx])
+        CustomDropdown(fn_row, variable=self._tt_tmpl_var,
+                       values=self._tt_tmpl_labels, width=280,
+                       accent=self.TT_PINK, accent_dim="#3d0617").pack(anchor="w")
+
     def _build_section_media(self, parent):
         card = self._section_card(parent, T("tt_sec_media"))
         sw = self._toggle_row(card, T("tt_embed_thumb_lbl"), T("tt_embed_thumb_desc"), "tt_embed_thumbnail")
@@ -2251,6 +2315,9 @@ class TikTokSettingsDialog(ctk.CTkToplevel):
         labels = [T(k) for k in self.RATE_LABELS]
         idx = labels.index(label) if label in labels else 0
         self._config["tt_rate_limit"] = self.RATE_VALUES[idx]
+        lbl = self._tt_tmpl_var.get()
+        tidx = self._tt_tmpl_labels.index(lbl) if lbl in self._tt_tmpl_labels else 0
+        self._config["tt_filename_template"] = self._tt_tmpl_keys[tidx]
         self._on_save(self._config)
         self.destroy()
 
