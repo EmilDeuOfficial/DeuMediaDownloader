@@ -168,6 +168,50 @@ class SpotifyClient:
         )
 
 
+def _find_best_youtube_match(artist: str, title: str, duration_ms: int) -> str:
+    """Search 5 YouTube results and return the URL whose duration is closest to the Spotify track."""
+    target_s = duration_ms / 1000 if duration_ms > 0 else 0
+
+    search_opts = {
+        "quiet":         True,
+        "no_warnings":   True,
+        "extract_flat":  True,
+        "skip_download": True,
+        **_ffmpeg_opts(),
+    }
+    try:
+        with yt_dlp.YoutubeDL(search_opts) as ydl:
+            info = ydl.extract_info(f"ytsearch5:{artist} - {title}", download=False)
+        entries = (info or {}).get("entries") or []
+    except Exception:
+        entries = []
+
+    if not entries:
+        return f"ytsearch1:{artist} - {title}"
+
+    # If Spotify gave no duration, just take first result
+    if target_s <= 0:
+        vid_id = (entries[0] or {}).get("id", "")
+        return f"https://www.youtube.com/watch?v={vid_id}" if vid_id else f"ytsearch1:{artist} - {title}"
+
+    best_url  = None
+    best_diff = float("inf")
+
+    for entry in entries:
+        if not entry:
+            continue
+        dur    = entry.get("duration") or 0
+        vid_id = entry.get("id", "")
+        if not vid_id or dur <= 0:
+            continue
+        diff = abs(dur - target_s)
+        if diff < best_diff:
+            best_diff = diff
+            best_url  = f"https://www.youtube.com/watch?v={vid_id}"
+
+    return best_url or f"ytsearch1:{artist} - {title}"
+
+
 def download_spotify_track(task: DownloadTask, ffmpeg_ok: bool) -> None:
     def _status(s: DownloadStatus, msg: str = ""):
         task.status    = s
@@ -213,7 +257,9 @@ def download_spotify_track(task: DownloadTask, ffmpeg_ok: bool) -> None:
         _status(DownloadStatus.SEARCHING)
         _progress(0.0)
 
-        search_query = f"ytsearch1:{track.artist} - {track.title}"
+        search_url = _find_best_youtube_match(
+            track.artist, track.title, track.duration_ms
+        )
 
         ydl_opts: Dict[str, Any] = {
             "format":         "bestaudio/best",
@@ -237,7 +283,7 @@ def download_spotify_track(task: DownloadTask, ffmpeg_ok: bool) -> None:
         _status(DownloadStatus.DOWNLOADING)
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            ydl.download([search_query])
+            ydl.download([search_url])
 
         if not final_path.exists():
             candidates = list(out_dir.glob(f"{safe_filename}.*"))
