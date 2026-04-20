@@ -143,7 +143,7 @@ class CustomDropdown(ctk.CTkFrame):
 
         item_h   = 36
         padding  = 6
-        p_height = len(self._values) * item_h + padding * 2 + 24
+        p_height = len(self._values) * item_h + padding * 2 + 4
         popup.geometry(f"{self._width}x{p_height}+{x}+{y}")
 
         popup.update_idletasks()
