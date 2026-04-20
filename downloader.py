@@ -310,8 +310,7 @@ def download_track(task: DownloadTask, ffmpeg_ok: bool) -> None:
         if track.album == "YouTube" and track.track_id.startswith("http"):
             search_query = track.track_id
         else:
-            # ytmsearch searches YouTube Music which is far more accurate for Spotify tracks
-            search_query = f"ytmsearch1:{track.artist} - {track.title}"
+            search_query = f"ytsearch1:{track.artist} - {track.title} audio"
 
         ydl_opts: Dict[str, Any] = {
             "format":          "bestaudio/best",
