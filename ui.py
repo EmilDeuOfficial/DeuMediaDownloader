@@ -141,9 +141,9 @@ class CustomDropdown(ctk.CTkFrame):
         popup.overrideredirect(True)
         popup.configure(bg=C["bg_card"])
 
-        item_h   = 40
-        padding  = 8
-        p_height = len(self._values) * item_h + padding * 2 + 28
+        item_h   = 36
+        padding  = 6
+        p_height = len(self._values) * item_h + padding * 2 + 16
         popup.geometry(f"{self._width}x{p_height}+{x}+{y}")
 
         popup.update_idletasks()
