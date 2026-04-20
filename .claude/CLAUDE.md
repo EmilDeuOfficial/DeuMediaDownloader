@@ -1,9 +1,9 @@
-# CLAUDE.md — DeuMediaDownloader
+# CLAUDE.md — DeuDownloader
 
 ## Projektübersicht
 
-DeuMediaDownloader ist ein Spotify/Media-Downloader mit GUI (Python-basiert).
-Repository: `git@github.com:EmilDeuOfficial/DeuMediaDownloader.git`
+DeuDownloader ist ein Spotify/Media-Downloader mit GUI (Python-basiert).
+Repository: `https://github.com/EmilDeuOfficial/DeuDownloader.git`
 
 ---
 
@@ -34,43 +34,37 @@ APP_VERSION = "1.0.0"  # <-- wird automatisch erhöht
 
 ```bash
 pyinstaller --noconfirm --onefile --windowed \
-  --name "DeuMediaDownloader" \
-  --icon "assets/icon.ico" \
-  --add-data "assets;assets" \
+  --name "DeuDownloader" \
+  --icon "img/app.ico" \
+  --add-data "img;img" \
   main.py
 ```
 
 Output: `dist/DeuDownloader.exe`
 
-### Schritt 3 — Installer bauen (Inno Setup oder NSIS)
+### Schritt 3 — Installer bauen (Inno Setup)
 
-Verwende das vorhandene Installer-Script (`installer.iss` oder `installer.nsi`).
+Inno Setup ist unter `%LOCALAPPDATA%\Programs\Inno Setup 6\ISCC.exe` installiert.
 
-**Inno Setup (bevorzugt):**
 ```bash
-iscc installer.iss
+"/c/Users/emilo/AppData/Local/Programs/Inno Setup 6/ISCC.exe" installer.iss
 ```
 
-**Alternativ NSIS:**
-```bash
-makensis installer.nsi
-```
-
-Output: `dist/DeuDownloader_Setup_v{VERSION}.exe`
+Output: `dist/DeuDownloader_Setup.exe`
 
 ### Schritt 4 — Git Commit & Tag
 
 ```bash
 git add .
-git commit -m "release: v{VERSION} — {kurze Beschreibung der Änderung}"
+git commit -m "fix: v{VERSION} — {kurze Beschreibung}"   # Bugfix
+git commit -m "feat: v{VERSION} — {kurze Beschreibung}"  # Feature
 git tag -a "v{VERSION}" -m "Release v{VERSION}"
 ```
 
 ### Schritt 5 — Zu GitHub pushen
 
 ```bash
-git remote set-url origin git@github.com:EmilDeuOfficial/DeuMediaDownloader.git
-git push origin main
+git push origin master
 git push origin --tags
 ```
 
@@ -78,13 +72,37 @@ git push origin --tags
 
 > **Wichtig:** Es wird ausschließlich der Installer hochgeladen — die portable EXE wird NICHT als Release-Asset veröffentlicht.
 
+#### Einheitliches Release-Format (PFLICHT)
+
+**Für Bugfixes:**
 ```bash
 gh release create "v{VERSION}" \
   "dist/DeuDownloader_Setup.exe" \
   --title "DeuDownloader v{VERSION}" \
-  --notes "## Was ist neu in v{VERSION}?
+  --notes "## DeuDownloader v{VERSION} — Bugfix
 
-{automatisch generierte Änderungsliste aus dem Commit}
+### Fix
+- {Was wurde behoben}
+
+### Download
+| Datei | Beschreibung |
+|-------|-------------|
+| DeuDownloader_Setup.exe | Windows-Installer (empfohlen) |
+
+### Systemvoraussetzungen
+- Windows 10 / 11
+- FFmpeg (wird vom Installer eingerichtet)"
+```
+
+**Für neue Features:**
+```bash
+gh release create "v{VERSION}" \
+  "dist/DeuDownloader_Setup.exe" \
+  --title "DeuDownloader v{VERSION}" \
+  --notes "## DeuDownloader v{VERSION} — {Feature-Name}
+
+### Neu in dieser Version
+- {Was wurde hinzugefügt}
 
 ### Download
 | Datei | Beschreibung |
@@ -101,17 +119,20 @@ gh release create "v{VERSION}" \
 ## Dateistruktur (Pflichtdateien für den Build)
 
 ```
-DeuMediaDownloader/
+DeuDownloader/
 ├── main.py
 ├── downloader.py
 ├── converter.py
 ├── ui.py
 ├── config.py              ← APP_VERSION hier pflegen
-├── assets/
-│   └── icon.ico
+├── img/
+│   ├── app.ico            ← Windows-Icon (generiert aus app-icon.svg)
+│   └── app-icon.svg       ← Quell-Icon
+├── tools/
+│   └── svg_to_ico.py      ← Icon-Konvertierung (SVG → ICO)
 ├── installer.iss          ← Inno Setup Script
 ├── requirements.txt
-├── CLAUDE.md              ← diese Datei
+├── .claude/CLAUDE.md      ← diese Datei
 └── dist/                  ← Build-Output (nicht commiten!)
 ```
 
@@ -125,35 +146,6 @@ __pycache__/
 
 ---
 
-## Inno Setup Template (`installer.iss`)
-
-Falls noch nicht vorhanden, erstelle diese Datei:
-
-```ini
-[Setup]
-AppName=DeuMediaDownloader
-AppVersion={VERSION}
-AppPublisher=EmilDeuOfficial
-DefaultDirName={autopf}\DeuMediaDownloader
-DefaultGroupName=DeuMediaDownloader
-OutputDir=dist
-OutputBaseFilename=DeuMediaDownloader_Setup_v{VERSION}
-SetupIconFile=assets\icon.ico
-Compression=lzma
-SolidCompression=yes
-WizardStyle=modern
-
-[Files]
-Source: "dist\DeuMediaDownloader.exe"; DestDir: "{app}"; Flags: ignoreversion
-
-[Icons]
-Name: "{group}\DeuMediaDownloader"; Filename: "{app}\DeuMediaDownloader.exe"
-Name: "{commondesktop}\DeuMediaDownloader"; Filename: "{app}\DeuMediaDownloader.exe"
-
-[Run]
-Filename: "{app}\DeuMediaDownloader.exe"; Description: "Jetzt starten"; Flags: postinstall nowait
-```
-
 ---
 
 ## Voraussetzungen auf dem Build-System
@@ -161,9 +153,8 @@ Filename: "{app}\DeuMediaDownloader.exe"; Description: "Jetzt starten"; Flags: p
 | Tool | Zweck | Install |
 |------|-------|---------|
 | `pyinstaller` | EXE-Erstellung | `pip install pyinstaller` |
-| `inno setup` | Installer-Build | https://jrsoftware.org/isinfo.php |
+| `inno setup` | Installer-Build | `%LOCALAPPDATA%\Programs\Inno Setup 6\ISCC.exe` |
 | `gh` (GitHub CLI) | Release erstellen | https://cli.github.com |
-| SSH-Key | GitHub Push | `ssh-keygen`, dann in GitHub Settings hinterlegen |
 
 ---
 
@@ -183,15 +174,17 @@ Code ändern
     ↓
 Version in config.py erhöhen
     ↓
-pyinstaller → DeuDownloader.exe
+pyinstaller → dist/DeuDownloader.exe
     ↓
-iscc installer.iss → DeuDownloader_Setup_vX.X.X.exe
+ISCC.exe installer.iss → dist/DeuDownloader_Setup.exe
     ↓
-git add . && git commit && git tag
+git add . && git commit -m "fix/feat: vX.X.X — Beschreibung" && git tag
     ↓
-git push origin main --tags
+git push origin master && git push origin --tags
     ↓
 gh release create vX.X.X (nur Installer: DeuDownloader_Setup.exe)
+    ↓
+Release-Format: "## DeuDownloader vX.X.X — {Bugfix|Feature-Name}"
 ```
 
 **Dieser Ablauf ist nicht optional — er wird nach jedem Update automatisch ausgeführt.**
