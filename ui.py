@@ -15,9 +15,14 @@ from config import (
     load_config, save_config, T,
 )
 from downloader import (
-    SpotifyClient, DownloadManager, DownloadTask, DownloadStatus, TrackInfo,
+    # Shared
+    DownloadStatus,
+    # Spotify
+    SpotifyClient, SpotifyDownloadManager, DownloadTask, TrackInfo,
+    # YouTube
     YouTubeTask, YouTubeDownloadManager, extract_youtube_entries,
-    extract_tiktok_entries,
+    # TikTok
+    TikTokTask, TikTokDownloadManager, extract_tiktok_entries,
 )
 
 # Global CustomTkinter appearance
@@ -622,7 +627,7 @@ class DeuDownloaderApp:
         self._went_back  = False
         self._config     = load_config()
         self._sp_client: Optional[SpotifyClient] = None
-        self._manager:   Optional[DownloadManager] = None
+        self._manager:   Optional[SpotifyDownloadManager] = None
         self._task_widgets: Dict[str, QueueItemWidget] = {}
 
         self._root = ctk.CTk()
@@ -975,7 +980,7 @@ class DeuDownloaderApp:
             try:
                 self._sp_client = SpotifyClient(cid, csec)
                 n_workers = self._config.get("concurrent_downloads", 2)
-                self._manager = DownloadManager(n_workers, self._ffmpeg_ok)
+                self._manager = SpotifyDownloadManager(n_workers, self._ffmpeg_ok)
                 self._log(T("spotify_init"))
             except Exception as exc:
                 self._log(T("spotify_auth_err").format(exc))
@@ -1958,7 +1963,7 @@ class TikTokQueueItemWidget(ctk.CTkFrame):
         DownloadStatus.ERROR:       C["error"],
     }
 
-    def __init__(self, parent, task: YouTubeTask, **kwargs):
+    def __init__(self, parent, task: TikTokTask, **kwargs):
         super().__init__(parent, fg_color=C["bg_card"], corner_radius=8, **kwargs)
         self._task = task
         self._build()
@@ -2002,7 +2007,7 @@ class TikTokQueueItemWidget(ctk.CTkFrame):
             self._bar.configure(progress_color=self.TT_PINK)
 
 
-def _tt_status_log_line(task: YouTubeTask) -> str:
+def _tt_status_log_line(task: TikTokTask) -> str:
     name = task.display_name()
     if task.status == DownloadStatus.DONE:
         return T("log_done").format(name)
@@ -2263,7 +2268,7 @@ class TikTokDownloaderApp:
         self._show_back  = show_back
         self._went_back  = False
         self._config     = load_config()
-        self._manager    = YouTubeDownloadManager(
+        self._manager    = TikTokDownloadManager(
             self._config.get("tt_concurrent", 2), ffmpeg_available
         )
         self._task_widgets: Dict[str, TikTokQueueItemWidget] = {}
@@ -2683,7 +2688,7 @@ class TikTokDownloaderApp:
 
     def _queue_entry(self, entry: dict, out_dir: str, fmt: str):
         task_id = str(uuid.uuid4())
-        task = YouTubeTask(
+        task = TikTokTask(
             task_id     = task_id,
             url         = entry["url"],
             title       = entry["title"],
@@ -2691,16 +2696,16 @@ class TikTokDownloaderApp:
             format_name = fmt,
         )
 
-        def on_progress(t: YouTubeTask):
+        def on_progress(t: TikTokTask):
             self._root.after(0, lambda: widget.update_progress(t.progress))
 
-        def on_status(t: YouTubeTask):
+        def on_status(t: TikTokTask):
             self._root.after(0, lambda: (
                 widget.update_status(t.status, t.error_msg),
                 self._log(_tt_status_log_line(t)),
             ))
 
-        def on_done(t: YouTubeTask):
+        def on_done(t: TikTokTask):
             self._root.after(0, lambda: (
                 widget.update_status(t.status, t.error_msg),
                 widget.update_progress(t.progress),
