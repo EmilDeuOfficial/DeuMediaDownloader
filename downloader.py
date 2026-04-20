@@ -31,6 +31,20 @@ def _sanitize(name: str) -> str:
     return re.sub(r'[\\/*?:"<>|]', "_", name).strip()
 
 
+def _apply_template(template: str, artist: str = "", title: str = "",
+                    album: str = "", year: str = "") -> str:
+    try:
+        result = template.format(
+            artist=artist or "Unknown Artist",
+            title=title  or "Unknown Title",
+            album=album  or "",
+            year=year    or "",
+        ).strip(" -—_[]()").strip()
+    except (KeyError, ValueError):
+        result = title or artist or "track"
+    return _sanitize(result) or "track"
+
+
 _RATE_MAP = {"1M": 1_048_576, "5M": 5_242_880, "10M": 10_485_760, "50M": 52_428_800}
 
 
@@ -233,7 +247,9 @@ def download_spotify_track(task: DownloadTask, ffmpeg_ok: bool) -> None:
         out_dir  = Path(task.output_dir)
         out_dir.mkdir(parents=True, exist_ok=True)
 
-        safe_filename = _sanitize(f"{track.artist} - {track.title}")
+        tmpl          = cfg.get("sp_filename_template", "{artist} - {title}")
+        safe_filename = _apply_template(tmpl, artist=track.artist, title=track.title,
+                                        album=track.album, year=track.year or "")
         final_path    = out_dir / f"{safe_filename}.{ext}"
 
         if final_path.exists() and cfg.get("sp_skip_existing", True):
@@ -500,7 +516,14 @@ def download_youtube_task(task: YouTubeTask, ffmpeg_ok: bool) -> None:
         out_dir  = Path(task.output_dir)
         out_dir.mkdir(parents=True, exist_ok=True)
 
-        safe_title = _sanitize(task.title or "track")
+        raw_title = task.title or "track"
+        if " - " in raw_title:
+            _yt_artist, _yt_title = raw_title.split(" - ", 1)
+        else:
+            _yt_artist, _yt_title = "", raw_title
+        tmpl       = cfg.get("yt_filename_template", "{title}")
+        safe_title = _apply_template(tmpl, artist=_yt_artist.strip(),
+                                     title=_yt_title.strip())
         final_path = out_dir / f"{safe_title}.{ext}"
 
         if final_path.exists():
@@ -724,7 +747,14 @@ def download_tiktok_task(task: TikTokTask, ffmpeg_ok: bool) -> None:
         out_dir  = Path(task.output_dir)
         out_dir.mkdir(parents=True, exist_ok=True)
 
-        safe_title = _sanitize(task.title or "video")
+        raw_title = task.title or "video"
+        if " - " in raw_title:
+            _tt_artist, _tt_title = raw_title.split(" - ", 1)
+        else:
+            _tt_artist, _tt_title = "", raw_title
+        tmpl       = cfg.get("tt_filename_template", "{title}")
+        safe_title = _apply_template(tmpl, artist=_tt_artist.strip(),
+                                     title=_tt_title.strip())
         final_path = out_dir / f"{safe_title}.{ext}"
 
         if final_path.exists():

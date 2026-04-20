@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 APP_NAME = "DeuDownloader"
-APP_VERSION = "1.2.4"
+APP_VERSION = "1.3.0"
 CONFIG_FILE   = Path.home() / ".spotify_downloader" / "config.json"
 LANGUAGE_FILE = Path.home() / ".spotify_downloader" / "language"
 
@@ -87,6 +87,31 @@ DEFAULT_CONFIG = {
     "tt_embed_thumbnail":    True,
     "tt_rate_limit":         "",
     "tt_win_geo":            "820x720",
+    # Filename templates
+    "sp_filename_template":  "{artist} - {title}",
+    "yt_filename_template":  "{title}",
+    "tt_filename_template":  "{title}",
+}
+
+# Filename template options  {format_string: translation_key}
+SP_FILENAME_TEMPLATES = {
+    "{artist} - {title}":        "tmpl_artist_title",
+    "{title} - {artist}":        "tmpl_title_artist",
+    "{title}":                   "tmpl_title_only",
+    "{artist} - {title} ({year})": "tmpl_artist_title_year",
+    "{title} [{album}]":         "tmpl_title_album",
+}
+
+YT_FILENAME_TEMPLATES = {
+    "{title}":        "tmpl_title_only",
+    "{artist} - {title}": "tmpl_artist_title",
+    "{title} - {artist}": "tmpl_title_artist",
+}
+
+TT_FILENAME_TEMPLATES = {
+    "{title}":        "tmpl_title_only",
+    "{artist} - {title}": "tmpl_artist_title",
+    "{title} - {artist}": "tmpl_title_artist",
 }
 
 # ---------------------------------------------------------------------------
@@ -218,6 +243,14 @@ STRINGS: dict[str, dict[str, str]] = {
         "yt_rate_5m":             "5 MB/s",
         "yt_rate_10m":            "10 MB/s",
         "yt_rate_50m":            "50 MB/s",
+        # Filename templates
+        "filename_template_lbl":  "Filename",
+        "filename_template_desc": "Placeholders: {artist}, {title}, {year}, {album}",
+        "tmpl_artist_title":      "Artist — Title",
+        "tmpl_title_artist":      "Title — Artist",
+        "tmpl_title_only":        "Title only",
+        "tmpl_artist_title_year": "Artist — Title (Year)",
+        "tmpl_title_album":       "Title [Album]",
         # TikTok settings dialog
         "tt_settings_title":      "TikTok Settings",
         "tt_sec_downloads":       "Downloads",
@@ -352,6 +385,14 @@ STRINGS: dict[str, dict[str, str]] = {
         "yt_rate_5m":             "5 MB/s",
         "yt_rate_10m":            "10 MB/s",
         "yt_rate_50m":            "50 MB/s",
+        # Filename templates
+        "filename_template_lbl":  "Dateiname",
+        "filename_template_desc": "Platzhalter: {artist}, {title}, {year}, {album}",
+        "tmpl_artist_title":      "Künstler — Titel",
+        "tmpl_title_artist":      "Titel — Künstler",
+        "tmpl_title_only":        "Nur Titel",
+        "tmpl_artist_title_year": "Künstler — Titel (Jahr)",
+        "tmpl_title_album":       "Titel [Album]",
         # TikTok settings dialog
         "tt_settings_title":      "TikTok Einstellungen",
         "tt_sec_downloads":       "Downloads",
