@@ -321,6 +321,59 @@ def is_youtube_url(url: str) -> bool:
     return "youtube.com" in url or "youtu.be" in url
 
 
+class YouTubeClient:
+    """Used by the Spotify downloader to resolve YouTube URLs pasted into its URL field."""
+    @staticmethod
+    def _ydl_opts() -> dict:
+        return {"quiet": True, "no_warnings": True, **_ffmpeg_opts()}
+
+    def get_track_info(self, url: str) -> TrackInfo:
+        url = re.sub(r"[&?]list=[^&]+", "", url)
+        url = re.sub(r"[&?]index=[^&]+", "", url)
+        with yt_dlp.YoutubeDL({**self._ydl_opts(), "noplaylist": True}) as ydl:
+            info = ydl.extract_info(url, download=False)
+        return self._info_to_track(info)
+
+    def get_playlist_tracks(self, url: str) -> List[TrackInfo]:
+        with yt_dlp.YoutubeDL({**self._ydl_opts(), "extract_flat": True}) as ydl:
+            info = ydl.extract_info(url, download=False)
+        entries = info.get("entries", [info])
+        tracks = []
+        for e in entries:
+            if not e:
+                continue
+            try:
+                tracks.append(self._info_to_track(e))
+            except Exception:
+                pass
+        return tracks
+
+    @staticmethod
+    def _info_to_track(info: dict) -> TrackInfo:
+        title     = info.get("title", "Unknown")
+        uploader  = info.get("uploader") or info.get("channel") or "YouTube"
+        thumbnail = info.get("thumbnail")
+        duration  = info.get("duration") or 0
+        raw_id    = info.get("id", "")
+        video_id  = f"https://www.youtube.com/watch?v={raw_id}" if raw_id else title[:16]
+        year      = str(info["upload_date"][:4]) if info.get("upload_date") else None
+
+        artist, clean_title = uploader, title
+        if " - " in title:
+            parts = title.split(" - ", 1)
+            artist, clean_title = parts[0].strip(), parts[1].strip()
+
+        return TrackInfo(
+            track_id    = video_id,
+            title       = clean_title,
+            artist      = artist,
+            album       = "YouTube",
+            cover_url   = thumbnail,
+            duration_ms = int(duration * 1000),
+            year        = year,
+        )
+
+
 @dataclass
 class YouTubeTask:
     task_id:     str
