@@ -85,15 +85,26 @@ def _apply_taskbar_button(root: ctk.CTk):
         style = (style | WS_EX_APPWINDOW) & ~WS_EX_TOOLWINDOW
         ctypes.windll.user32.SetWindowLongW(hwnd, GWL_EXSTYLE, style)
         ctypes.windll.user32.SetWindowPos(hwnd, 0, 0, 0, 0, 0, SWP_FLAGS)
-        # Set the app icon on the taskbar button
+
         base = Path(getattr(sys, "_MEIPASS", Path(__file__).parent))
         ico  = str(base / "img" / "app.ico")
-        hicon = ctypes.windll.user32.LoadImageW(
-            None, ico, 1, 0, 0, 0x0010 | 0x0040,  # LR_LOADFROMFILE | LR_DEFAULTSIZE
-        )
-        if hicon:
-            ctypes.windll.user32.SendMessageW(hwnd, 0x0080, 1, hicon)  # WM_SETICON ICON_BIG
-            ctypes.windll.user32.SendMessageW(hwnd, 0x0080, 0, hicon)  # WM_SETICON ICON_SMALL
+
+        # Set via tkinter so the window class icon and alt-tab thumbnail also update
+        try:
+            root.iconbitmap(ico)
+        except Exception:
+            pass
+
+        # Load big and small icons at the correct system-metric sizes
+        cx_big   = ctypes.windll.user32.GetSystemMetrics(11)   # SM_CXICON   (32 or 48)
+        cx_small = ctypes.windll.user32.GetSystemMetrics(49)   # SM_CXSMICON (16 or 24)
+        LR_LOADFROMFILE = 0x0010
+        hbig   = ctypes.windll.user32.LoadImageW(None, ico, 1, cx_big,   cx_big,   LR_LOADFROMFILE)
+        hsmall = ctypes.windll.user32.LoadImageW(None, ico, 1, cx_small, cx_small, LR_LOADFROMFILE)
+        if hbig:
+            ctypes.windll.user32.SendMessageW(hwnd, 0x0080, 1, hbig)    # WM_SETICON ICON_BIG
+        if hsmall:
+            ctypes.windll.user32.SendMessageW(hwnd, 0x0080, 0, hsmall)  # WM_SETICON ICON_SMALL
     except Exception:
         pass
 
