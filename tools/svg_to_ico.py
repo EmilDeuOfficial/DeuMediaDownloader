@@ -53,11 +53,20 @@ subprocess.run([
     html_file.as_uri(),
 ], check=True, capture_output=True)
 
-# ── Step 2: extract mask (black SVG paths → opaque, white bg → transparent) ───
+# ── Step 2: extract SOLID mask (fill hollow interior via flood-fill) ──────────
 raw = Image.open(screenshot).convert("L")
 raw = raw.crop((0, 0, RENDER_SIZE, RENDER_SIZE))
-mask = ImageOps.invert(raw)                 # black→255, white→0
-mask = mask.filter(ImageFilter.SMOOTH_MORE) # smooth anti-aliasing
+
+# binary: 0=icon(black paths), 255=everything else (bg + hollow interior)
+binary = raw.point(lambda p: 0 if p < 128 else 255).convert("RGB")
+# flood-fill from all 4 corners to mark external background as gray(128)
+from PIL import ImageDraw as _ID
+for corner in [(0, 0), (RENDER_SIZE-1, 0), (0, RENDER_SIZE-1), (RENDER_SIZE-1, RENDER_SIZE-1)]:
+    _ID.floodfill(binary, corner, (128, 128, 128), thresh=30)
+# now: (0,0,0)=icon paths, (128,128,128)=external bg, (255,255,255)=hollow interior
+# solid mask: icon + hollow interior = opaque (255), external bg = transparent (0)
+solid = binary.convert("L").point(lambda p: 0 if 100 < p < 150 else 255)
+mask  = solid.filter(ImageFilter.SMOOTH_MORE)
 
 # ── Step 3: compose icon on yellow rounded-rect background ────────────────────
 bg = Image.new("RGBA", (256, 256), (0, 0, 0, 0))
