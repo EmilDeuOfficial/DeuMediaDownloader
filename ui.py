@@ -37,6 +37,26 @@ C = COLORS  # alias
 # Custom Dropdown Widget
 # ---------------------------------------------------------------------------
 
+def _bring_to_front(root: ctk.CTk):
+    """Temporarily set topmost so the window appears in front of other apps on startup."""
+    try:
+        root.attributes("-topmost", True)
+        root.lift()
+        root.focus_force()
+        root.after(300, lambda: root.attributes("-topmost", False))
+    except Exception:
+        pass
+
+
+def _center_geometry(root: ctk.CTk, w: int, h: int) -> str:
+    """Return a geometry string centered on the primary screen."""
+    sw = root.winfo_screenwidth()
+    sh = root.winfo_screenheight()
+    x = max(0, (sw - w) // 2)
+    y = max(0, (sh - h) // 2)
+    return f"{w}x{h}+{x}+{y}"
+
+
 def _apply_win11_rounded(hwnd, radius: int = 2):
     """Apply Windows 11 rounded corners via DWM (DWMWCP_ROUND=2).
     Walks up to the real OS top-level HWND via GetAncestor so it works even
@@ -672,7 +692,9 @@ class DeuDownloaderApp:
 
         self._root = ctk.CTk()
         self._root.title(T("spotify_win_title"))
-        _sp_geo = self._config.get("sp_win_geo", "820x720")
+        _sp_geo = self._config.get("sp_win_geo", "")
+        if not _sp_geo:
+            _sp_geo = _center_geometry(self._root, 820, 720)
         self._root.geometry(_sp_geo)
         self._root.minsize(700, 600)
         self._root.configure(fg_color=C["bg_primary"])
@@ -687,6 +709,7 @@ class DeuDownloaderApp:
         self._root.bind("<Destroy>", lambda e: self._save_sp_geo() if e.widget is self._root else None)
         self._root.after(100, lambda: _apply_win11_rounded(self._root.winfo_id()))
         self._root.after(100, lambda: _apply_taskbar_button(self._root))
+        self._root.after(150, lambda: _bring_to_front(self._root))
         self._init_client()
 
     # ------------------------------------------------------------------
@@ -1553,7 +1576,9 @@ class YouTubeDownloaderApp:
 
         self._root = ctk.CTk()
         self._root.title(T("youtube_win_title"))
-        _yt_geo = self._config.get("yt_win_geo", "820x720")
+        _yt_geo = self._config.get("yt_win_geo", "")
+        if not _yt_geo:
+            _yt_geo = _center_geometry(self._root, 820, 720)
         self._root.geometry(_yt_geo)
         self._root.minsize(700, 600)
         self._root.configure(fg_color=C["bg_primary"])
@@ -1568,6 +1593,7 @@ class YouTubeDownloaderApp:
         self._root.bind("<Destroy>", lambda e: self._save_yt_geo() if e.widget is self._root else None)
         self._root.after(100, lambda: _apply_win11_rounded(self._root.winfo_id()))
         self._root.after(100, lambda: _apply_taskbar_button(self._root))
+        self._root.after(150, lambda: _bring_to_front(self._root))
 
     def run(self) -> bool:
         self._root.mainloop()
@@ -2362,7 +2388,9 @@ class TikTokDownloaderApp:
 
         self._root = ctk.CTk()
         self._root.title(T("tiktok_win_title"))
-        _tt_geo = self._config.get("tt_win_geo", "820x720")
+        _tt_geo = self._config.get("tt_win_geo", "")
+        if not _tt_geo:
+            _tt_geo = _center_geometry(self._root, 820, 720)
         self._root.geometry(_tt_geo)
         self._root.minsize(700, 600)
         self._root.configure(fg_color=C["bg_primary"])
@@ -2377,6 +2405,7 @@ class TikTokDownloaderApp:
         self._root.bind("<Destroy>", lambda e: self._save_geo() if e.widget is self._root else None)
         self._root.after(100, lambda: _apply_win11_rounded(self._root.winfo_id()))
         self._root.after(100, lambda: _apply_taskbar_button(self._root))
+        self._root.after(150, lambda: _bring_to_front(self._root))
 
     def run(self) -> bool:
         self._root.mainloop()
@@ -2823,7 +2852,10 @@ class LauncherApp:
         self._root   = ctk.CTk()
         self._root.title(T("launcher_title"))
         _lpos = self._cfg.get("launcher_pos", "")
-        self._root.geometry(f"720x360{_lpos}")
+        if _lpos:
+            self._root.geometry(f"720x360{_lpos}")
+        else:
+            self._root.geometry(_center_geometry(self._root, 720, 360))
         self._root.resizable(False, False)
         self._root.configure(fg_color=C["bg_primary"])
         self._root.overrideredirect(True)
@@ -2836,6 +2868,7 @@ class LauncherApp:
         threading.Thread(target=warmup_icons, daemon=True).start()
         self._root.after(100, lambda: _apply_win11_rounded(self._root.winfo_id()))
         self._root.after(100, lambda: _apply_taskbar_button(self._root))
+        self._root.after(150, lambda: _bring_to_front(self._root))
 
     def run(self) -> Optional[str]:
         self._root.mainloop()
