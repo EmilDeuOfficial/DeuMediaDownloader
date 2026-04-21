@@ -23,6 +23,9 @@ svg_data = SVG_PATH.read_text(encoding="utf-8")
 svg_data = re.sub(r'\s+width="[^"]*"',  '', svg_data)
 svg_data = re.sub(r'\s+height="[^"]*"', '', svg_data)
 
+PAD = 20  # padding so the icon edges don't get clipped
+SVG_SIZE = 256 - PAD * 2
+
 html = f"""<!DOCTYPE html>
 <html>
 <head>
@@ -32,11 +35,12 @@ html = f"""<!DOCTYPE html>
 body {{
   width: 256px; height: 256px;
   background: black;
+  display: flex; align-items: center; justify-content: center;
   overflow: hidden;
 }}
 svg {{
-  width: 256px;
-  height: 256px;
+  width: {SVG_SIZE}px;
+  height: {SVG_SIZE}px;
   display: block;
   fill: white;
 }}

@@ -1,4 +1,5 @@
 import os
+import sys
 import threading
 import tkinter as tk
 from tkinter import filedialog, messagebox
@@ -16,7 +17,7 @@ from config import (
 )
 from downloader import (
     # Shared
-    DownloadStatus,
+    DownloadStatus, _apply_template,
     # Spotify
     SpotifyClient, SpotifyDownloadManager, DownloadTask, TrackInfo,
     # YouTube
@@ -51,22 +52,28 @@ def _apply_win11_rounded(hwnd, radius: int = 2):
 
 
 def _apply_taskbar_button(root: ctk.CTk):
-    """Force the overrideredirect window to appear in the taskbar."""
+    """Force the overrideredirect window to appear in the taskbar with the app icon."""
     try:
         import ctypes
         GWL_EXSTYLE      = -20
         WS_EX_APPWINDOW  = 0x00040000
         WS_EX_TOOLWINDOW = 0x00000080
-        # SWP flags: NOSIZE | NOMOVE | NOZORDER | FRAMECHANGED
         SWP_FLAGS        = 0x0001 | 0x0002 | 0x0004 | 0x0020
-        # GA_ROOT=2 walks up to the real top-level HWND owned by the OS;
-        # winfo_id() returns the child HWND of the Tk frame, not the host window.
         child = root.winfo_id()
         hwnd  = ctypes.windll.user32.GetAncestor(child, 2) or child
         style = ctypes.windll.user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
         style = (style | WS_EX_APPWINDOW) & ~WS_EX_TOOLWINDOW
         ctypes.windll.user32.SetWindowLongW(hwnd, GWL_EXSTYLE, style)
         ctypes.windll.user32.SetWindowPos(hwnd, 0, 0, 0, 0, 0, SWP_FLAGS)
+        # Set the app icon on the taskbar button
+        base = Path(getattr(sys, "_MEIPASS", Path(__file__).parent))
+        ico  = str(base / "img" / "app.ico")
+        hicon = ctypes.windll.user32.LoadImageW(
+            None, ico, 1, 0, 0, 0x0010 | 0x0040,  # LR_LOADFROMFILE | LR_DEFAULTSIZE
+        )
+        if hicon:
+            ctypes.windll.user32.SendMessageW(hwnd, 0x0080, 1, hicon)  # WM_SETICON ICON_BIG
+            ctypes.windll.user32.SendMessageW(hwnd, 0x0080, 0, hicon)  # WM_SETICON ICON_SMALL
     except Exception:
         pass
 
@@ -613,7 +620,11 @@ class QueueItemWidget(ctk.CTkFrame):
                      text_color=C["accent"], width=32).grid(row=0, column=0, rowspan=2,
                      padx=(12,6), pady=10)
 
-        name = self._task.track.display_name()
+        cfg  = load_config()
+        tmpl = cfg.get("sp_filename_template", "{artist} - {title}")
+        t    = self._task.track
+        name = _apply_template(tmpl, artist=t.artist, title=t.title,
+                               album=t.album or "", year=t.year or "")
         if len(name) > 60:
             name = name[:57] + "…"
         self._name_lbl = ctk.CTkLabel(self, text=name, font=(FONT_FAMILY, 13, "bold"),
@@ -1198,7 +1209,11 @@ class YouTubeQueueItemWidget(ctk.CTkFrame):
                      text_color="#FF4444", width=32).grid(row=0, column=0, rowspan=2,
                      padx=(12, 6), pady=10)
 
-        name = self._task.display_name()
+        cfg   = load_config()
+        tmpl  = cfg.get("yt_filename_template", "{title}")
+        raw   = self._task.display_name()
+        parts = raw.split(" - ", 1) if " - " in raw else ["", raw]
+        name  = _apply_template(tmpl, artist=parts[0].strip(), title=parts[1].strip())
         if len(name) > 60:
             name = name[:57] + "…"
         self._name_lbl = ctk.CTkLabel(self, text=name, font=(FONT_FAMILY, 13, "bold"),
@@ -2023,7 +2038,11 @@ class TikTokQueueItemWidget(ctk.CTkFrame):
                      text_color=self.TT_PINK, width=32).grid(row=0, column=0, rowspan=2,
                      padx=(12, 6), pady=10)
 
-        name = self._task.display_name()
+        cfg   = load_config()
+        tmpl  = cfg.get("tt_filename_template", "{title}")
+        raw   = self._task.display_name()
+        parts = raw.split(" - ", 1) if " - " in raw else ["", raw]
+        name  = _apply_template(tmpl, artist=parts[0].strip(), title=parts[1].strip())
         if len(name) > 60:
             name = name[:57] + "…"
         self._name_lbl = ctk.CTkLabel(self, text=name, font=(FONT_FAMILY, 13, "bold"),
