@@ -47,13 +47,22 @@ def _fix_scroll_ghosting(sf: ctk.CTkScrollableFrame):
     canvas = sf._parent_canvas
     user32 = ctypes.windll.user32
 
-    _orig = canvas.yview_scroll
-    def _patched(n, what):
-        _orig(n, what)
+    def _repaint():
         hwnd = canvas.winfo_id()
         user32.InvalidateRect(hwnd, None, True)
         user32.UpdateWindow(hwnd)
-    canvas.yview_scroll = _patched
+
+    _orig_scroll = canvas.yview_scroll
+    def _patched_scroll(n, what):
+        _orig_scroll(n, what)
+        _repaint()
+    canvas.yview_scroll = _patched_scroll
+
+    _orig_moveto = canvas.yview_moveto
+    def _patched_moveto(fraction):
+        _orig_moveto(fraction)
+        _repaint()
+    canvas.yview_moveto = _patched_moveto
 
     def _prerender():
         canvas.yview_moveto(1.0)
