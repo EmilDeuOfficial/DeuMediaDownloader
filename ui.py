@@ -41,9 +41,13 @@ def _fix_scroll_ghosting(sf: ctk.CTkScrollableFrame):
     """Fix CTkScrollableFrame ghosting on Windows by patching yview_scroll to force redraw."""
     canvas = sf._parent_canvas
     _orig = canvas.yview_scroll
+    _busy = [False]
     def _patched(n, what):
         _orig(n, what)
-        canvas.update_idletasks()
+        if not _busy[0]:
+            _busy[0] = True
+            canvas.update()
+            _busy[0] = False
     canvas.yview_scroll = _patched
 
 
