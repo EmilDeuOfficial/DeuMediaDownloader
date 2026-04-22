@@ -37,6 +37,15 @@ C = COLORS  # alias
 # Custom Dropdown Widget
 # ---------------------------------------------------------------------------
 
+def _fix_scroll_ghosting(sf: ctk.CTkScrollableFrame):
+    """Fix CTkScrollableFrame ghosting on Windows by forcing a canvas redraw after each scroll."""
+    canvas = sf._parent_canvas
+    def _redraw(e):
+        canvas.update_idletasks()
+    sf.bind("<MouseWheel>", _redraw, add=True)
+    canvas.bind("<MouseWheel>", _redraw, add=True)
+
+
 def _bring_to_front(root: ctk.CTk):
     """Temporarily set topmost so the window appears in front of other apps on startup."""
     try:
@@ -340,6 +349,7 @@ class SettingsDialog(ctk.CTkToplevel):
                                         scrollbar_button_color=C["bg_card"],
                                         scrollbar_button_hover_color=C["border"])
         scroll.pack(fill="both", expand=True)
+        _fix_scroll_ghosting(scroll)
 
         # --- API credentials ---
         ctk.CTkLabel(scroll, text=T("spotify_api_creds"),
@@ -1376,6 +1386,7 @@ class YouTubeSettingsDialog(ctk.CTkToplevel):
                                         scrollbar_button_hover_color=C["border"])
         scroll.pack(fill="both", expand=True)
         scroll.grid_columnconfigure(0, weight=1)
+        _fix_scroll_ghosting(scroll)
         self._build_section_downloads(scroll)
         self._build_section_media(scroll)
         self._build_section_subtitles(scroll)
@@ -2225,6 +2236,7 @@ class TikTokSettingsDialog(ctk.CTkToplevel):
                                         scrollbar_button_hover_color=C["border"])
         scroll.pack(fill="both", expand=True)
         scroll.grid_columnconfigure(0, weight=1)
+        _fix_scroll_ghosting(scroll)
         self._build_section_downloads(scroll)
         self._build_section_media(scroll)
         self._build_section_network(scroll)
