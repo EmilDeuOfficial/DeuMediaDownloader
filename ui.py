@@ -39,30 +39,26 @@ C = COLORS  # alias
 
 def _fix_scroll_ghosting(sf: ctk.CTkScrollableFrame):
     """Fix CTkScrollableFrame ghosting on Windows.
-    1. Patch yview_scroll to force a Win32 repaint after every scroll step.
-    2. Pre-render all off-screen widgets by scrolling to the bottom and back
-       while the window is still invisible (alpha=0).
+    Hooks into yscrollcommand (fires on every scroll regardless of source)
+    and forces a Win32 InvalidateRect/UpdateWindow repaint each time.
+    Also pre-renders off-screen widgets while the window is still invisible.
     """
     import ctypes
-    canvas = sf._parent_canvas
-    user32 = ctypes.windll.user32
+    canvas   = sf._parent_canvas
+    scrollbar = sf._scrollbar
+    user32   = ctypes.windll.user32
 
-    def _repaint():
+    def _repaint(*_):
         hwnd = canvas.winfo_id()
         user32.InvalidateRect(hwnd, None, True)
         user32.UpdateWindow(hwnd)
 
-    _orig_scroll = canvas.yview_scroll
-    def _patched_scroll(n, what):
-        _orig_scroll(n, what)
+    # yscrollcommand fires for every scroll source: wheel, drag, programmatic
+    _orig_yscmd = scrollbar.set
+    def _yscmd_with_repaint(*args):
+        _orig_yscmd(*args)
         _repaint()
-    canvas.yview_scroll = _patched_scroll
-
-    _orig_moveto = canvas.yview_moveto
-    def _patched_moveto(fraction):
-        _orig_moveto(fraction)
-        _repaint()
-    canvas.yview_moveto = _patched_moveto
+    canvas.configure(yscrollcommand=_yscmd_with_repaint)
 
     def _prerender():
         canvas.yview_moveto(1.0)
