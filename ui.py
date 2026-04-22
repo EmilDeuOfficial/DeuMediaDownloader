@@ -710,7 +710,7 @@ class DeuDownloaderApp:
         self._root.minsize(700, 600)
         self._root.configure(fg_color=C["bg_primary"])
         self._root.overrideredirect(True)
-        self._root.withdraw()
+        self._root.attributes("-alpha", 0)
 
         self._drag_x = 0
         self._drag_y = 0
@@ -719,7 +719,7 @@ class DeuDownloaderApp:
 
         self._build_ui()
         self._root.update_idletasks()
-        self._root.deiconify()
+        self._root.attributes("-alpha", 1)
         self._root.bind("<Destroy>", lambda e: self._save_sp_geo() if e.widget is self._root else None)
         self._root.after(10, lambda: _apply_win11_rounded(self._root.winfo_id()))
         self._root.after(10, lambda: _apply_taskbar_button(self._root))
@@ -1597,7 +1597,7 @@ class YouTubeDownloaderApp:
         self._root.minsize(700, 600)
         self._root.configure(fg_color=C["bg_primary"])
         self._root.overrideredirect(True)
-        self._root.withdraw()
+        self._root.attributes("-alpha", 0)
 
         self._drag_x = 0
         self._drag_y = 0
@@ -1606,7 +1606,7 @@ class YouTubeDownloaderApp:
 
         self._build_ui()
         self._root.update_idletasks()
-        self._root.deiconify()
+        self._root.attributes("-alpha", 1)
         self._root.bind("<Destroy>", lambda e: self._save_yt_geo() if e.widget is self._root else None)
         self._root.after(10, lambda: _apply_win11_rounded(self._root.winfo_id()))
         self._root.after(10, lambda: _apply_taskbar_button(self._root))
@@ -2412,7 +2412,7 @@ class TikTokDownloaderApp:
         self._root.minsize(700, 600)
         self._root.configure(fg_color=C["bg_primary"])
         self._root.overrideredirect(True)
-        self._root.withdraw()
+        self._root.attributes("-alpha", 0)
 
         self._drag_x = 0
         self._drag_y = 0
@@ -2421,7 +2421,7 @@ class TikTokDownloaderApp:
 
         self._build_ui()
         self._root.update_idletasks()
-        self._root.deiconify()
+        self._root.attributes("-alpha", 1)
         self._root.bind("<Destroy>", lambda e: self._save_geo() if e.widget is self._root else None)
         self._root.after(10, lambda: _apply_win11_rounded(self._root.winfo_id()))
         self._root.after(10, lambda: _apply_taskbar_button(self._root))
@@ -2879,14 +2879,14 @@ class LauncherApp:
         self._root.resizable(False, False)
         self._root.configure(fg_color=C["bg_primary"])
         self._root.overrideredirect(True)
-        self._root.withdraw()
+        self._root.attributes("-alpha", 0)
 
         self._drag_x = 0
         self._drag_y = 0
 
         self._build_ui()
         self._root.update_idletasks()
-        self._root.deiconify()
+        self._root.attributes("-alpha", 1)
         self._root.bind("<Destroy>", lambda e: self._save_pos() if e.widget is self._root else None)
         threading.Thread(target=warmup_icons, daemon=True).start()
         self._root.after(10, lambda: _apply_win11_rounded(self._root.winfo_id()))
