@@ -38,12 +38,13 @@ C = COLORS  # alias
 # ---------------------------------------------------------------------------
 
 def _fix_scroll_ghosting(sf: ctk.CTkScrollableFrame):
-    """Fix CTkScrollableFrame ghosting on Windows by forcing a canvas redraw after each scroll."""
+    """Fix CTkScrollableFrame ghosting on Windows by patching yview_scroll to force redraw."""
     canvas = sf._parent_canvas
-    def _redraw(e):
+    _orig = canvas.yview_scroll
+    def _patched(n, what):
+        _orig(n, what)
         canvas.update_idletasks()
-    sf.bind("<MouseWheel>", _redraw, add=True)
-    canvas.bind("<MouseWheel>", _redraw, add=True)
+    canvas.yview_scroll = _patched
 
 
 def _bring_to_front(root: ctk.CTk):
