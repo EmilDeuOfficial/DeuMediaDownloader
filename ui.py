@@ -38,17 +38,29 @@ C = COLORS  # alias
 # ---------------------------------------------------------------------------
 
 def _fix_scroll_ghosting(sf: ctk.CTkScrollableFrame):
-    """Fix CTkScrollableFrame ghosting on Windows via InvalidateRect after each scroll step."""
+    """Fix CTkScrollableFrame ghosting on Windows.
+    1. Patch yview_scroll to force a Win32 repaint after every scroll step.
+    2. Pre-render all off-screen widgets by scrolling to the bottom and back
+       while the window is still invisible (alpha=0).
+    """
     import ctypes
     canvas = sf._parent_canvas
     user32 = ctypes.windll.user32
-    _orig  = canvas.yview_scroll
+
+    _orig = canvas.yview_scroll
     def _patched(n, what):
         _orig(n, what)
         hwnd = canvas.winfo_id()
         user32.InvalidateRect(hwnd, None, True)
         user32.UpdateWindow(hwnd)
     canvas.yview_scroll = _patched
+
+    def _prerender():
+        canvas.yview_moveto(1.0)
+        canvas.update_idletasks()
+        canvas.yview_moveto(0.0)
+        canvas.update_idletasks()
+    sf.after(0, _prerender)
 
 
 def _bring_to_front(root: ctk.CTk):
