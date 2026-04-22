@@ -38,16 +38,16 @@ C = COLORS  # alias
 # ---------------------------------------------------------------------------
 
 def _fix_scroll_ghosting(sf: ctk.CTkScrollableFrame):
-    """Fix CTkScrollableFrame ghosting on Windows by patching yview_scroll to force redraw."""
+    """Fix CTkScrollableFrame ghosting on Windows via InvalidateRect after each scroll step."""
+    import ctypes
     canvas = sf._parent_canvas
-    _orig = canvas.yview_scroll
-    _busy = [False]
+    user32 = ctypes.windll.user32
+    _orig  = canvas.yview_scroll
     def _patched(n, what):
         _orig(n, what)
-        if not _busy[0]:
-            _busy[0] = True
-            canvas.update()
-            _busy[0] = False
+        hwnd = canvas.winfo_id()
+        user32.InvalidateRect(hwnd, None, True)
+        user32.UpdateWindow(hwnd)
     canvas.yview_scroll = _patched
 
 
