@@ -718,7 +718,8 @@ class DeuDownloaderApp:
         self._restore_geometry = _sp_geo
 
         self._build_ui()
-        self._root.update_idletasks()
+        self._root.update()
+        self._root.update()
         self._root.attributes("-alpha", 1)
         self._root.bind("<Destroy>", lambda e: self._save_sp_geo() if e.widget is self._root else None)
         self._root.after(10, lambda: _apply_win11_rounded(self._root.winfo_id()))
@@ -1605,7 +1606,8 @@ class YouTubeDownloaderApp:
         self._restore_geometry = _yt_geo
 
         self._build_ui()
-        self._root.update_idletasks()
+        self._root.update()
+        self._root.update()
         self._root.attributes("-alpha", 1)
         self._root.bind("<Destroy>", lambda e: self._save_yt_geo() if e.widget is self._root else None)
         self._root.after(10, lambda: _apply_win11_rounded(self._root.winfo_id()))
@@ -2420,7 +2422,8 @@ class TikTokDownloaderApp:
         self._restore_geometry = _tt_geo
 
         self._build_ui()
-        self._root.update_idletasks()
+        self._root.update()
+        self._root.update()
         self._root.attributes("-alpha", 1)
         self._root.bind("<Destroy>", lambda e: self._save_geo() if e.widget is self._root else None)
         self._root.after(10, lambda: _apply_win11_rounded(self._root.winfo_id()))
@@ -2885,7 +2888,8 @@ class LauncherApp:
         self._drag_y = 0
 
         self._build_ui()
-        self._root.update_idletasks()
+        self._root.update()
+        self._root.update()
         self._root.attributes("-alpha", 1)
         self._root.bind("<Destroy>", lambda e: self._save_pos() if e.widget is self._root else None)
         threading.Thread(target=warmup_icons, daemon=True).start()
