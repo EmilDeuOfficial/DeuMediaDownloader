@@ -257,6 +257,7 @@ class SettingsDialog(ctk.CTkToplevel):
     def __init__(self, parent, config: dict, on_save: callable,
                  on_quit: callable = None, show_spotify: bool = True):
         super().__init__(parent)
+        self.attributes("-alpha", 0)
         self.title(T("settings_title"))
         h = 580 if show_spotify else 380
         self.geometry(f"520x{h}")
@@ -272,6 +273,8 @@ class SettingsDialog(ctk.CTkToplevel):
         self.after(10,  lambda: _apply_win11_rounded(self.winfo_id()))
         self._build_titlebar()
         self._build()
+        self.update()
+        self.update()
         self.after(30,  self._center_on_parent)
         self.after(100, self.grab_set)
 
@@ -281,6 +284,7 @@ class SettingsDialog(ctk.CTkToplevel):
         pw, ph = self.master.winfo_width(), self.master.winfo_height()
         w,  h  = self.winfo_width(), self.winfo_height()
         self.geometry(f"+{px + (pw - w) // 2}+{py + (ph - h) // 2}")
+        self.attributes("-alpha", 1)
 
     def _build_titlebar(self):
         bar = ctk.CTkFrame(self, fg_color=C["bg_secondary"], corner_radius=0, height=40)
@@ -1296,6 +1300,7 @@ class YouTubeSettingsDialog(ctk.CTkToplevel):
 
     def __init__(self, parent, config: dict, on_save: callable, on_quit: callable = None):
         super().__init__(parent)
+        self.attributes("-alpha", 0)
         self.title(T("yt_settings_title"))
         self.geometry("520x560")
         self.resizable(False, False)
@@ -1309,6 +1314,8 @@ class YouTubeSettingsDialog(ctk.CTkToplevel):
         self.after(10,  lambda: _apply_win11_rounded(self.winfo_id()))
         self._build_titlebar()
         self._build()
+        self.update()
+        self.update()
         self.after(30,  self._center_on_parent)
         self.after(100, self.grab_set)
 
@@ -1318,6 +1325,7 @@ class YouTubeSettingsDialog(ctk.CTkToplevel):
         pw, ph = self.master.winfo_width(), self.master.winfo_height()
         w,  h  = self.winfo_width(), self.winfo_height()
         self.geometry(f"+{px + (pw - w) // 2}+{py + (ph - h) // 2}")
+        self.attributes("-alpha", 1)
 
     def _build_titlebar(self):
         bar = ctk.CTkFrame(self, fg_color=C["bg_secondary"], corner_radius=0, height=40)
@@ -2142,6 +2150,7 @@ class TikTokSettingsDialog(ctk.CTkToplevel):
 
     def __init__(self, parent, config: dict, on_save: callable, on_quit: callable = None):
         super().__init__(parent)
+        self.attributes("-alpha", 0)
         self.title(T("tt_settings_title"))
         self.geometry("520x480")
         self.resizable(False, False)
@@ -2155,6 +2164,8 @@ class TikTokSettingsDialog(ctk.CTkToplevel):
         self.after(10,  lambda: _apply_win11_rounded(self.winfo_id()))
         self._build_titlebar()
         self._build()
+        self.update()
+        self.update()
         self.after(30,  self._center_on_parent)
         self.after(100, self.grab_set)
 
@@ -2164,6 +2175,7 @@ class TikTokSettingsDialog(ctk.CTkToplevel):
         pw, ph = self.master.winfo_width(), self.master.winfo_height()
         w,  h  = self.winfo_width(), self.winfo_height()
         self.geometry(f"+{px + (pw - w) // 2}+{py + (ph - h) // 2}")
+        self.attributes("-alpha", 1)
 
     def _build_titlebar(self):
         bar = ctk.CTkFrame(self, fg_color=C["bg_secondary"], corner_radius=0, height=40)
