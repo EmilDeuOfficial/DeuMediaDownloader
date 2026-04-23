@@ -943,9 +943,9 @@ class DeuDownloaderApp:
 
         ctk.CTkLabel(frame, text=T("format"), font=(FONT_FAMILY, 12),
                      text_color=C["text_secondary"]).grid(row=0, column=0, padx=(16,8), pady=14)
-        saved_fmt = self._config.get("default_format", "MP3 256 kbps")
+        saved_fmt = self._config.get("default_format", "MP3 (256 kbps)")
         if saved_fmt not in AUDIO_FORMATS:
-            saved_fmt = "MP3 256 kbps"
+            saved_fmt = "MP3 (256 kbps)"
         self._format_var = ctk.StringVar(value=saved_fmt)
         self._format_var.trace_add("write", lambda *_: self._save_ui_prefs())
         fmt_keys = list(AUDIO_FORMATS.keys())
@@ -1858,14 +1858,14 @@ class YouTubeDownloaderApp:
         # Restore last format for the saved media type
         if saved_media == "Video":
             fmt_values = list(VIDEO_FORMATS.keys())
-            saved_fmt  = self._config.get("yt_format_video", "MP4 1080p (H.264)")
+            saved_fmt  = self._config.get("yt_format_video", "MP4 (1080p)")
             if saved_fmt not in VIDEO_FORMATS:
-                saved_fmt = "MP4 1080p (H.264)"
+                saved_fmt = "MP4 (1080p)"
         else:
             fmt_values = list(AUDIO_FORMATS.keys())
-            saved_fmt  = self._config.get("yt_format_audio", "MP3 256 kbps")
+            saved_fmt  = self._config.get("yt_format_audio", "MP3 (256 kbps)")
             if saved_fmt not in AUDIO_FORMATS:
-                saved_fmt = "MP3 256 kbps"
+                saved_fmt = "MP3 (256 kbps)"
 
         self._format_var = ctk.StringVar(value=saved_fmt)
         self._format_var.trace_add("write", lambda *_: self._save_ui_prefs())
@@ -1913,17 +1913,17 @@ class YouTubeDownloaderApp:
             self._audio_btn.configure(fg_color="#CC2222", text_color="white")
             self._video_btn.configure(fg_color="transparent", text_color=C["text_secondary"])
             self._format_dropdown._values = list(AUDIO_FORMATS.keys())
-            saved = self._config.get("yt_format_audio", "MP3 256 kbps")
+            saved = self._config.get("yt_format_audio", "MP3 (256 kbps)")
             if saved not in AUDIO_FORMATS:
-                saved = "MP3 256 kbps"
+                saved = "MP3 (256 kbps)"
             self._format_var.set(saved)
         else:
             self._video_btn.configure(fg_color="#CC2222", text_color="white")
             self._audio_btn.configure(fg_color="transparent", text_color=C["text_secondary"])
             self._format_dropdown._values = list(VIDEO_FORMATS.keys())
-            saved = self._config.get("yt_format_video", "MP4 1080p (H.264)")
+            saved = self._config.get("yt_format_video", "MP4 (1080p)")
             if saved not in VIDEO_FORMATS:
-                saved = "MP4 1080p (H.264)"
+                saved = "MP4 (1080p)"
             self._format_var.set(saved)
         self._config["yt_media_type"] = kind
         save_config(self._config)
@@ -2666,16 +2666,16 @@ class TikTokDownloaderApp:
 
         if saved_media == "Audio":
             fmt_values = list(AUDIO_FORMATS.keys())
-            saved_fmt  = self._config.get("tt_format_audio", "MP3 256 kbps")
+            saved_fmt  = self._config.get("tt_format_audio", "MP3 (256 kbps)")
             if saved_fmt not in AUDIO_FORMATS:
-                saved_fmt = "MP3 256 kbps"
+                saved_fmt = "MP3 (256 kbps)"
             self._audio_btn.configure(fg_color=self.TT_PINK, text_color="white")
             self._video_btn.configure(fg_color="transparent", text_color=C["text_secondary"])
         else:
             fmt_values = list(VIDEO_FORMATS.keys())
-            saved_fmt  = self._config.get("tt_format_video", "MP4 1080p (H.264)")
+            saved_fmt  = self._config.get("tt_format_video", "MP4 (1080p)")
             if saved_fmt not in VIDEO_FORMATS:
-                saved_fmt = "MP4 1080p (H.264)"
+                saved_fmt = "MP4 (1080p)"
 
         self._format_var = ctk.StringVar(value=saved_fmt)
         self._format_var.trace_add("write", lambda *_: self._save_ui_prefs())
@@ -2715,17 +2715,17 @@ class TikTokDownloaderApp:
             self._audio_btn.configure(fg_color=self.TT_PINK, text_color="white")
             self._video_btn.configure(fg_color="transparent", text_color=C["text_secondary"])
             self._format_dropdown._values = list(AUDIO_FORMATS.keys())
-            saved = self._config.get("tt_format_audio", "MP3 256 kbps")
+            saved = self._config.get("tt_format_audio", "MP3 (256 kbps)")
             if saved not in AUDIO_FORMATS:
-                saved = "MP3 256 kbps"
+                saved = "MP3 (256 kbps)"
             self._format_var.set(saved)
         else:
             self._video_btn.configure(fg_color=self.TT_PINK, text_color="white")
             self._audio_btn.configure(fg_color="transparent", text_color=C["text_secondary"])
             self._format_dropdown._values = list(VIDEO_FORMATS.keys())
-            saved = self._config.get("tt_format_video", "MP4 1080p (H.264)")
+            saved = self._config.get("tt_format_video", "MP4 (1080p)")
             if saved not in VIDEO_FORMATS:
-                saved = "MP4 1080p (H.264)"
+                saved = "MP4 (1080p)"
             self._format_var.set(saved)
         self._config["tt_media_type"] = kind
         save_config(self._config)
