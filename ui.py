@@ -1409,6 +1409,7 @@ class YouTubeSettingsDialog(ctk.CTkToplevel):
         self._build_section_media(scroll)
         self._build_section_subtitles(scroll)
         self._build_section_network(scroll)
+        self._build_section_filename(scroll)
 
         btn_frame = ctk.CTkFrame(settings_tab, fg_color="transparent")
         btn_frame.pack(fill="x", pady=(8, 4))
@@ -1473,11 +1474,14 @@ class YouTubeSettingsDialog(ctk.CTkToplevel):
                       button_color=self.YT_RED,
                       command=_update_lbl).grid(row=0, column=1, sticky="ew")
 
-        # Filename template
+    def _build_section_filename(self, parent):
+        ctk.CTkLabel(parent, text=T("filename_template_lbl"),
+                     font=(FONT_FAMILY, 13, "bold"),
+                     text_color=C["text_secondary"]).pack(anchor="w", padx=14, pady=(2, 2))
+        card = ctk.CTkFrame(parent, fg_color=C["bg_secondary"], corner_radius=10)
+        card.pack(fill="x", pady=(0, 8))
         fn_row = ctk.CTkFrame(card, fg_color="transparent")
-        fn_row.pack(fill="x", padx=14, pady=(4, 12))
-        ctk.CTkLabel(fn_row, text=T("filename_template_lbl"), font=(FONT_FAMILY, 12),
-                     text_color=C["text_primary"]).pack(anchor="w")
+        fn_row.pack(fill="x", padx=14, pady=10)
         ctk.CTkLabel(fn_row, text=T("filename_template_desc"), font=(FONT_FAMILY, 10),
                      text_color=C["text_secondary"]).pack(anchor="w", pady=(0, 4))
         from config import YT_FILENAME_TEMPLATES
@@ -2254,6 +2258,7 @@ class TikTokSettingsDialog(ctk.CTkToplevel):
         self._build_section_downloads(scroll)
         self._build_section_media(scroll)
         self._build_section_network(scroll)
+        self._build_section_filename(scroll)
 
         btn_frame = ctk.CTkFrame(settings_tab, fg_color="transparent")
         btn_frame.pack(fill="x", pady=(8, 4))
@@ -2315,11 +2320,14 @@ class TikTokSettingsDialog(ctk.CTkToplevel):
                       button_color=self.TT_PINK,
                       command=_update_lbl).grid(row=0, column=1, sticky="ew")
 
-        # Filename template
+    def _build_section_filename(self, parent):
+        ctk.CTkLabel(parent, text=T("filename_template_lbl"),
+                     font=(FONT_FAMILY, 13, "bold"),
+                     text_color=C["text_secondary"]).pack(anchor="w", padx=14, pady=(2, 2))
+        card = ctk.CTkFrame(parent, fg_color=C["bg_secondary"], corner_radius=10)
+        card.pack(fill="x", pady=(0, 8))
         fn_row = ctk.CTkFrame(card, fg_color="transparent")
-        fn_row.pack(fill="x", padx=14, pady=(4, 12))
-        ctk.CTkLabel(fn_row, text=T("filename_template_lbl"), font=(FONT_FAMILY, 12),
-                     text_color=C["text_primary"]).pack(anchor="w")
+        fn_row.pack(fill="x", padx=14, pady=10)
         ctk.CTkLabel(fn_row, text=T("filename_template_desc"), font=(FONT_FAMILY, 10),
                      text_color=C["text_secondary"]).pack(anchor="w", pady=(0, 4))
         from config import TT_FILENAME_TEMPLATES
