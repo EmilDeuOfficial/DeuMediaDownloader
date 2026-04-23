@@ -28,7 +28,10 @@ class DownloadStatus(Enum):
 
 
 def _sanitize(name: str) -> str:
-    return re.sub(r'[\\/*?:"<>|]', "_", name).strip()
+    name = re.sub(r'[|:]', ' - ', name)       # natural dash substitutes
+    name = re.sub(r'[\\/*?"<>]', '', name)    # no good substitute → remove
+    name = re.sub(r'\s{2,}', ' ', name)       # collapse multiple spaces
+    return name.strip()
 
 
 def _apply_template(template: str, artist: str = "", title: str = "",
@@ -39,7 +42,10 @@ def _apply_template(template: str, artist: str = "", title: str = "",
             title=title  or "Unknown Title",
             album=album  or "",
             year=year    or "",
-        ).strip(" -—_[]()").strip()
+        )
+        result = re.sub(r'\s*\(\s*\)\s*', ' ', result)  # empty () from template
+        result = re.sub(r'\s*\[\s*\]\s*', ' ', result)  # empty [] from template
+        result = result.strip(" -—_").strip()
     except (KeyError, ValueError):
         result = title or artist or "track"
     return _sanitize(result) or "track"
