@@ -1537,7 +1537,8 @@ class YouTubeSettingsDialog(ctk.CTkToplevel):
         cur_val = self._config.get("yt_rate_limit", "")
         cur_idx = self.RATE_VALUES.index(cur_val) if cur_val in self.RATE_VALUES else 0
         self._rate_var = ctk.StringVar(value=rate_labels[cur_idx])
-        CustomDropdown(row, variable=self._rate_var, values=rate_labels, width=200
+        CustomDropdown(row, variable=self._rate_var, values=rate_labels, width=200,
+                       accent=self.YT_RED, accent_dim="#3a0a0a"
                        ).grid(row=0, column=1, sticky="w")
 
     def _build_section_uninstall(self, parent):
