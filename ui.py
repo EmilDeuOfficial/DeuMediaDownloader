@@ -831,11 +831,6 @@ class DeuDownloaderApp:
 
         bar.grid_columnconfigure(col, weight=1)
         col += 1
-
-        ffmpeg_color = C["success"] if self._ffmpeg_ok else C["error"]
-        ffmpeg_text  = T("ffmpeg_ok") if self._ffmpeg_ok else T("ffmpeg_fail")
-        ctk.CTkLabel(bar, text=ffmpeg_text, font=(FONT_FAMILY, 10),
-                     text_color=ffmpeg_color).grid(row=0, column=col, padx=(0, 8), pady=PY)
         col += 1
 
         ctk.CTkButton(bar, text="⚙", width=36, height=28,
@@ -1716,11 +1711,6 @@ class YouTubeDownloaderApp:
 
         bar.grid_columnconfigure(col, weight=1)
         col += 1
-
-        ffmpeg_color = C["success"] if self._ffmpeg_ok else C["error"]
-        ffmpeg_text  = T("ffmpeg_ok") if self._ffmpeg_ok else T("ffmpeg_fail")
-        ctk.CTkLabel(bar, text=ffmpeg_text, font=(FONT_FAMILY, 10),
-                     text_color=ffmpeg_color).grid(row=0, column=col, padx=(0, 8), pady=PY)
         col += 1
 
         ctk.CTkButton(bar, text="⚙", width=36, height=28,
@@ -2537,11 +2527,6 @@ class TikTokDownloaderApp:
 
         bar.grid_columnconfigure(col, weight=1)
         col += 1
-
-        ffmpeg_color = C["success"] if self._ffmpeg_ok else C["error"]
-        ffmpeg_text  = T("ffmpeg_ok") if self._ffmpeg_ok else T("ffmpeg_fail")
-        ctk.CTkLabel(bar, text=ffmpeg_text, font=(FONT_FAMILY, 10),
-                     text_color=ffmpeg_color).grid(row=0, column=col, padx=(0, 8), pady=PY)
         col += 1
 
         ctk.CTkButton(bar, text="⚙", width=36, height=28,
