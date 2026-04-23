@@ -976,6 +976,7 @@ class DeuDownloaderApp:
             command=self._start_download,
         )
         self._dl_btn.grid(row=0, column=5, padx=(4,16))
+        self._dl_btn._text_label.configure(pady=0, anchor="center")
 
     # --- Queue panel -------------------------------------------------
     def _build_queue_panel(self):
@@ -1901,6 +1902,7 @@ class YouTubeDownloaderApp:
             command=self._start_download,
         )
         self._dl_btn.grid(row=0, column=4, rowspan=2, padx=(4, 16))
+        self._dl_btn._text_label.configure(pady=0, anchor="center")
 
         # Store the saved media type (needed by _set_media_type)
         self._media_type = ctk.StringVar(value=saved_media)
@@ -2703,6 +2705,7 @@ class TikTokDownloaderApp:
             command=self._start_download,
         )
         self._dl_btn.grid(row=0, column=4, rowspan=2, padx=(4, 16))
+        self._dl_btn._text_label.configure(pady=0, anchor="center")
 
         self._media_type = ctk.StringVar(value=saved_media)
 
