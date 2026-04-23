@@ -971,12 +971,12 @@ class DeuDownloaderApp:
 
         self._dl_btn = ctk.CTkButton(
             frame, text=T("download"), width=130, height=38,
-            font=(FONT_FAMILY, 14, "bold"),
+            font=(FONT_FAMILY, 13, "bold"),
             fg_color=C["accent"], hover_color=C["accent_hover"],
             command=self._start_download,
         )
         self._dl_btn.grid(row=0, column=5, padx=(4,16))
-        self._dl_btn._text_label.configure(pady=0, anchor="center")
+        self._dl_btn._text_label.configure(pady=0)
 
     # --- Queue panel -------------------------------------------------
     def _build_queue_panel(self):
@@ -1858,9 +1858,9 @@ class YouTubeDownloaderApp:
         # Restore last format for the saved media type
         if saved_media == "Video":
             fmt_values = list(VIDEO_FORMATS.keys())
-            saved_fmt  = self._config.get("yt_format_video", "MP4 1080p")
+            saved_fmt  = self._config.get("yt_format_video", "MP4 1080p (H.264)")
             if saved_fmt not in VIDEO_FORMATS:
-                saved_fmt = "MP4 1080p"
+                saved_fmt = "MP4 1080p (H.264)"
         else:
             fmt_values = list(AUDIO_FORMATS.keys())
             saved_fmt  = self._config.get("yt_format_audio", "MP3 256 kbps")
@@ -1897,12 +1897,12 @@ class YouTubeDownloaderApp:
 
         self._dl_btn = ctk.CTkButton(
             frame, text=T("download"), width=130, height=38,
-            font=(FONT_FAMILY, 14, "bold"),
+            font=(FONT_FAMILY, 13, "bold"),
             fg_color="#CC2222", hover_color="#AA1111",
             command=self._start_download,
         )
         self._dl_btn.grid(row=0, column=4, rowspan=2, padx=(4, 16))
-        self._dl_btn._text_label.configure(pady=0, anchor="center")
+        self._dl_btn._text_label.configure(pady=0)
 
         # Store the saved media type (needed by _set_media_type)
         self._media_type = ctk.StringVar(value=saved_media)
@@ -1921,9 +1921,9 @@ class YouTubeDownloaderApp:
             self._video_btn.configure(fg_color="#CC2222", text_color="white")
             self._audio_btn.configure(fg_color="transparent", text_color=C["text_secondary"])
             self._format_dropdown._values = list(VIDEO_FORMATS.keys())
-            saved = self._config.get("yt_format_video", "MP4 1080p")
+            saved = self._config.get("yt_format_video", "MP4 1080p (H.264)")
             if saved not in VIDEO_FORMATS:
-                saved = "MP4 1080p"
+                saved = "MP4 1080p (H.264)"
             self._format_var.set(saved)
         self._config["yt_media_type"] = kind
         save_config(self._config)
@@ -2673,9 +2673,9 @@ class TikTokDownloaderApp:
             self._video_btn.configure(fg_color="transparent", text_color=C["text_secondary"])
         else:
             fmt_values = list(VIDEO_FORMATS.keys())
-            saved_fmt  = self._config.get("tt_format_video", "MP4 1080p")
+            saved_fmt  = self._config.get("tt_format_video", "MP4 1080p (H.264)")
             if saved_fmt not in VIDEO_FORMATS:
-                saved_fmt = "MP4 1080p"
+                saved_fmt = "MP4 1080p (H.264)"
 
         self._format_var = ctk.StringVar(value=saved_fmt)
         self._format_var.trace_add("write", lambda *_: self._save_ui_prefs())
@@ -2700,12 +2700,12 @@ class TikTokDownloaderApp:
 
         self._dl_btn = ctk.CTkButton(
             frame, text=T("download"), width=130, height=38,
-            font=(FONT_FAMILY, 14, "bold"),
+            font=(FONT_FAMILY, 13, "bold"),
             fg_color=self.TT_PINK, hover_color=self.TT_PINK_HOV,
             command=self._start_download,
         )
         self._dl_btn.grid(row=0, column=4, rowspan=2, padx=(4, 16))
-        self._dl_btn._text_label.configure(pady=0, anchor="center")
+        self._dl_btn._text_label.configure(pady=0)
 
         self._media_type = ctk.StringVar(value=saved_media)
 
@@ -2723,9 +2723,9 @@ class TikTokDownloaderApp:
             self._video_btn.configure(fg_color=self.TT_PINK, text_color="white")
             self._audio_btn.configure(fg_color="transparent", text_color=C["text_secondary"])
             self._format_dropdown._values = list(VIDEO_FORMATS.keys())
-            saved = self._config.get("tt_format_video", "MP4 1080p")
+            saved = self._config.get("tt_format_video", "MP4 1080p (H.264)")
             if saved not in VIDEO_FORMATS:
-                saved = "MP4 1080p"
+                saved = "MP4 1080p (H.264)"
             self._format_var.set(saved)
         self._config["tt_media_type"] = kind
         save_config(self._config)
