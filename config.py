@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 APP_NAME = "DeuDownloader"
-APP_VERSION = "1.5.1"
+APP_VERSION = "1.5.2"
 CONFIG_FILE   = Path.home() / ".spotify_downloader" / "config.json"
 LANGUAGE_FILE = Path.home() / ".spotify_downloader" / "language"
 
