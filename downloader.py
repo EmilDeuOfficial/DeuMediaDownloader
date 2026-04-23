@@ -28,9 +28,9 @@ class DownloadStatus(Enum):
 
 
 def _sanitize(name: str) -> str:
-    name = re.sub(r'[|:]', ' - ', name)       # natural dash substitutes
-    name = re.sub(r'[\\/*?"<>]', '', name)    # no good substitute → remove
-    name = re.sub(r'\s{2,}', ' ', name)       # collapse multiple spaces
+    name = name.replace('|', '｜').replace(':', '꞉')  # Unicode lookalikes (visually identical, Windows-safe)
+    name = re.sub(r'[\\/*?"<>]', '', name)
+    name = re.sub(r'\s{2,}', ' ', name)
     return name.strip()
 
 
