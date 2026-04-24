@@ -1497,9 +1497,10 @@ class YouTubeSettingsDialog(ctk.CTkToplevel):
     def _build_section_media(self, parent):
         card = self._section_card(parent, T("yt_sec_media"))
         self._toggle_row(card, T("yt_embed_thumb_lbl"), T("yt_embed_thumb_desc"), "yt_embed_thumbnail")
-        # Default for embed thumbnail is True, fix the var
         self._var_yt_embed_thumbnail.set(self._config.get("yt_embed_thumbnail", True))
         self._toggle_row(card, T("yt_sponsorblock_lbl"), T("yt_sponsorblock_desc"), "yt_sponsorblock")
+        self._toggle_row(card, T("sp_open_folder_lbl"), T("sp_open_folder_desc"), "yt_open_folder")
+        self._var_yt_open_folder.set(self._config.get("yt_open_folder", True))
 
     def _build_section_subtitles(self, parent):
         card = self._section_card(parent, T("yt_sec_subtitles"))
@@ -1603,6 +1604,7 @@ class YouTubeSettingsDialog(ctk.CTkToplevel):
         self._config["yt_concurrent"]      = int(self._conc_var.get())
         self._config["yt_embed_thumbnail"] = self._var_yt_embed_thumbnail.get()
         self._config["yt_sponsorblock"]    = self._var_yt_sponsorblock.get()
+        self._config["yt_open_folder"]     = self._var_yt_open_folder.get()
         self._config["yt_write_subtitles"] = self._var_yt_write_subtitles.get()
         self._config["yt_subtitle_langs"]  = self._subtitle_langs_var.get().strip()
         label = self._rate_var.get()
@@ -2076,10 +2078,21 @@ class YouTubeDownloaderApp:
             ))
 
         def on_done(t: YouTubeTask):
-            self._root.after(0, lambda: (
-                widget.update_status(t.status, t.error_msg),
-                widget.update_progress(t.progress),
-            ))
+            def _update():
+                widget.update_status(t.status, t.error_msg)
+                widget.update_progress(t.progress)
+                if self._config.get("yt_open_folder", True):
+                    all_done = all(
+                        w._task.status in (DownloadStatus.DONE, DownloadStatus.ERROR)
+                        for w in self._task_widgets.values()
+                    )
+                    if all_done:
+                        import os
+                        try:
+                            os.startfile(task.output_dir)
+                        except Exception:
+                            pass
+            self._root.after(0, _update)
 
         task.on_progress = on_progress
         task.on_status   = on_status
@@ -2343,8 +2356,10 @@ class TikTokSettingsDialog(ctk.CTkToplevel):
 
     def _build_section_media(self, parent):
         card = self._section_card(parent, T("tt_sec_media"))
-        sw = self._toggle_row(card, T("tt_embed_thumb_lbl"), T("tt_embed_thumb_desc"), "tt_embed_thumbnail")
+        self._toggle_row(card, T("tt_embed_thumb_lbl"), T("tt_embed_thumb_desc"), "tt_embed_thumbnail")
         self._var_tt_embed_thumbnail.set(self._config.get("tt_embed_thumbnail", True))
+        self._toggle_row(card, T("sp_open_folder_lbl"), T("sp_open_folder_desc"), "tt_open_folder")
+        self._var_tt_open_folder.set(self._config.get("tt_open_folder", True))
 
     def _build_section_network(self, parent):
         card = self._section_card(parent, T("tt_sec_network"))
@@ -2423,6 +2438,7 @@ class TikTokSettingsDialog(ctk.CTkToplevel):
     def _save(self):
         self._config["tt_concurrent"]      = int(self._conc_var.get())
         self._config["tt_embed_thumbnail"] = self._var_tt_embed_thumbnail.get()
+        self._config["tt_open_folder"]     = self._var_tt_open_folder.get()
         label = self._rate_var.get()
         labels = [T(k) for k in self.RATE_LABELS]
         idx = labels.index(label) if label in labels else 0
@@ -2888,10 +2904,21 @@ class TikTokDownloaderApp:
             ))
 
         def on_done(t: TikTokTask):
-            self._root.after(0, lambda: (
-                widget.update_status(t.status, t.error_msg),
-                widget.update_progress(t.progress),
-            ))
+            def _update():
+                widget.update_status(t.status, t.error_msg)
+                widget.update_progress(t.progress)
+                if self._config.get("tt_open_folder", True):
+                    all_done = all(
+                        w._task.status in (DownloadStatus.DONE, DownloadStatus.ERROR)
+                        for w in self._task_widgets.values()
+                    )
+                    if all_done:
+                        import os
+                        try:
+                            os.startfile(task.output_dir)
+                        except Exception:
+                            pass
+            self._root.after(0, _update)
 
         task.on_progress = on_progress
         task.on_status   = on_status
