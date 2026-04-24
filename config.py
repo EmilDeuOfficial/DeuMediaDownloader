@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 APP_NAME = "DeuDownloader"
-APP_VERSION = "1.5.6"
+APP_VERSION = "1.5.7"
 CONFIG_FILE   = Path.home() / ".spotify_downloader" / "config.json"
 LANGUAGE_FILE = Path.home() / ".spotify_downloader" / "language"
 
@@ -71,7 +71,7 @@ DEFAULT_CONFIG = {
     "sp_skip_existing":      True,
     "sp_embed_cover":        True,
     "sp_normalize":          False,
-    "sp_open_folder":        False,
+    "sp_open_folder":        True,
     # YouTube-specific settings
     "yt_concurrent":         2,
     "yt_embed_thumbnail":    True,
@@ -79,6 +79,7 @@ DEFAULT_CONFIG = {
     "yt_subtitle_langs":     "en",
     "yt_sponsorblock":       False,
     "yt_rate_limit":         "",
+    "yt_open_folder":        True,
     # TikTok-specific settings
     "tt_format_video":       "MP4 (1080p)",
     "tt_format_audio":       "MP3 (256 kbps)",
@@ -86,6 +87,7 @@ DEFAULT_CONFIG = {
     "tt_concurrent":         2,
     "tt_embed_thumbnail":    True,
     "tt_rate_limit":         "",
+    "tt_open_folder":        True,
     "tt_win_geo":            "820x720",
     # Filename templates
     "sp_filename_template":  "{artist} - {title}",
