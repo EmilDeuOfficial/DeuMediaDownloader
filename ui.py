@@ -653,7 +653,7 @@ class SettingsDialog(ctk.CTkToplevel):
             Path(os.environ.get("ProgramFiles", r"C:\Program Files")),
             Path(os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)")),
         ):
-            candidate = base / "DeuDownloader" / "unins000.exe"
+            candidate = base / "DeuMediaDownloader" / "unins000.exe"
             if candidate.exists():
                 return str(candidate)
 
@@ -727,7 +727,7 @@ class QueueItemWidget(ctk.CTkFrame):
 # Main application window — Spotify
 # ---------------------------------------------------------------------------
 
-class DeuDownloaderApp:
+class DeuMediaDownloaderApp:
     def __init__(self, ffmpeg_available: bool = True, show_back: bool = False):
         self._ffmpeg_ok  = ffmpeg_available
         self._show_back  = show_back

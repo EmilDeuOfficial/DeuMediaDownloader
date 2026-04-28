@@ -61,7 +61,7 @@ def clean():
     for d in [BUILD, ROOT / "__pycache__"]:
         if d.exists():
             shutil.rmtree(d)
-    exe = DIST / "DeuDownloader.exe"
+    exe = DIST / "DeuMediaDownloader.exe"
     if exe.exists():
         exe.unlink()
 
@@ -71,20 +71,20 @@ def build_exe():
     run([
         sys.executable, "-m", "PyInstaller",
         "--clean",
-        str(ROOT / "DeuDownloader.spec"),
+        str(ROOT / "DeuMediaDownloader.spec"),
     ], cwd=ROOT)
-    exe = DIST / "DeuDownloader.exe"
+    exe = DIST / "DeuMediaDownloader.exe"
     if not exe.exists():
         print("[ERROR] PyInstaller output not found.")
         sys.exit(1)
     size_mb = exe.stat().st_size / 1024 / 1024
-    print(f"[OK] DeuDownloader.exe built ({size_mb:.1f} MB)")
+    print(f"[OK] DeuMediaDownloader.exe built ({size_mb:.1f} MB)")
 
 
 def build_installer(iscc: str):
     print("[*] Building installer with Inno Setup...")
     run([iscc, str(ROOT / "installer.iss")], cwd=ROOT)
-    installer = DIST / "DeuDownloader_Setup.exe"
+    installer = DIST / "DeuMediaDownloader_Setup.exe"
     if not installer.exists():
         print("[ERROR] Installer not found after Inno Setup.")
         sys.exit(1)
@@ -97,7 +97,7 @@ def build_installer(iscc: str):
 
 def main():
     print("=" * 60)
-    print("  DeuDownloader — Build Pipeline")
+    print("  DeuMediaDownloader — Build Pipeline")
     print("=" * 60)
 
     clean()
