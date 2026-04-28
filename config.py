@@ -1,8 +1,8 @@
 import json
 from pathlib import Path
 
-APP_NAME = "DeuDownloader"
-APP_VERSION = "1.5.7"
+APP_NAME = "DeuMediaDownloader"
+APP_VERSION = "1.5.8"
 CONFIG_FILE   = Path.home() / ".spotify_downloader" / "config.json"
 LANGUAGE_FILE = Path.home() / ".spotify_downloader" / "language"
 
@@ -165,7 +165,7 @@ STRINGS: dict[str, dict[str, str]] = {
         "sp_open_folder_lbl":      "Open Folder When Done",
         "sp_open_folder_desc":     "Open the output folder once all queued downloads finish",
         # Launcher
-        "launcher_title":      "DeuDownloader",
+        "launcher_title":      "DeuMediaDownloader",
         "choose_downloader":   "Choose a Downloader",
         "spotify_desc":        "Tracks, playlists\nand albums",
         "youtube_desc":        "Videos and\nplaylists",
@@ -215,11 +215,11 @@ STRINGS: dict[str, dict[str, str]] = {
         "clear_data_desc":        "Removes settings, API credentials and cached data.",
         "uninstall_ffmpeg_btn":   "Uninstall FFmpeg",
         "uninstall_ffmpeg_desc":  "Removes FFmpeg from your system via winget.",
-        "uninstall_app_btn":      "Uninstall DeuDownloader",
+        "uninstall_app_btn":      "Uninstall DeuMediaDownloader",
         "uninstall_app_desc":     "Runs the uninstaller and closes the app.",
         "confirm_clear_data":     "Delete all settings and credentials?\nThis cannot be undone.",
         "confirm_uninstall_ffmpeg": "Uninstall FFmpeg from your system?",
-        "confirm_uninstall_app":  "Uninstall DeuDownloader?\nThe app will close now.",
+        "confirm_uninstall_app":  "Uninstall DeuMediaDownloader?\nThe app will close now.",
         "no_uninstaller":         "Uninstaller not found.\nPlease use Windows Settings \u2192 Apps.",
         "uninstall_started":      "Uninstall started in background.",
         "yes_btn":                "Yes",
@@ -307,7 +307,7 @@ STRINGS: dict[str, dict[str, str]] = {
         "sp_open_folder_lbl":      "Ordner nach Fertigstellung \u00f6ffnen",
         "sp_open_folder_desc":     "Ausgabeordner \u00f6ffnen, wenn alle Downloads abgeschlossen sind",
         # Launcher
-        "launcher_title":      "DeuDownloader",
+        "launcher_title":      "DeuMediaDownloader",
         "choose_downloader":   "Downloader w\u00e4hlen",
         "spotify_desc":        "Tracks, Playlisten\nund Alben",
         "youtube_desc":        "Videos und\nPlaylisten",
@@ -357,11 +357,11 @@ STRINGS: dict[str, dict[str, str]] = {
         "clear_data_desc":        "Entfernt Einstellungen, API-Zugangsdaten und Cache.",
         "uninstall_ffmpeg_btn":   "FFmpeg deinstallieren",
         "uninstall_ffmpeg_desc":  "Entfernt FFmpeg \u00fcber winget vom System.",
-        "uninstall_app_btn":      "DeuDownloader deinstallieren",
+        "uninstall_app_btn":      "DeuMediaDownloader deinstallieren",
         "uninstall_app_desc":     "Startet den Deinstaller und schlie\u00dft die App.",
         "confirm_clear_data":     "Alle Einstellungen und Zugangsdaten l\u00f6schen?\nDies kann nicht r\u00fcckg\u00e4ngig gemacht werden.",
         "confirm_uninstall_ffmpeg": "FFmpeg vom System deinstallieren?",
-        "confirm_uninstall_app":  "DeuDownloader deinstallieren?\nDie App wird jetzt geschlossen.",
+        "confirm_uninstall_app":  "DeuMediaDownloader deinstallieren?\nDie App wird jetzt geschlossen.",
         "no_uninstaller":         "Deinstaller nicht gefunden.\nBitte \u00fcber Windows-Einstellungen \u2192 Apps deinstallieren.",
         "uninstall_started":      "Deinstallation im Hintergrund gestartet.",
         "yes_btn":                "Ja",

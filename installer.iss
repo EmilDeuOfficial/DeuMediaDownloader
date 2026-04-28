@@ -1,7 +1,7 @@
-#define MyAppName "DeuDownloader"
+#define MyAppName "DeuMediaDownloader"
 #define MyAppVersion "1.0.0"
-#define MyAppPublisher "DeuDownloader"
-#define MyAppExeName "DeuDownloader.exe"
+#define MyAppPublisher "DeuMediaDownloader"
+#define MyAppExeName "DeuMediaDownloader.exe"
 
 [Setup]
 AppId={{8F3A2B1C-4D5E-6F7A-8B9C-0D1E2F3A4B5C}
@@ -12,7 +12,7 @@ DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 AllowNoIcons=yes
 OutputDir=dist
-OutputBaseFilename=DeuDownloader_Setup
+OutputBaseFilename=DeuMediaDownloader_Setup
 Compression=lzma2/ultra64
 SolidCompression=yes
 WizardStyle=modern

@@ -1,9 +1,9 @@
-# CLAUDE.md — DeuDownloader
+# CLAUDE.md — DeuMediaDownloader
 
 ## Projektübersicht
 
-DeuDownloader ist ein Spotify/Media-Downloader mit GUI (Python-basiert).
-Repository: `https://github.com/EmilDeuOfficial/DeuDownloader.git`
+DeuMediaDownloader ist ein Spotify/Media-Downloader mit GUI (Python-basiert).
+Repository: `https://github.com/EmilDeuOfficial/DeuMediaDownloader.git`
 
 ---
 
@@ -34,13 +34,13 @@ APP_VERSION = "1.0.0"  # <-- wird automatisch erhöht
 
 ```bash
 pyinstaller --noconfirm --onefile --windowed \
-  --name "DeuDownloader" \
+  --name "DeuMediaDownloader" \
   --icon "img/app.ico" \
   --add-data "img;img" \
   main.py
 ```
 
-Output: `dist/DeuDownloader.exe`
+Output: `dist/DeuMediaDownloader.exe`
 
 ### Schritt 3 — Installer bauen (Inno Setup)
 
@@ -50,7 +50,7 @@ Inno Setup ist unter `%LOCALAPPDATA%\Programs\Inno Setup 6\ISCC.exe` installiert
 "/c/Users/emilo/AppData/Local/Programs/Inno Setup 6/ISCC.exe" installer.iss
 ```
 
-Output: `dist/DeuDownloader_Setup.exe`
+Output: `dist/DeuMediaDownloader_Setup.exe`
 
 ### Schritt 4 — Git Commit & Tag
 
@@ -77,9 +77,9 @@ git push origin --tags
 **Für Bugfixes:**
 ```bash
 gh release create "v{VERSION}" \
-  "dist/DeuDownloader_Setup.exe" \
-  --title "DeuDownloader v{VERSION}" \
-  --notes "## DeuDownloader v{VERSION} — Bugfix
+  "dist/DeuMediaDownloader_Setup.exe" \
+  --title "DeuMediaDownloader v{VERSION}" \
+  --notes "## DeuMediaDownloader v{VERSION} — Bugfix
 
 ### Fix
 - {Was wurde behoben}
@@ -87,7 +87,7 @@ gh release create "v{VERSION}" \
 ### Download
 | Datei | Beschreibung |
 |-------|-------------|
-| DeuDownloader_Setup.exe | Windows-Installer (empfohlen) |
+| DeuMediaDownloader_Setup.exe | Windows-Installer (empfohlen) |
 
 ### Systemvoraussetzungen
 - Windows 10 / 11
@@ -97,9 +97,9 @@ gh release create "v{VERSION}" \
 **Für neue Features:**
 ```bash
 gh release create "v{VERSION}" \
-  "dist/DeuDownloader_Setup.exe" \
-  --title "DeuDownloader v{VERSION}" \
-  --notes "## DeuDownloader v{VERSION} — {Feature-Name}
+  "dist/DeuMediaDownloader_Setup.exe" \
+  --title "DeuMediaDownloader v{VERSION}" \
+  --notes "## DeuMediaDownloader v{VERSION} — {Feature-Name}
 
 ### Neu in dieser Version
 - {Was wurde hinzugefügt}
@@ -107,7 +107,7 @@ gh release create "v{VERSION}" \
 ### Download
 | Datei | Beschreibung |
 |-------|-------------|
-| DeuDownloader_Setup.exe | Windows-Installer (empfohlen) |
+| DeuMediaDownloader_Setup.exe | Windows-Installer (empfohlen) |
 
 ### Systemvoraussetzungen
 - Windows 10 / 11
@@ -119,7 +119,7 @@ gh release create "v{VERSION}" \
 ## Dateistruktur (Pflichtdateien für den Build)
 
 ```
-DeuDownloader/
+DeuMediaDownloader/
 ├── main.py
 ├── downloader.py
 ├── converter.py
@@ -174,17 +174,17 @@ Code ändern
     ↓
 Version in config.py erhöhen
     ↓
-pyinstaller → dist/DeuDownloader.exe
+pyinstaller → dist/DeuMediaDownloader.exe
     ↓
-ISCC.exe installer.iss → dist/DeuDownloader_Setup.exe
+ISCC.exe installer.iss → dist/DeuMediaDownloader_Setup.exe
     ↓
 git add . && git commit -m "fix/feat: vX.X.X — Beschreibung" && git tag
     ↓
 git push origin master && git push origin --tags
     ↓
-gh release create vX.X.X (nur Installer: DeuDownloader_Setup.exe)
+gh release create vX.X.X (nur Installer: DeuMediaDownloader_Setup.exe)
     ↓
-Release-Format: "## DeuDownloader vX.X.X — {Bugfix|Feature-Name}"
+Release-Format: "## DeuMediaDownloader vX.X.X — {Bugfix|Feature-Name}"
 ```
 
 **Dieser Ablauf ist nicht optional — er wird nach jedem Update automatisch ausgeführt.**
