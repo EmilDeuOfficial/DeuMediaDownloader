@@ -22,27 +22,27 @@ def _check_ffmpeg() -> bool:
 
 
 def main():
-    missing = [pkg for mod, pkg in REQUIRED_PACKAGES.items() if not _check_module(mod)]
-
-    if missing:
-        install_cmd = f"pip install {' '.join(missing)}"
-        print(f"[ERROR] Missing packages: {', '.join(missing)}")
-        print(f"        Run:  {install_cmd}")
-        try:
-            import tkinter as tk
-            from tkinter import messagebox
-            root = tk.Tk()
-            root.withdraw()
-            messagebox.showerror(
-                "Missing Dependencies",
-                f"The following packages are required but not installed:\n\n"
-                f"{chr(10).join(missing)}\n\n"
-                f"Run this command and restart:\n{install_cmd}",
-            )
-            root.destroy()
-        except Exception:
-            pass
-        sys.exit(1)
+    if not getattr(sys, "frozen", False):
+        missing = [pkg for mod, pkg in REQUIRED_PACKAGES.items() if not _check_module(mod)]
+        if missing:
+            install_cmd = f"pip install {' '.join(missing)}"
+            print(f"[ERROR] Missing packages: {', '.join(missing)}")
+            print(f"        Run:  {install_cmd}")
+            try:
+                import tkinter as tk
+                from tkinter import messagebox
+                root = tk.Tk()
+                root.withdraw()
+                messagebox.showerror(
+                    "Missing Dependencies",
+                    f"The following packages are required but not installed:\n\n"
+                    f"{chr(10).join(missing)}\n\n"
+                    f"Run this command and restart:\n{install_cmd}",
+                )
+                root.destroy()
+            except Exception:
+                pass
+            sys.exit(1)
 
     from config import load_language
     load_language()
