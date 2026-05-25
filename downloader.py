@@ -293,7 +293,7 @@ def download_spotify_track(task: DownloadTask, ffmpeg_ok: bool) -> None:
             **_ffmpeg_opts(),
         }
 
-        if ext != "opus" and ffmpeg_ok:
+        if ext != "opus" and find_ffmpeg():
             pp: Dict[str, Any] = {"key": "FFmpegExtractAudio", "preferredcodec": ext}
             if quality and quality != "0":
                 pp["preferredquality"] = quality
