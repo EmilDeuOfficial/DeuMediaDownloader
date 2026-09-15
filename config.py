@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 APP_NAME = "DeuMediaDownloader"
-APP_VERSION = "1.6.1"
+APP_VERSION = "1.6.2"
 CONFIG_FILE   = Path.home() / ".spotify_downloader" / "config.json"
 LANGUAGE_FILE = Path.home() / ".spotify_downloader" / "language"
 
@@ -92,6 +92,7 @@ DEFAULT_CONFIG = {
     "tt_open_folder":        True,
     "tt_win_geo":            "820x720",
     "tt_cookies_browser":    "",
+    "tt_cookies_file":       "",
     # Filename templates
     "sp_filename_template":  "{artist} - {title}",
     "yt_filename_template":  "{title}",
@@ -280,14 +281,20 @@ STRINGS: dict[str, dict[str, str]] = {
         "tt_rate_limit_lbl":      "Speed Limit",
         "tt_sec_auth":            "Authentication",
         "tt_cookies_lbl":         "Browser Cookies",
-        "tt_cookies_desc":        "TikTok blocks most anonymous downloads. Using a logged-in browser's cookies usually fixes “Unexpected response” errors.",
+        "tt_cookies_desc":        "TikTok blocks most anonymous downloads. Using a logged-in browser's cookies usually fixes “Unexpected response” errors. Chrome and Edge currently can't be read on Windows due to a browser security feature - use Firefox if you have it installed, or the cookie file option below otherwise.",
         "tt_cookies_none":        "Don't use cookies",
         "tt_cookies_chrome":      "Chrome",
         "tt_cookies_edge":        "Edge",
-        "tt_cookies_firefox":     "Firefox",
+        "tt_cookies_firefox":     "Firefox (recommended)",
         "tt_cookies_brave":       "Brave",
         "tt_cookies_opera":       "Opera",
         "tt_cookies_vivaldi":     "Vivaldi",
+        "tt_cookies_file_lbl":    "Cookie File (alternative)",
+        "tt_cookies_file_desc":   "Works even when Chrome/Edge don't and Firefox isn't installed: export your TikTok cookies to a .txt file with a browser extension (e.g. “Get cookies.txt LOCALLY”) and select it here. Takes priority over Browser Cookies above when set.",
+        "tt_cookies_file_ph":     "No file selected",
+        "tt_cookies_file_clear":  "Clear",
+        "tt_err_dpapi":           "This browser's cookies can't be read due to a Windows security feature with no available fix. Please try Firefox instead, or use the Cookie File option below.",
+        "tt_err_no_browser":      "This browser (or its saved TikTok login) wasn't found on your PC. Please pick a different browser, or use the Cookie File option below.",
     },
     "de": {
         # Labels
@@ -432,14 +439,20 @@ STRINGS: dict[str, dict[str, str]] = {
         "tt_rate_limit_lbl":      "Geschwindigkeitsbegrenzung",
         "tt_sec_auth":            "Anmeldung",
         "tt_cookies_lbl":         "Browser-Cookies",
-        "tt_cookies_desc":        "TikTok blockiert die meisten anonymen Downloads. Die Cookies eines eingeloggten Browsers beheben meist den „Unexpected response“-Fehler.",
+        "tt_cookies_desc":        "TikTok blockiert die meisten anonymen Downloads. Die Cookies eines eingeloggten Browsers beheben meist den „Unexpected response“-Fehler. Chrome und Edge lassen sich unter Windows wegen eines Browser-Sicherheitsfeatures derzeit nicht auslesen - nutze Firefox, falls installiert, sonst die Cookie-Datei-Option unten.",
         "tt_cookies_none":        "Keine Cookies verwenden",
         "tt_cookies_chrome":      "Chrome",
         "tt_cookies_edge":        "Edge",
-        "tt_cookies_firefox":     "Firefox",
+        "tt_cookies_firefox":     "Firefox (empfohlen)",
         "tt_cookies_brave":       "Brave",
         "tt_cookies_opera":       "Opera",
         "tt_cookies_vivaldi":     "Vivaldi",
+        "tt_cookies_file_lbl":    "Cookie-Datei (Alternative)",
+        "tt_cookies_file_desc":   "Funktioniert auch wenn Chrome/Edge nicht gehen und Firefox nicht installiert ist: TikTok-Cookies mit einer Browser-Erweiterung (z. B. „Get cookies.txt LOCALLY“) als .txt-Datei exportieren und hier auswählen. Hat Vorrang vor Browser-Cookies oben, wenn gesetzt.",
+        "tt_cookies_file_ph":     "Keine Datei ausgewählt",
+        "tt_cookies_file_clear":  "Entfernen",
+        "tt_err_dpapi":           "Die Cookies dieses Browsers können wegen eines Windows-Sicherheitsfeatures ohne verfügbaren Fix nicht gelesen werden. Bitte Firefox probieren oder die Cookie-Datei-Option unten nutzen.",
+        "tt_err_no_browser":      "Dieser Browser (oder der gespeicherte TikTok-Login darin) wurde auf deinem PC nicht gefunden. Bitte einen anderen Browser wählen oder die Cookie-Datei-Option unten nutzen.",
     },
 }
 

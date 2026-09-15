@@ -2416,9 +2416,56 @@ class TikTokSettingsDialog(ctk.CTkToplevel):
         cur = self._config.get("tt_cookies_browser", "")
         cur_idx = self._tt_cookie_values.index(cur) if cur in self._tt_cookie_values else 0
         self._cookie_var = ctk.StringVar(value=self._tt_cookie_labels[cur_idx])
-        CustomDropdown(row, variable=self._cookie_var, values=self._tt_cookie_labels, width=200,
+        CustomDropdown(row, variable=self._cookie_var, values=self._tt_cookie_labels, width=260,
                        accent=self.TT_PINK, accent_dim="#3d0617"
                        ).grid(row=0, column=1, sticky="w")
+
+        ctk.CTkLabel(card, text=T("tt_cookies_file_lbl"), font=(FONT_FAMILY, 12),
+                     text_color=C["text_primary"]).pack(anchor="w", padx=14, pady=(4, 2))
+        ctk.CTkLabel(card, text=T("tt_cookies_file_desc"), font=(FONT_FAMILY, 10),
+                     text_color=C["text_secondary"], anchor="w",
+                     wraplength=440, justify="left").pack(anchor="w", padx=14, pady=(0, 6))
+
+        file_row = ctk.CTkFrame(card, fg_color="transparent")
+        file_row.pack(fill="x", padx=14, pady=(0, 12))
+        file_row.grid_columnconfigure(0, weight=1)
+
+        self._cookie_file_var = ctk.StringVar(value=self._config.get("tt_cookies_file", ""))
+        self._cookie_file_entry = ctk.CTkEntry(
+            file_row, height=32, font=(FONT_FAMILY, 11),
+            fg_color=C["bg_input"], border_color=C["border"],
+            placeholder_text=T("tt_cookies_file_ph"), state="readonly",
+        )
+        self._cookie_file_entry.grid(row=0, column=0, sticky="ew", padx=(0, 8))
+        self._refresh_cookie_file_entry()
+
+        ctk.CTkButton(file_row, text=T("browse"), width=80, height=32,
+                      fg_color=C["bg_card"], hover_color=C["border"],
+                      command=self._browse_cookie_file).grid(row=0, column=1, padx=(0, 8))
+        ctk.CTkButton(file_row, text=T("tt_cookies_file_clear"), width=80, height=32,
+                      fg_color=C["bg_card"], hover_color=C["border"],
+                      command=self._clear_cookie_file).grid(row=0, column=2)
+
+    def _refresh_cookie_file_entry(self):
+        path = self._cookie_file_var.get()
+        self._cookie_file_entry.configure(state="normal")
+        self._cookie_file_entry.delete(0, "end")
+        if path:
+            self._cookie_file_entry.insert(0, path)
+        self._cookie_file_entry.configure(state="readonly")
+
+    def _browse_cookie_file(self):
+        path = filedialog.askopenfilename(
+            title=T("tt_cookies_file_lbl"),
+            filetypes=[("Cookies", "*.txt"), ("All files", "*.*")],
+        )
+        if path:
+            self._cookie_file_var.set(path)
+            self._refresh_cookie_file_entry()
+
+    def _clear_cookie_file(self):
+        self._cookie_file_var.set("")
+        self._refresh_cookie_file_entry()
 
     def _build_section_uninstall(self, parent):
         ctk.CTkLabel(parent, text=T("uninstall_section"),
@@ -2488,6 +2535,7 @@ class TikTokSettingsDialog(ctk.CTkToplevel):
         cookie_label = self._cookie_var.get()
         cidx = self._tt_cookie_labels.index(cookie_label) if cookie_label in self._tt_cookie_labels else 0
         self._config["tt_cookies_browser"] = self._tt_cookie_values[cidx]
+        self._config["tt_cookies_file"]    = self._cookie_file_var.get()
         lbl = self._tt_tmpl_var.get()
         tidx = self._tt_tmpl_labels.index(lbl) if lbl in self._tt_tmpl_labels else 0
         self._config["tt_filename_template"] = self._tt_tmpl_keys[tidx]

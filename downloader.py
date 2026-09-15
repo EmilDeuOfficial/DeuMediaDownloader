@@ -7,9 +7,10 @@ from enum import Enum
 from pathlib import Path
 from typing import Optional, Callable, List, Dict, Any
 
+import requests
 import yt_dlp
 
-from config import AUDIO_FORMATS, VIDEO_FORMATS, load_config
+from config import AUDIO_FORMATS, VIDEO_FORMATS, load_config, T
 from converter import embed_metadata, fetch_cover, find_ffmpeg
 
 
@@ -69,10 +70,27 @@ def _ffmpeg_opts() -> dict:
 
 
 def _tiktok_cookie_opts(cfg: dict) -> dict:
-    """TikTok blocks most cookie-less requests. If the user picked a browser in
-    Settings, pass its cookie jar to yt-dlp so requests look like a logged-in session."""
+    """TikTok blocks most cookie-less requests. A manually exported cookie file
+    (cfg["tt_cookies_file"]) always works and takes priority since it needs no
+    browser-side decryption; otherwise fall back to reading the selected browser's
+    cookie jar directly (cfg["tt_cookies_browser"])."""
+    cookie_file = cfg.get("tt_cookies_file", "")
+    if cookie_file:
+        return {"cookiefile": cookie_file}
     browser = cfg.get("tt_cookies_browser", "")
     return {"cookiesfrombrowser": (browser,)} if browser else {}
+
+
+def _friendly_tiktok_error(msg: str) -> str:
+    """Chrome's and Edge's "App-Bound Encryption" (rolled out since mid-2024)
+    permanently broke yt-dlp's cookie decryption for those browsers on Windows - see
+    https://github.com/yt-dlp/yt-dlp/issues/10927. There is no fix on yt-dlp's or our
+    side; Firefox (if installed) or a manually exported cookie file still work."""
+    if "Failed to decrypt with DPAPI" in msg:
+        return T("tt_err_dpapi")
+    if "could not find" in msg and "cookies database" in msg:
+        return T("tt_err_no_browser")
+    return msg
 
 
 # ===========================================================================
@@ -150,6 +168,20 @@ class SpotifyClient:
         return self._track_from_data(self._sp.track(track_id))
 
     def get_playlist_tracks(self, playlist_id: str) -> List[TrackInfo]:
+        import spotipy
+        try:
+            return self._get_playlist_tracks_via_api(playlist_id)
+        except spotipy.exceptions.SpotifyException as exc:
+            if exc.http_status != 403:
+                raise
+            # Spotify's Web API rejects "get playlist items" with 403 for playlists the
+            # authenticated user doesn't own, unless the app has been granted Extended
+            # Quota Mode (Spotify no longer approves this for hobby apps). The public
+            # embed page exposes the same track listing with no such restriction, so we
+            # fall back to that for other people's playlists.
+            return self._get_playlist_tracks_via_embed(playlist_id)
+
+    def _get_playlist_tracks_via_api(self, playlist_id: str) -> List[TrackInfo]:
         tracks: List[TrackInfo] = []
         results = self._sp.playlist_items(playlist_id, additional_types=("track",))
         while results:
@@ -164,6 +196,40 @@ class SpotifyClient:
                 except Exception:
                     pass
             results = self._sp.next(results) if results.get("next") else None
+        return tracks
+
+    def _get_playlist_tracks_via_embed(self, playlist_id: str) -> List[TrackInfo]:
+        resp = requests.get(
+            f"https://open.spotify.com/embed/playlist/{playlist_id}", timeout=15
+        )
+        resp.raise_for_status()
+        m = re.search(
+            r'<script id="__NEXT_DATA__"[^>]*>(.*?)</script>', resp.text, re.S
+        )
+        if not m:
+            raise ValueError("Could not read playlist from Spotify's public page.")
+
+        import json
+        entity = json.loads(m.group(1))["props"]["pageProps"]["state"]["data"]["entity"]
+        track_ids = [
+            item["uri"].rsplit(":", 1)[-1]
+            for item in entity.get("trackList") or []
+            if (item.get("uri") or "").startswith("spotify:track:")
+        ]
+
+        # The embed page only exposes a preview window of the playlist (currently
+        # ~100 tracks); this is a known limit of this fallback, not a bug.
+        #
+        # Spotify's batch "Get Several Tracks" endpoint (/v1/tracks?ids=...) is
+        # blocked by the same Extended Quota restriction as playlist items, even
+        # though the single-track endpoint isn't - so these have to be fetched
+        # one at a time.
+        tracks: List[TrackInfo] = []
+        for track_id in track_ids:
+            try:
+                tracks.append(self.get_track_info(track_id))
+            except Exception:
+                pass
         return tracks
 
     def get_album_tracks(self, album_id: str) -> List[TrackInfo]:
@@ -725,8 +791,11 @@ def extract_tiktok_entries(url: str) -> List[Dict[str, Any]]:
         **_ffmpeg_opts(),
         **_tiktok_cookie_opts(load_config()),
     }
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(url, download=False)
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=False)
+    except Exception as exc:
+        raise type(exc)(_friendly_tiktok_error(str(exc))) from exc
 
     if info is None:
         raise ValueError("Could not extract info from URL.")
@@ -849,7 +918,7 @@ def download_tiktok_task(task: TikTokTask, ffmpeg_ok: bool) -> None:
             task.on_done(task)
 
     except Exception as exc:
-        _status(DownloadStatus.ERROR, str(exc))
+        _status(DownloadStatus.ERROR, _friendly_tiktok_error(str(exc)))
         _progress(0.0)
         if task.on_done:
             task.on_done(task)
