@@ -53,6 +53,12 @@ def _apply_template(template: str, artist: str = "", title: str = "",
 
 _RATE_MAP = {"1M": 1_048_576, "5M": 5_242_880, "10M": 10_485_760, "50M": 52_428_800}
 
+# yt-dlp's EmbedThumbnail postprocessor only supports these container/codec
+# extensions (its own reported list); WAV (and anything else) raises a hard
+# PostProcessingError that aborts the task even though the file already
+# downloaded and converted successfully.
+_THUMBNAIL_EMBED_EXTS = {"mp3", "mkv", "mka", "ogg", "opus", "flac", "m4a", "mp4", "m4v", "mov"}
+
 
 def _ffmpeg_opts() -> dict:
     opts: dict = {}
@@ -582,7 +588,7 @@ def download_youtube_task(task: YouTubeTask, ffmpeg_ok: bool) -> None:
                 pp["preferredquality"] = quality
             postprocessors.append(pp)
 
-        if cfg.get("yt_embed_thumbnail", True) and not is_video and ffmpeg_ok:
+        if cfg.get("yt_embed_thumbnail", True) and not is_video and ffmpeg_ok and ext in _THUMBNAIL_EMBED_EXTS:
             ydl_opts["writethumbnail"] = True
             postprocessors.append({"key": "EmbedThumbnail"})
 
@@ -815,7 +821,7 @@ def download_tiktok_task(task: TikTokTask, ffmpeg_ok: bool) -> None:
                 pp["preferredquality"] = quality
             postprocessors.append(pp)
 
-        if cfg.get("tt_embed_thumbnail", True) and not is_video and ffmpeg_ok:
+        if cfg.get("tt_embed_thumbnail", True) and not is_video and ffmpeg_ok and ext in _THUMBNAIL_EMBED_EXTS:
             ydl_opts["writethumbnail"] = True
             postprocessors.append({"key": "EmbedThumbnail"})
 

@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 APP_NAME = "DeuMediaDownloader"
-APP_VERSION = "1.6.0"
+APP_VERSION = "1.6.1"
 CONFIG_FILE   = Path.home() / ".spotify_downloader" / "config.json"
 LANGUAGE_FILE = Path.home() / ".spotify_downloader" / "language"
 
@@ -61,6 +61,8 @@ DEFAULT_CONFIG = {
     "spotify_client_id":     "",
     "spotify_client_secret": "",
     "output_dir":            str(Path.home() / "Music" / "Spotify Downloads"),
+    "yt_output_dir":         str(Path.home() / "Music" / "YouTube Downloads"),
+    "tt_output_dir":         str(Path.home() / "Music" / "TikTok Downloads"),
     "default_format":        "MP3 (256 kbps)",
     "yt_format":             "MP3 (256 kbps)",
     "yt_format_audio":       "MP3 (256 kbps)",

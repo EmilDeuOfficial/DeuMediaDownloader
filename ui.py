@@ -196,6 +196,11 @@ class CustomDropdown(ctk.CTkFrame):
             self._close_popup()
         else:
             self._open_popup()
+        # Stop propagation to the widget's class bindings: the label/frame we're
+        # clicking is backed by a Tk Canvas, whose default class binding runs
+        # `focus %W` on Button-1 *after* ours - which would steal focus straight
+        # back from the popup we just opened and close it via FocusOut.
+        return "break"
 
     def _open_popup(self):
         self._arrow.configure(text="∧")
@@ -266,6 +271,13 @@ class CustomDropdown(ctk.CTkFrame):
 
         self._popup = popup
         popup.bind("<FocusOut>", lambda e: self._after_focus_out())
+        # When this dropdown lives inside a modal dialog (grab_set()), the parent's
+        # grab fights this popup for focus; taking our own grab while open (and
+        # restoring the dialog's grab on close) makes the popup win that fight
+        # without permanently undoing the dialog's modality.
+        owner = self.winfo_toplevel()
+        self._grab_owner = owner if owner.grab_status() else None
+        popup.grab_set()
         popup.focus_set()
 
     def _after_focus_out(self):
@@ -273,8 +285,15 @@ class CustomDropdown(ctk.CTkFrame):
 
     def _close_popup(self):
         if self._popup and self._popup.winfo_exists():
+            self._popup.grab_release()
             self._popup.destroy()
         self._popup = None
+        if getattr(self, "_grab_owner", None) is not None:
+            try:
+                self._grab_owner.grab_set()
+            except Exception:
+                pass
+            self._grab_owner = None
         self._arrow.configure(text="∨")
         self.configure(fg_color=C["border"])
         self._inner.configure(fg_color=C["bg_input"])
@@ -1881,7 +1900,7 @@ class YouTubeDownloaderApp:
         ctk.CTkLabel(frame, text=T("save_to"), font=(FONT_FAMILY, 12),
                      text_color=C["text_secondary"]).grid(row=1, column=0, padx=(16, 8), pady=(4, 12))
 
-        self._outdir_var = ctk.StringVar(value=self._config.get("output_dir", ""))
+        self._outdir_var = ctk.StringVar(value=self._config.get("yt_output_dir", ""))
         self._outdir_var.trace_add("write", lambda *_: self._save_ui_prefs())
         ctk.CTkEntry(frame, textvariable=self._outdir_var,
                      height=34, font=(FONT_FAMILY, 12),
@@ -1993,8 +2012,8 @@ class YouTubeDownloaderApp:
             self._config["yt_format_audio"] = fmt
         else:
             self._config["yt_format_video"] = fmt
-        self._config["yt_media_type"] = media
-        self._config["output_dir"]    = self._outdir_var.get()
+        self._config["yt_media_type"]  = media
+        self._config["yt_output_dir"]  = self._outdir_var.get()
         save_config(self._config)
 
     def _paste_url(self):
@@ -2195,7 +2214,7 @@ class TikTokSettingsDialog(ctk.CTkToplevel):
         super().__init__(parent)
         self.attributes("-alpha", 0)
         self.title(T("tt_settings_title"))
-        self.geometry("520x480")
+        self.geometry("520x600")
         self.resizable(False, False)
         self.overrideredirect(True)
         self.configure(fg_color=C["bg_primary"])
@@ -2723,7 +2742,7 @@ class TikTokDownloaderApp:
         ctk.CTkLabel(frame, text=T("save_to"), font=(FONT_FAMILY, 12),
                      text_color=C["text_secondary"]).grid(row=1, column=0, padx=(16, 8), pady=(4, 12))
 
-        self._outdir_var = ctk.StringVar(value=self._config.get("output_dir", ""))
+        self._outdir_var = ctk.StringVar(value=self._config.get("tt_output_dir", ""))
         self._outdir_var.trace_add("write", lambda *_: self._save_ui_prefs())
         ctk.CTkEntry(frame, textvariable=self._outdir_var,
                      height=34, font=(FONT_FAMILY, 12),
@@ -2834,8 +2853,8 @@ class TikTokDownloaderApp:
             self._config["tt_format_audio"] = fmt
         else:
             self._config["tt_format_video"] = fmt
-        self._config["tt_media_type"] = media
-        self._config["output_dir"]    = self._outdir_var.get()
+        self._config["tt_media_type"]  = media
+        self._config["tt_output_dir"]  = self._outdir_var.get()
         save_config(self._config)
 
     def _open_settings(self):

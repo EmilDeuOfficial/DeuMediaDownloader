@@ -1,5 +1,5 @@
 #define MyAppName "DeuMediaDownloader"
-#define MyAppVersion "1.6.0"
+#define MyAppVersion "1.6.1"
 #define MyAppPublisher "DeuMediaDownloader"
 #define MyAppExeName "DeuMediaDownloader.exe"
 
