@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 APP_NAME = "DeuMediaDownloader"
-APP_VERSION = "1.5.11"
+APP_VERSION = "1.6.0"
 CONFIG_FILE   = Path.home() / ".spotify_downloader" / "config.json"
 LANGUAGE_FILE = Path.home() / ".spotify_downloader" / "language"
 
@@ -89,6 +89,7 @@ DEFAULT_CONFIG = {
     "tt_rate_limit":         "",
     "tt_open_folder":        True,
     "tt_win_geo":            "820x720",
+    "tt_cookies_browser":    "",
     # Filename templates
     "sp_filename_template":  "{artist} - {title}",
     "yt_filename_template":  "{title}",
@@ -114,6 +115,19 @@ TT_FILENAME_TEMPLATES = {
     "{title}":        "tmpl_title_only",
     "{artist} - {title}": "tmpl_artist_title",
     "{title} - {artist}": "tmpl_title_artist",
+}
+
+# TikTok now blocks most unauthenticated scraping; browsing with a logged-in session's
+# cookies (via yt-dlp's cookiesfrombrowser) lets downloads pass as authenticated traffic.
+# Keys are yt-dlp's own browser identifiers.  {value: translation_key}
+TT_COOKIE_BROWSERS = {
+    "":           "tt_cookies_none",
+    "chrome":     "tt_cookies_chrome",
+    "edge":       "tt_cookies_edge",
+    "firefox":    "tt_cookies_firefox",
+    "brave":      "tt_cookies_brave",
+    "opera":      "tt_cookies_opera",
+    "vivaldi":    "tt_cookies_vivaldi",
 }
 
 # ---------------------------------------------------------------------------
@@ -262,6 +276,16 @@ STRINGS: dict[str, dict[str, str]] = {
         "tt_embed_thumb_desc":    "Embed the video cover into audio files",
         "tt_sec_network":         "Network",
         "tt_rate_limit_lbl":      "Speed Limit",
+        "tt_sec_auth":            "Authentication",
+        "tt_cookies_lbl":         "Browser Cookies",
+        "tt_cookies_desc":        "TikTok blocks most anonymous downloads. Using a logged-in browser's cookies usually fixes “Unexpected response” errors.",
+        "tt_cookies_none":        "Don't use cookies",
+        "tt_cookies_chrome":      "Chrome",
+        "tt_cookies_edge":        "Edge",
+        "tt_cookies_firefox":     "Firefox",
+        "tt_cookies_brave":       "Brave",
+        "tt_cookies_opera":       "Opera",
+        "tt_cookies_vivaldi":     "Vivaldi",
     },
     "de": {
         # Labels
@@ -404,6 +428,16 @@ STRINGS: dict[str, dict[str, str]] = {
         "tt_embed_thumb_desc":    "Video-Cover in Audiodateien einbetten",
         "tt_sec_network":         "Netzwerk",
         "tt_rate_limit_lbl":      "Geschwindigkeitsbegrenzung",
+        "tt_sec_auth":            "Anmeldung",
+        "tt_cookies_lbl":         "Browser-Cookies",
+        "tt_cookies_desc":        "TikTok blockiert die meisten anonymen Downloads. Die Cookies eines eingeloggten Browsers beheben meist den „Unexpected response“-Fehler.",
+        "tt_cookies_none":        "Keine Cookies verwenden",
+        "tt_cookies_chrome":      "Chrome",
+        "tt_cookies_edge":        "Edge",
+        "tt_cookies_firefox":     "Firefox",
+        "tt_cookies_brave":       "Brave",
+        "tt_cookies_opera":       "Opera",
+        "tt_cookies_vivaldi":     "Vivaldi",
     },
 }
 

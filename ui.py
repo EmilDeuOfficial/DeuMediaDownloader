@@ -2272,6 +2272,7 @@ class TikTokSettingsDialog(ctk.CTkToplevel):
         self._build_section_downloads(scroll)
         self._build_section_media(scroll)
         self._build_section_network(scroll)
+        self._build_section_auth(scroll)
         self._build_section_filename(scroll)
 
         btn_frame = ctk.CTkFrame(settings_tab, fg_color="transparent")
@@ -2378,6 +2379,28 @@ class TikTokSettingsDialog(ctk.CTkToplevel):
                        accent=self.TT_PINK, accent_dim="#3d0617"
                        ).grid(row=0, column=1, sticky="w")
 
+    def _build_section_auth(self, parent):
+        card = self._section_card(parent, T("tt_sec_auth"))
+        ctk.CTkLabel(card, text=T("tt_cookies_desc"), font=(FONT_FAMILY, 10),
+                     text_color=C["text_secondary"], anchor="w",
+                     wraplength=440, justify="left").pack(anchor="w", padx=14, pady=(0, 8))
+        row = ctk.CTkFrame(card, fg_color="transparent")
+        row.pack(fill="x", padx=14, pady=(0, 12))
+        row.grid_columnconfigure(1, weight=1)
+
+        ctk.CTkLabel(row, text=T("tt_cookies_lbl"), font=(FONT_FAMILY, 12),
+                     text_color=C["text_primary"]).grid(row=0, column=0, sticky="w", padx=(0, 12))
+
+        from config import TT_COOKIE_BROWSERS
+        self._tt_cookie_values = list(TT_COOKIE_BROWSERS.keys())
+        self._tt_cookie_labels = [T(v) for v in TT_COOKIE_BROWSERS.values()]
+        cur = self._config.get("tt_cookies_browser", "")
+        cur_idx = self._tt_cookie_values.index(cur) if cur in self._tt_cookie_values else 0
+        self._cookie_var = ctk.StringVar(value=self._tt_cookie_labels[cur_idx])
+        CustomDropdown(row, variable=self._cookie_var, values=self._tt_cookie_labels, width=200,
+                       accent=self.TT_PINK, accent_dim="#3d0617"
+                       ).grid(row=0, column=1, sticky="w")
+
     def _build_section_uninstall(self, parent):
         ctk.CTkLabel(parent, text=T("uninstall_section"),
                      font=(FONT_FAMILY, 13, "bold"),
@@ -2443,6 +2466,9 @@ class TikTokSettingsDialog(ctk.CTkToplevel):
         labels = [T(k) for k in self.RATE_LABELS]
         idx = labels.index(label) if label in labels else 0
         self._config["tt_rate_limit"] = self.RATE_VALUES[idx]
+        cookie_label = self._cookie_var.get()
+        cidx = self._tt_cookie_labels.index(cookie_label) if cookie_label in self._tt_cookie_labels else 0
+        self._config["tt_cookies_browser"] = self._tt_cookie_values[cidx]
         lbl = self._tt_tmpl_var.get()
         tidx = self._tt_tmpl_labels.index(lbl) if lbl in self._tt_tmpl_labels else 0
         self._config["tt_filename_template"] = self._tt_tmpl_keys[tidx]

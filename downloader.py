@@ -62,6 +62,13 @@ def _ffmpeg_opts() -> dict:
     return opts
 
 
+def _tiktok_cookie_opts(cfg: dict) -> dict:
+    """TikTok blocks most cookie-less requests. If the user picked a browser in
+    Settings, pass its cookie jar to yt-dlp so requests look like a logged-in session."""
+    browser = cfg.get("tt_cookies_browser", "")
+    return {"cookiesfrombrowser": (browser,)} if browser else {}
+
+
 # ===========================================================================
 # SPOTIFY
 # ===========================================================================
@@ -101,7 +108,10 @@ class SpotifyClient:
         import spotipy
         from spotipy.oauth2 import SpotifyOAuth
 
-        cache_path = Path.home() / ".spotify_downloader" / ".spotify_token_cache"
+        # Cache is keyed by client_id: a token cached under different (e.g. old/rotated)
+        # credentials causes Spotify's token endpoint to reject refresh attempts with
+        # "invalid_client", since a refresh token is only valid for the client it was issued to.
+        cache_path = Path.home() / ".spotify_downloader" / f".spotify_token_cache_{client_id}"
         cache_path.parent.mkdir(parents=True, exist_ok=True)
 
         self._sp = spotipy.Spotify(
@@ -707,6 +717,7 @@ def extract_tiktok_entries(url: str) -> List[Dict[str, Any]]:
         "extract_flat":  is_playlist,
         "skip_download": True,
         **_ffmpeg_opts(),
+        **_tiktok_cookie_opts(load_config()),
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=False)
@@ -794,6 +805,7 @@ def download_tiktok_task(task: TikTokTask, ffmpeg_ok: bool) -> None:
             "progress_hooks": [ydl_hook],
             "noplaylist":     True,
             **_ffmpeg_opts(),
+            **_tiktok_cookie_opts(cfg),
         }
 
         if not is_video and ffmpeg_ok:
