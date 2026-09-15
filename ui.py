@@ -743,7 +743,7 @@ class QueueItemWidget(ctk.CTkFrame):
 
 
 # ---------------------------------------------------------------------------
-# Main application window — Spotify
+# Main application window - Spotify
 # ---------------------------------------------------------------------------
 
 class DeuMediaDownloaderApp:
@@ -2980,7 +2980,7 @@ class TikTokDownloaderApp:
 
 
 # ---------------------------------------------------------------------------
-# Launcher – choose downloader on startup
+# Launcher - choose downloader on startup
 # ---------------------------------------------------------------------------
 
 class LauncherApp:

@@ -90,7 +90,7 @@ class TrackInfo:
     year:        Optional[str] = None
 
     def display_name(self) -> str:
-        return f"{self.artist} – {self.title}"
+        return f"{self.artist} - {self.title}"
 
 
 @dataclass

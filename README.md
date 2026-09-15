@@ -17,9 +17,9 @@ as high-quality audio files (MP3, FLAC, WAV, AAC, OGG).
 
 ## Quick Start
 
-### 1 — Install FFmpeg
+### 1 - Install FFmpeg
 
-**Windows (recommended — winget):**
+**Windows (recommended - winget):**
 ```
 winget install ffmpeg
 ```
@@ -32,7 +32,7 @@ ffmpeg -version
 
 ---
 
-### 2 — Install Python dependencies
+### 2 - Install Python dependencies
 
 ```
 pip install -r requirements.txt
@@ -40,7 +40,7 @@ pip install -r requirements.txt
 
 ---
 
-### 3 — Get Spotify API credentials (free)
+### 3 - Get Spotify API credentials (free)
 
 1. Go to https://developer.spotify.com/dashboard
 2. Log in and click **Create app**
@@ -49,7 +49,7 @@ pip install -r requirements.txt
 
 ---
 
-### 4 — Run the application
+### 4 - Run the application
 
 ```
 python main.py
@@ -77,7 +77,7 @@ Metadata (title, artist, album, cover art) is automatically embedded.
 
 ```
 spotify_downloader/
-├── main.py          Entry point — dependency checks + launch
+├── main.py          Entry point - dependency checks + launch
 ├── downloader.py    Spotify metadata + yt-dlp download logic
 ├── converter.py     FFmpeg helpers + mutagen metadata embedding
 ├── ui.py            CustomTkinter GUI
@@ -102,12 +102,12 @@ spotify_downloader/
 
 ## Troubleshooting
 
-**"FFmpeg ✗" shown in the header** — FFmpeg is not on your PATH.
+**"FFmpeg ✗" shown in the header** - FFmpeg is not on your PATH.
 Install it and restart the app.
 
-**"No Spotify API credentials"** — Open Settings and enter your credentials.
+**"No Spotify API credentials"** - Open Settings and enter your credentials.
 
-**Track not found / wrong match** — yt-dlp searches YouTube Music;
+**Track not found / wrong match** - yt-dlp searches YouTube Music;
 rare tracks may not be available there.
 
 ---

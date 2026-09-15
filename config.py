@@ -6,7 +6,7 @@ APP_VERSION = "1.6.1"
 CONFIG_FILE   = Path.home() / ".spotify_downloader" / "config.json"
 LANGUAGE_FILE = Path.home() / ".spotify_downloader" / "language"
 
-# Source is YouTube Music (max ~256 kbps AAC/Opus) — lossless formats are intentionally excluded
+# Source is YouTube Music (max ~256 kbps AAC/Opus) - lossless formats are intentionally excluded
 AUDIO_FORMATS = {
     "MP3 (128 kbps)":       {"ext": "mp3", "codec": "libmp3lame", "bitrate": "128k", "ydl_quality": "128"},
     "MP3 (192 kbps)":       {"ext": "mp3", "codec": "libmp3lame", "bitrate": "192k", "ydl_quality": "192"},
@@ -264,10 +264,10 @@ STRINGS: dict[str, dict[str, str]] = {
         # Filename templates
         "filename_template_lbl":  "Filename",
         "filename_template_desc": "Placeholders: {artist}, {title}, {year}, {album}",
-        "tmpl_artist_title":      "Artist — Title",
-        "tmpl_title_artist":      "Title — Artist",
+        "tmpl_artist_title":      "Artist - Title",
+        "tmpl_title_artist":      "Title - Artist",
         "tmpl_title_only":        "Title only",
-        "tmpl_artist_title_year": "Artist — Title (Year)",
+        "tmpl_artist_title_year": "Artist - Title (Year)",
         "tmpl_title_album":       "Title [Album]",
         # TikTok settings dialog
         "tt_settings_title":      "TikTok Settings",
@@ -416,10 +416,10 @@ STRINGS: dict[str, dict[str, str]] = {
         # Filename templates
         "filename_template_lbl":  "Dateiname",
         "filename_template_desc": "Platzhalter: {artist}, {title}, {year}, {album}",
-        "tmpl_artist_title":      "Künstler — Titel",
-        "tmpl_title_artist":      "Titel — Künstler",
+        "tmpl_artist_title":      "Künstler - Titel",
+        "tmpl_title_artist":      "Titel - Künstler",
         "tmpl_title_only":        "Nur Titel",
-        "tmpl_artist_title_year": "Künstler — Titel (Jahr)",
+        "tmpl_artist_title_year": "Künstler - Titel (Jahr)",
         "tmpl_title_album":       "Titel [Album]",
         # TikTok settings dialog
         "tt_settings_title":      "TikTok Einstellungen",

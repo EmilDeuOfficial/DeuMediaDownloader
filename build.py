@@ -97,7 +97,7 @@ def build_installer(iscc: str):
 
 def main():
     print("=" * 60)
-    print("  DeuMediaDownloader — Build Pipeline")
+    print("  DeuMediaDownloader - Build Pipeline")
     print("=" * 60)
 
     clean()
