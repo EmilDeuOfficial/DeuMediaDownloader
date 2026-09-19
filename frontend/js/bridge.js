@@ -4,18 +4,32 @@
 // With ?mock=1 the api is served by mock-bridge.js so the UI can run in a plain browser.
 
 const listeners = new Map();
+let buffering = true;
+const buffered = [];
 
+function dispatch(name, payload) {
+  for (const fn of listeners.get(name) || []) {
+    try {
+      fn(payload);
+    } catch (err) {
+      console.error(`event handler for "${name}" failed`, err);
+    }
+  }
+}
+
+// Python may emit before the views exist (e.g. the Spotify init log right after
+// bootstrap); those events are held back until startEvents() is called.
 window.__bridge = {
   emit(name, payload) {
-    for (const fn of listeners.get(name) || []) {
-      try {
-        fn(payload);
-      } catch (err) {
-        console.error(`event handler for "${name}" failed`, err);
-      }
-    }
+    if (buffering) buffered.push([name, payload]);
+    else dispatch(name, payload);
   },
 };
+
+export function startEvents() {
+  buffering = false;
+  for (const [name, payload] of buffered.splice(0)) dispatch(name, payload);
+}
 
 export function on(name, handler) {
   if (!listeners.has(name)) listeners.set(name, new Set());
