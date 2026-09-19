@@ -15,8 +15,10 @@ import webbrowser
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional, Tuple
 
+import clipboard
 import config
 from config import (
+    APP_NAME,
     APP_VERSION,
     AUDIO_FORMATS,
     DEFAULT_CONFIG,
@@ -147,6 +149,7 @@ class Api:
             for rt in self._rt.values():
                 self._spawn(lambda rt=rt: rt.configure(cfg))
         return {
+            "app_name": APP_NAME,
             "version": APP_VERSION,
             "lang": current_language(),
             "strings": active_strings(),
@@ -216,6 +219,10 @@ class Api:
         raise ApiError(f"Unknown file kind: {kind}")
 
     @_safe
+    def paste(self) -> str:
+        return clipboard.read_text().strip()
+
+    @_safe
     def open_folder(self, path: str) -> None:
         os.startfile(path)  # type: ignore[attr-defined]  # Windows only
 
@@ -239,6 +246,27 @@ class Api:
             self._normal_geo = self._current_geometry()
             self._window.maximize()
             self._maximized = True
+
+    @_safe
+    def get_rect(self) -> dict:
+        win = self._window
+        return {"x": win.x, "y": win.y, "w": win.width, "h": win.height}
+
+    @_safe
+    def resize_to(self, w: int, h: int, fix: str = "") -> None:
+        """Resize from a JS edge handle. `fix` holds the edges that must stay in place
+        ("E" when dragging the west edge, "S" when dragging the north edge)."""
+        if self._view in (None, "launcher") or self._maximized:
+            return
+        from webview.window import FixPoint
+
+        flags = FixPoint.NORTH | FixPoint.WEST
+        if "E" in fix:
+            flags = (flags & ~FixPoint.WEST) | FixPoint.EAST
+        if "S" in fix:
+            flags = (flags & ~FixPoint.NORTH) | FixPoint.SOUTH
+        self._window.resize(
+            max(int(w), TOOL_MIN_SIZE[0]), max(int(h), TOOL_MIN_SIZE[1]), flags)
 
     @_safe
     def close(self) -> None:

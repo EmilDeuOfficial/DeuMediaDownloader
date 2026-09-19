@@ -157,6 +157,9 @@ STRINGS: dict[str, dict[str, str]] = {
         "clear_log":           "Clear",
         "save_btn":            "Save",
         "cancel_btn":          "Cancel",
+        "btn_ok":              "OK",
+        "btn_yes":             "Yes",
+        "btn_no":              "No",
         # Panel titles
         "download_queue":      "Download Queue",
         "log_panel":           "Log",
@@ -315,6 +318,9 @@ STRINGS: dict[str, dict[str, str]] = {
         "clear_log":           "L\u00f6schen",
         "save_btn":            "Speichern",
         "cancel_btn":          "Abbrechen",
+        "btn_ok":              "OK",
+        "btn_yes":             "Ja",
+        "btn_no":              "Nein",
         # Panel titles
         "download_queue":      "Download-Warteschlange",
         "log_panel":           "Protokoll",

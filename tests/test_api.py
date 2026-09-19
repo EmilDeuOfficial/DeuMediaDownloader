@@ -242,3 +242,48 @@ def test_exception_is_wrapped(env):
     api._window = None
     res = api.minimize()
     assert res["ok"] is False and res["error"]
+
+
+def test_get_rect(env):
+    api, rts, win, _ = env
+    assert api.get_rect() == {"ok": True, "data": {"x": 10, "y": 20, "w": 820, "h": 720}}
+
+
+def test_resize_to_clamps_to_tool_minimum_and_sets_fix_point(env):
+    from webview.window import FixPoint
+
+    api, rts, win, _ = env
+    seen = []
+    win.resize = lambda w, h, *a: seen.append((w, h, a))
+    api.set_view("spotify")
+    seen.clear()
+    api.resize_to(650, 500, "")
+    api.resize_to(900, 800, "ES")
+    assert seen[0] == (700, 600, (FixPoint.NORTH | FixPoint.WEST,))
+    assert seen[1] == (900, 800, (FixPoint.EAST | FixPoint.SOUTH,))
+
+
+def test_resize_to_ignored_in_launcher_and_when_maximized(env):
+    api, rts, win, _ = env
+    seen = []
+    win.resize = lambda *a: seen.append(a)
+    api.set_view("launcher")
+    seen.clear()
+    api.resize_to(900, 800, "")
+    api.set_view("spotify")
+    seen.clear()
+    api.toggle_maximize()
+    api.resize_to(900, 800, "")
+    assert seen == []
+
+
+def test_paste_returns_stripped_clipboard_text(env, monkeypatch):
+    import clipboard
+    monkeypatch.setattr(clipboard, "read_text", lambda: "  https://example.com/x \r\n")
+    api, *_ = env
+    assert api.paste() == {"ok": True, "data": "https://example.com/x"}
+
+
+def test_bootstrap_includes_app_name(env):
+    api, *_ = env
+    assert api.bootstrap()["data"]["app_name"] == config.APP_NAME

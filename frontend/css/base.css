@@ -1,0 +1,69 @@
+:root {
+  --bg-primary: #0d1117;
+  --bg-secondary: #161b22;
+  --bg-card: #21262d;
+  --bg-input: #1c2128;
+  --text-primary: #e6edf3;
+  --text-secondary: #8b949e;
+  --text-muted: #484f58;
+  --success: #1db954;
+  --warning: #e3b341;
+  --error: #f85149;
+  --border: #30363d;
+  --font: "Segoe UI", system-ui, sans-serif;
+
+  /* per service; overridden below */
+  --accent: #1db954;
+  --accent-hover: #17a347;
+  --accent-dim: #145c30;
+  --item-accent: #1db954;
+}
+
+[data-service="spotify"] { --accent: #1db954; --accent-hover: #17a347; --accent-dim: #145c30; --item-accent: #1db954; }
+[data-service="youtube"] { --accent: #cc2222; --accent-hover: #aa1111; --accent-dim: #3a0a0a; --item-accent: #ff4444; }
+[data-service="tiktok"]  { --accent: #ee1d52; --accent-hover: #c71542; --accent-dim: #4a0a1a; --item-accent: #ee1d52; }
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font);
+  font-size: 13px;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+#app { height: 100%; position: relative; }
+
+button, input, select { font-family: inherit; font-size: inherit; color: inherit; }
+button { cursor: pointer; }
+[hidden] { display: none !important; }
+
+input[type="text"], input[type="password"], input:not([type]) {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+svg.icon { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+
+/* Dark scrollbars */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--bg-card); border-radius: 5px; border: 2px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background: var(--border); background-clip: padding-box; }
+
+/* Window resize handles (frameless window) */
+.rz { position: fixed; z-index: 1000; }
+.rz.n  { top: 0; left: 8px; right: 8px; height: 5px; cursor: ns-resize; }
+.rz.s  { bottom: 0; left: 8px; right: 8px; height: 5px; cursor: ns-resize; }
+.rz.w  { left: 0; top: 8px; bottom: 8px; width: 5px; cursor: ew-resize; }
+.rz.e  { right: 0; top: 8px; bottom: 8px; width: 5px; cursor: ew-resize; }
+.rz.nw { top: 0; left: 0; width: 8px; height: 8px; cursor: nwse-resize; }
+.rz.se { bottom: 0; right: 0; width: 8px; height: 8px; cursor: nwse-resize; }
+.rz.ne { top: 0; right: 0; width: 8px; height: 8px; cursor: nesw-resize; }
+.rz.sw { bottom: 0; left: 0; width: 8px; height: 8px; cursor: nesw-resize; }
+body.no-resize .rz { display: none; }
