@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 APP_NAME = "DeuMediaDownloader"
-APP_VERSION = "1.6.3"
+APP_VERSION = "1.7.0"
 CONFIG_FILE   = Path.home() / ".spotify_downloader" / "config.json"
 LANGUAGE_FILE = Path.home() / ".spotify_downloader" / "language"
 
@@ -35,27 +35,6 @@ QUALITY_LABELS = {
 
 # Map from ext to mutagen format tag for cover art MIME
 COVER_MIME = "image/jpeg"
-
-COLORS = {
-    "bg_primary":    "#0d1117",
-    "bg_secondary":  "#161b22",
-    "bg_card":       "#21262d",
-    "bg_input":      "#1c2128",
-    "accent":        "#1DB954",   # Spotify green
-    "accent_hover":  "#17a347",
-    "accent_dim":    "#145c30",
-    "text_primary":  "#e6edf3",
-    "text_secondary":"#8b949e",
-    "text_muted":    "#484f58",
-    "success":       "#1DB954",
-    "warning":       "#e3b341",
-    "error":         "#f85149",
-    "progress_bg":   "#21262d",
-    "progress_fill": "#1DB954",
-    "border":        "#30363d",
-}
-
-FONT_FAMILY = "Segoe UI"
 
 DEFAULT_CONFIG = {
     "spotify_client_id":     "",

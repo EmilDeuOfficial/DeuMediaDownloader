@@ -1,12 +1,14 @@
-"""Convert img/app-icon.svg to img/app.ico using aggdraw (no Edge/browser needed)."""
+"""Convert img/app-icon.svg to img/app.ico using aggdraw (no Edge/browser needed).
+
+Dev-only dependencies: pip install aggdraw Pillow
+"""
 import sys
 from pathlib import Path
 
-# Make sure we can import assets.py from the project root
-sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).parent))
 
 from PIL import Image, ImageDraw
-from assets import _svg_to_pil
+from svg_render import _svg_to_pil
 
 REPO_ROOT  = Path(__file__).parent.parent
 SVG_PATH   = REPO_ROOT / "img" / "app-icon.svg"

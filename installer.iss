@@ -1,5 +1,5 @@
 #define MyAppName "DeuMediaDownloader"
-#define MyAppVersion "1.6.3"
+#define MyAppVersion "1.7.0"
 #define MyAppPublisher "DeuMediaDownloader"
 #define MyAppExeName "DeuMediaDownloader.exe"
 
@@ -41,9 +41,24 @@ Name: "{commondesktop}\{#MyAppName}";   Filename: "{app}\{#MyAppExeName}"; Tasks
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 
 [Code]
+const
+  WebView2Key = 'SOFTWARE\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}';
+  WebView2Wow = 'SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}';
+
 var
   FFmpegPage: TOutputMsgMemoWizardPage;
   FFmpegInstalled: Boolean;
+
+function WebView2Installed(): Boolean;
+var
+  Version: String;
+begin
+  Result :=
+    RegQueryStringValue(HKLM, WebView2Wow, 'pv', Version) or
+    RegQueryStringValue(HKLM, WebView2Key, 'pv', Version) or
+    RegQueryStringValue(HKCU, WebView2Key, 'pv', Version);
+  Result := Result and (Version <> '') and (Version <> '0.0.0.0');
+end;
 
 function FFmpegExists(): Boolean;
 var
@@ -77,6 +92,32 @@ begin
     );
 end;
 
+procedure InstallWebView2();
+var
+  ResultCode: Integer;
+  SetupFile: String;
+begin
+  WizardForm.StatusLabel.Caption := 'Installing Microsoft Edge WebView2 Runtime...';
+  SetupFile := ExpandConstant('{tmp}\MicrosoftEdgeWebview2Setup.exe');
+  Exec(
+    ExpandConstant('{cmd}'),
+    '/c powershell -NoProfile -Command "Invoke-WebRequest -UseBasicParsing -Uri ''https://go.microsoft.com/fwlink/p/?LinkId=2124703'' -OutFile ''' + SetupFile + '''"',
+    '',
+    SW_HIDE,
+    ewWaitUntilTerminated,
+    ResultCode
+  );
+  if (ResultCode = 0) and FileExists(SetupFile) then
+    Exec(SetupFile, '/silent /install', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  if not WebView2Installed() then
+    MsgBox(
+      'The Microsoft Edge WebView2 Runtime could not be installed automatically.' + #13#10 +
+      'DeuMediaDownloader needs it to start. Please install it from:' + #13#10 +
+      'https://developer.microsoft.com/microsoft-edge/webview2/',
+      mbInformation, MB_OK
+    );
+end;
+
 procedure WriteLanguageFile();
 var
   LangDir: String;
@@ -95,6 +136,9 @@ procedure CurStepChanged(CurStep: TSetupStep);
 begin
   if CurStep = ssPostInstall then begin
     WriteLanguageFile();
+    if not WebView2Installed() then begin
+      InstallWebView2();
+    end;
     if not FFmpegExists() then begin
       InstallFFmpeg();
     end else begin
@@ -130,6 +174,8 @@ begin
   if MemoDirInfo <> '' then S := S + MemoDirInfo + NewLine + NewLine;
   if MemoGroupInfo <> '' then S := S + MemoGroupInfo + NewLine + NewLine;
   if MemoTasksInfo <> '' then S := S + MemoTasksInfo + NewLine + NewLine;
+  if not WebView2Installed() then
+    S := S + 'Microsoft Edge WebView2 Runtime: will be installed automatically' + NewLine;
   if not FFmpegExists() then
     S := S + 'FFmpeg: will be installed automatically' + NewLine;
   Result := S;

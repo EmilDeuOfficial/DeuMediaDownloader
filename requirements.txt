@@ -1,10 +1,8 @@
-customtkinter>=5.2.0
+pywebview>=5.0
 spotipy>=2.23.0
 yt-dlp>=2026.8.19
 mutagen>=1.47.0
 requests>=2.31.0
-Pillow>=10.0.0
-aggdraw>=1.4.0
 # Not imported directly - yt-dlp's TikTok extractor needs this for browser
 # impersonation (TLS fingerprinting) to get past TikTok's bot detection.
 # Without it every TikTok request fails with "Unexpected response from

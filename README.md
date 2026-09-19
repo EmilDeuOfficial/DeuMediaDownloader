@@ -10,6 +10,7 @@ as high-quality audio files (MP3, FLAC, WAV, AAC, OGG).
 | Dependency | Purpose |
 |---|---|
 | Python 3.10+ | Runtime |
+| Microsoft Edge WebView2 Runtime | Renders the UI (preinstalled on Windows 11, the installer adds it if missing) |
 | FFmpeg | Audio conversion & quality control |
 | Spotify Developer Account | API credentials (free) |
 
@@ -55,8 +56,8 @@ pip install -r requirements.txt
 python main.py
 ```
 
-On first launch, click **⚙ Settings** in the top-right and paste your
-Spotify Client ID and Client Secret, then click **Save**.
+On first launch, open the Spotify downloader, click the **gear icon** in the
+top-right and paste your Spotify Client ID and Client Secret, then click **Save**.
 
 ---
 
@@ -76,15 +77,33 @@ Metadata (title, artist, album, cover art) is automatically embedded.
 ## Project Structure
 
 ```
-spotify_downloader/
-├── main.py          Entry point - dependency checks + launch
-├── downloader.py    Spotify metadata + yt-dlp download logic
+DeuMediaDownloader/
+├── main.py          Entry point - dependency checks, creates the pywebview window
+├── api.py           Object exposed to JavaScript (window.pywebview.api)
+├── events.py        Pushes events from Python threads to the page
+├── services.py      Per-service runtimes: resolve URL, queue tasks, forward updates
+├── downloader.py    Spotify / YouTube / TikTok download logic (yt-dlp)
 ├── converter.py     FFmpeg helpers + mutagen metadata embedding
-├── ui.py            CustomTkinter GUI
-├── config.py        Constants, format definitions, config I/O
-├── requirements.txt
-└── README.md
+├── clipboard.py     Windows clipboard access for the Paste button
+├── config.py        Constants, format definitions, translations, config I/O
+├── frontend/        HTML, CSS and JavaScript UI (vanilla ES modules)
+├── tests/           pytest tests for the backend
+├── tools/           Dev helpers (smoke test, mock data, icon generator)
+├── build.py         PyInstaller + Inno Setup build
+└── requirements.txt
 ```
+
+### Development
+
+```
+python -m pytest                          # backend tests
+node --test frontend/tests/*.test.mjs     # frontend unit tests
+python tools/smoke_test.py                # drive the real window (no downloads)
+```
+
+To work on the UI without Python, serve `frontend/` (for example
+`python -m http.server --directory frontend`) and open `index.html?mock=1`;
+a simulated backend answers the API calls.
 
 ---
 

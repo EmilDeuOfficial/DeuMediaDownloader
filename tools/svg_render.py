@@ -1,14 +1,13 @@
-from functools import lru_cache
+"""Render simple path-only SVGs to Pillow images with aggdraw (dev tool helper for svg_to_ico.py).
+
+Dev-only dependencies: pip install aggdraw Pillow
+"""
 from pathlib import Path
 import re
 import xml.etree.ElementTree as ET
 
 import aggdraw
 from PIL import Image
-import customtkinter as ctk
-
-_IMG_DIR = Path(__file__).parent / "img"
-
 
 def _parse_translate(t: str):
     m = re.search(r'translate\(\s*([+-]?[\d.]+)[\s,]+([+-]?[\d.]+)\s*\)', t)
@@ -98,44 +97,3 @@ def _svg_to_pil(svg_path: Path, fill: str, size: int) -> Image.Image:
 
     canvas.flush()
     return img
-
-
-# Cache the expensive SVG→PIL render; create CTkImage fresh each call
-# so it's always bound to the current live Tk root.
-@lru_cache(maxsize=None)
-def _spotify_pil(size: int) -> Image.Image:
-    return _svg_to_pil(_IMG_DIR / "spotify-icon.svg", "#1DB954", size)
-
-
-@lru_cache(maxsize=None)
-def _youtube_pil(size: int) -> Image.Image:
-    return _svg_to_pil(_IMG_DIR / "youtube-icon.svg", "#FF0000", size)
-
-
-@lru_cache(maxsize=None)
-def _tiktok_pil(size: int) -> Image.Image:
-    return _svg_to_pil(_IMG_DIR / "tiktok-icon.svg", "#EE1D52", size)
-
-
-def spotify_icon(size: int = 20) -> ctk.CTkImage:
-    pil = _spotify_pil(size)
-    return ctk.CTkImage(light_image=pil, dark_image=pil, size=(size, size))
-
-
-def youtube_icon(size: int = 20) -> ctk.CTkImage:
-    pil = _youtube_pil(size)
-    return ctk.CTkImage(light_image=pil, dark_image=pil, size=(size, size))
-
-
-def tiktok_icon(size: int = 20) -> ctk.CTkImage:
-    pil = _tiktok_pil(size)
-    return ctk.CTkImage(light_image=pil, dark_image=pil, size=(size, size))
-
-
-def warmup_icons() -> None:
-    """Pre-render all PIL bitmaps used by the UI into the lru_cache.
-    Call this in a background thread right after the launcher appears."""
-    for size in (18, 22, 44):
-        _spotify_pil(size)
-        _youtube_pil(size)
-        _tiktok_pil(size)
