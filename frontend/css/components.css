@@ -21,7 +21,7 @@
 .launcher-bar { height: 40px; padding: 0 6px 0 14px; justify-content: space-between; }
 .tb-title { font-size: 14px; font-weight: 700; color: var(--text-primary); pointer-events: none; }
 .launcher-bar .tb-title { font-size: 13px; }
-.tb-spacer { flex: 1; }
+.tb-spacer { flex: 1; pointer-events: none; }
 
 .tb-btn {
   width: 36px;

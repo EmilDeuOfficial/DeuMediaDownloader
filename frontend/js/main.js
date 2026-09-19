@@ -7,6 +7,11 @@ import { createToolView } from "./views/tool-view.js";
 import { installResizeHandles, setResizable } from "./components/resize-handles.js";
 import { openSettings } from "./components/settings-modal.js";
 
+// No browser context menu (Reload, Inspect, ...) except where copy/paste is useful.
+document.addEventListener("contextmenu", (ev) => {
+  if (!ev.target.closest("input, textarea, .log-box, .modal-body")) ev.preventDefault();
+});
+
 const root = document.getElementById("app");
 const views = {};
 let current = null;

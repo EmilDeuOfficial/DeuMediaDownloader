@@ -1,14 +1,15 @@
-import sys
-import subprocess
+import ctypes
 import importlib.util
+import sys
+from pathlib import Path
 
 
 REQUIRED_PACKAGES = {
-    "customtkinter": "customtkinter",
-    "spotipy":       "spotipy",
-    "yt_dlp":        "yt-dlp",
-    "mutagen":       "mutagen",
-    "requests":      "requests",
+    "webview": "pywebview",
+    "spotipy": "spotipy",
+    "yt_dlp":  "yt-dlp",
+    "mutagen": "mutagen",
+    "requests": "requests",
 }
 
 
@@ -21,6 +22,30 @@ def _check_ffmpeg() -> bool:
     return find_ffmpeg() is not None
 
 
+def _resource_dir() -> Path:
+    """Folder that contains frontend/ and img/ (PyInstaller unpacks them to _MEIPASS)."""
+    if getattr(sys, "frozen", False):
+        return Path(getattr(sys, "_MEIPASS", Path(sys.executable).parent))
+    return Path(__file__).parent
+
+
+def _message_box(title: str, text: str) -> None:
+    try:
+        ctypes.windll.user32.MessageBoxW(None, text, title, 0x10)  # MB_ICONERROR
+    except Exception:
+        pass
+
+
+def _round_corners(window) -> None:
+    """Ask Windows 11 for rounded corners on the frameless window (no-op elsewhere)."""
+    try:
+        hwnd = window.native.Handle.ToInt32()
+        preference = ctypes.c_int(2)  # DWMWCP_ROUND
+        ctypes.windll.dwmapi.DwmSetWindowAttribute(hwnd, 33, ctypes.byref(preference), 4)
+    except Exception:
+        pass
+
+
 def main():
     if not getattr(sys, "frozen", False):
         missing = [pkg for mod, pkg in REQUIRED_PACKAGES.items() if not _check_module(mod)]
@@ -28,20 +53,12 @@ def main():
             install_cmd = f"pip install {' '.join(missing)}"
             print(f"[ERROR] Missing packages: {', '.join(missing)}")
             print(f"        Run:  {install_cmd}")
-            try:
-                import tkinter as tk
-                from tkinter import messagebox
-                root = tk.Tk()
-                root.withdraw()
-                messagebox.showerror(
-                    "Missing Dependencies",
-                    f"The following packages are required but not installed:\n\n"
-                    f"{chr(10).join(missing)}\n\n"
-                    f"Run this command and restart:\n{install_cmd}",
-                )
-                root.destroy()
-            except Exception:
-                pass
+            _message_box(
+                "Missing Dependencies",
+                "The following packages are required but not installed:\n\n"
+                + "\n".join(missing)
+                + f"\n\nRun this command and restart:\n{install_cmd}",
+            )
             sys.exit(1)
 
     from config import load_language
@@ -53,20 +70,42 @@ def main():
         print("          Download FFmpeg from https://ffmpeg.org/download.html")
         print("          and add it to your system PATH.")
 
-    from ui import LauncherApp, DeuMediaDownloaderApp, YouTubeDownloaderApp, TikTokDownloaderApp
+    import webview
+    window = create_app(ffmpeg_ok)
+    base = _resource_dir()
+    icon = base / "img" / "app.ico"
+    webview.start(http_server=True, icon=str(icon) if icon.exists() else None)
 
-    while True:
-        choice = LauncherApp().run()
-        if not choice:
-            break
-        if choice == "spotify":
-            went_back = DeuMediaDownloaderApp(ffmpeg_available=ffmpeg_ok, show_back=True).run()
-        elif choice == "youtube":
-            went_back = YouTubeDownloaderApp(ffmpeg_available=ffmpeg_ok, show_back=True).run()
-        else:
-            went_back = TikTokDownloaderApp(ffmpeg_available=ffmpeg_ok, show_back=True).run()
-        if not went_back:
-            break
+
+def create_app(ffmpeg_ok: bool):
+    """Wire backend and window together. Returns the (not yet started) pywebview window."""
+    import webview
+    from api import Api, LAUNCHER_SIZE
+    from config import APP_NAME
+    from events import Emitter
+    from services import build_runtimes
+
+    emitter = Emitter()
+    api = Api(emitter, build_runtimes(emitter, ffmpeg_ok), ffmpeg_ok)
+
+    webview.settings["DRAG_REGION_DIRECT_TARGET_ONLY"] = True
+    window = webview.create_window(
+        APP_NAME,
+        str(_resource_dir() / "frontend" / "index.html"),
+        js_api=api,
+        width=LAUNCHER_SIZE[0],
+        height=LAUNCHER_SIZE[1],
+        min_size=(320, 240),  # per-view minimums are enforced by Api.set_view/resize_to
+        frameless=True,
+        easy_drag=False,
+        resizable=True,
+        background_color="#0d1117",
+        shadow=True,
+    )
+    api.attach_window(window)
+    emitter.attach(window.evaluate_js)
+    window.events.shown += lambda: _round_corners(window)
+    return window
 
 
 if __name__ == "__main__":
