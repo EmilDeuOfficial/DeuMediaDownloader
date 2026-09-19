@@ -470,6 +470,15 @@ def load_language() -> None:
         pass
 
 
+def current_language() -> str:
+    return _lang
+
+
+def active_strings() -> dict:
+    """Active language table with English as fallback for missing keys."""
+    return {**STRINGS["en"], **STRINGS.get(_lang, {})}
+
+
 def T(key: str) -> str:
     return STRINGS.get(_lang, STRINGS["en"]).get(key, STRINGS["en"].get(key, key))
 
