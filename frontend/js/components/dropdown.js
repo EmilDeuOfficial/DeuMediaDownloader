@@ -71,6 +71,9 @@ export function createDropdown({ values, value, width = 210, onChange }) {
         ),
       ),
     );
+    // The popup lives on <body>, so carry the service accent over explicitly.
+    const service = el.closest("[data-service]");
+    if (service) popup.dataset.service = service.dataset.service;
     document.body.append(popup);
     const maxHeight = window.innerHeight - rect.bottom - 16;
     popup.style.maxHeight = `${Math.max(120, maxHeight)}px`;

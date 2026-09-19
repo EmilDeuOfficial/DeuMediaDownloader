@@ -5,7 +5,7 @@ import { SERVICES, SERVICE_ORDER } from "./services.js";
 import { createLauncher } from "./views/launcher.js";
 import { createToolView } from "./views/tool-view.js";
 import { installResizeHandles, setResizable } from "./components/resize-handles.js";
-import { alertModal } from "./components/modal.js";
+import { openSettings } from "./components/settings-modal.js";
 
 const root = document.getElementById("app");
 const views = {};
@@ -43,7 +43,7 @@ async function boot() {
   for (const id of SERVICE_ORDER) {
     const view = createToolView(SERVICES[id], {
       onBack: () => navigate("launcher"),
-      onSettings: (serviceId) => openSettings(serviceId),
+      onSettings: openSettings,
     });
     view.restoreTasks(data.tasks && data.tasks[id]);
     views[id] = view;
@@ -56,12 +56,6 @@ async function boot() {
   installResizeHandles();
   startEvents();
   await navigate("launcher");
-}
-
-// Replaced by the settings modal (see settings-modal.js once it exists).
-let openSettings = () => {};
-export function setSettingsOpener(fn) {
-  openSettings = fn;
 }
 
 boot().catch((err) => {

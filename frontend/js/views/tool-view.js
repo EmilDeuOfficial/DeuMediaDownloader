@@ -10,7 +10,7 @@ import { createLogPanel } from "../components/log-panel.js";
 import { alertModal } from "../components/modal.js";
 
 // Force text (not emoji) presentation for glyphs such as the play triangle.
-const textGlyph = (s) => s.replace(/[♪▶]/g, (c) => c + "︎");
+const textGlyph = (s) => s.replace(/[\u266a\u25b6]/g, (c) => c + "\ufe0e");
 const label = (text, cls = "") => h("span", { class: `field-label ${cls}`.trim() }, text);
 
 // One generic downloader screen. `service` is a descriptor from services.js.

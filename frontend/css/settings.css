@@ -1,0 +1,65 @@
+.settings-modal {
+  width: min(520px, calc(100vw - 24px));
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-primary);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+.sm-head { display: flex; align-items: center; height: 40px; padding: 0 6px 0 12px; gap: 6px; background: var(--bg-secondary); flex: none; }
+.sm-head-icon { display: inline-flex; color: var(--accent); font-size: 16px; }
+.sm-head-title { font-size: 13px; font-weight: 700; }
+.sm-body { flex: 1; min-height: 0; display: flex; flex-direction: column; margin: 8px 12px 12px; border-radius: 10px; background: var(--bg-secondary); padding: 8px 10px 10px; }
+.sm-tabs { align-self: center; margin-bottom: 8px; }
+.seg-btn.wide { width: 120px; }
+.sm-scroll { flex: 1; min-height: 0; overflow-y: auto; padding: 0 2px; }
+.sm-actions { display: flex; gap: 8px; padding-top: 8px; flex: none; }
+.sm-actions .btn { height: 32px; min-width: 80px; }
+
+.sm-section { margin-bottom: 8px; }
+.sm-section-title { padding: 10px 14px 2px; font-size: 13px; font-weight: 700; color: var(--text-secondary); }
+.sm-card { display: flex; flex-direction: column; gap: 8px; padding: 10px 14px 12px; border-radius: 10px; background: var(--bg-secondary); }
+.sm-section-title + .sm-card { background: var(--bg-secondary); }
+.sm-scroll .sm-card { background: var(--bg-primary); }
+.sm-card-title { font-size: 12px; font-weight: 700; color: var(--text-secondary); }
+
+.sm-field { display: flex; flex-direction: column; gap: 2px; }
+.sm-label { font-size: 12px; color: var(--text-primary); }
+.sm-label.bold { font-weight: 700; }
+.sm-hint { font-size: 10px; color: var(--text-muted); }
+.sm-desc, .sm-note { font-size: 10px; color: var(--text-secondary); line-height: 1.4; }
+.sm-entry { height: 32px; font-size: 12px; width: 100%; }
+.sm-entry:disabled { opacity: 0.5; }
+.sm-entry[readonly] { color: var(--text-primary); }
+
+.sm-link { display: inline-flex; align-items: center; gap: 6px; width: fit-content; font-size: 11px; color: var(--accent); text-decoration: none; cursor: pointer; }
+.sm-link:hover { color: var(--accent-hover); }
+
+.sm-row { display: flex; align-items: center; gap: 12px; }
+.sm-slider { flex: 1; accent-color: var(--accent); max-width: 260px; }
+.sm-slider-value { min-width: 20px; text-align: right; font-size: 12px; font-weight: 700; color: var(--accent); }
+
+.sm-toggle { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.sm-toggle-text { max-width: 340px; }
+
+.switch { position: relative; width: 44px; height: 22px; flex: none; }
+.switch input { position: absolute; inset: 0; z-index: 1; margin: 0; opacity: 0; cursor: pointer; }
+.switch-track { position: absolute; inset: 0; border-radius: 11px; background: var(--border); transition: background-color 0.15s; }
+.switch-track::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: var(--text-primary); transition: transform 0.15s; }
+.switch input:checked + .switch-track { background: var(--accent); }
+.switch input:checked + .switch-track::after { transform: translateX(22px); }
+.switch input:focus-visible + .switch-track { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.sm-file-row { display: flex; gap: 8px; }
+.sm-file-row .btn { height: 32px; width: 80px; padding: 0; }
+
+.sm-danger-title { padding: 8px 4px 4px; font-size: 13px; font-weight: 700; color: var(--error); }
+.sm-uninstall { display: flex; align-items: center; gap: 8px; margin: 4px 0; padding: 8px 10px; border-radius: 8px; background: var(--bg-card); }
+.sm-uninstall-icon { display: inline-flex; width: 36px; justify-content: center; font-size: 20px; color: var(--text-secondary); }
+.sm-uninstall.danger .sm-uninstall-icon { color: var(--error); }
+.sm-uninstall-text { flex: 1; min-width: 0; }
+.btn.small-wide { width: 180px; height: 28px; font-size: 11px; padding: 0 8px; }
+.sm-uninstall .btn.neutral { background: var(--bg-secondary); }
+.sm-uninstall .btn.neutral:hover { background: var(--border); }
