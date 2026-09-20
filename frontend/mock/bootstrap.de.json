@@ -63,6 +63,7 @@
     "err_short_ffmpeg": "FFmpeg fehlt",
     "err_short_disk": "Datei nicht schreibbar",
     "err_short_path": "Ordner nicht gefunden",
+    "err_short_file_in_use": "Datei in Benutzung",
     "err_short_tiktok_cookies": "TikTok-Cookie-Problem",
     "err_short_unknown": "Unbekannter Fehler",
     "download_queue": "Download-Warteschlange",
@@ -244,24 +245,34 @@
       "WAV (Lossless)"
     ],
     "video_formats": [
+      "MP4 (2160p)",
+      "MP4 (1440p)",
       "MP4 (1080p)",
       "MP4 (720p)",
       "MP4 (480p)",
       "MP4 (360p)",
+      "MOV (2160p)",
+      "MOV (1440p)",
       "MOV (1080p)",
       "MOV (720p)",
       "MOV (480p)",
       "MOV (360p)",
+      "AVI (2160p)",
+      "AVI (1440p)",
       "AVI (1080p)",
       "AVI (720p)",
       "AVI (480p)",
       "AVI (360p)",
       "MKV (Best)",
+      "MKV (2160p)",
+      "MKV (1440p)",
       "MKV (1080p)",
       "MKV (720p)",
       "MKV (480p)",
       "MKV (360p)",
       "WebM (Best)",
+      "WebM (2160p)",
+      "WebM (1440p)",
       "WebM (1080p)",
       "WebM (720p)",
       "WebM (480p)",
@@ -348,6 +359,14 @@
         "format": "MP4",
         "qualities": [
           {
+            "label": "2160p (4K)",
+            "name": "MP4 (2160p)"
+          },
+          {
+            "label": "1440p (2K)",
+            "name": "MP4 (1440p)"
+          },
+          {
             "label": "1080p",
             "name": "MP4 (1080p)"
           },
@@ -369,6 +388,14 @@
         "format": "MOV",
         "qualities": [
           {
+            "label": "2160p (4K)",
+            "name": "MOV (2160p)"
+          },
+          {
+            "label": "1440p (2K)",
+            "name": "MOV (1440p)"
+          },
+          {
             "label": "1080p",
             "name": "MOV (1080p)"
           },
@@ -389,6 +416,14 @@
       {
         "format": "AVI",
         "qualities": [
+          {
+            "label": "2160p (4K)",
+            "name": "AVI (2160p)"
+          },
+          {
+            "label": "1440p (2K)",
+            "name": "AVI (1440p)"
+          },
           {
             "label": "1080p",
             "name": "AVI (1080p)"
@@ -416,6 +451,14 @@
             "label_key": "quality_best"
           },
           {
+            "label": "2160p (4K)",
+            "name": "MKV (2160p)"
+          },
+          {
+            "label": "1440p (2K)",
+            "name": "MKV (1440p)"
+          },
+          {
             "label": "1080p",
             "name": "MKV (1080p)"
           },
@@ -440,6 +483,14 @@
             "label": "Best",
             "name": "WebM (Best)",
             "label_key": "quality_best"
+          },
+          {
+            "label": "2160p (4K)",
+            "name": "WebM (2160p)"
+          },
+          {
+            "label": "1440p (2K)",
+            "name": "WebM (1440p)"
           },
           {
             "label": "1080p",

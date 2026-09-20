@@ -39,7 +39,9 @@ _AUDIO_SPEC = [
     ("WAV",        {"ext": "wav",  "codec": "pcm_s16le"},                    None),
 ]
 
-_VIDEO_HEIGHTS = (1080, 720, 480, 360)
+_VIDEO_HEIGHTS = (2160, 1440, 1080, 720, 480, 360)
+# Common names shown next to the height in the quality dropdown.
+_HEIGHT_NOTES = {2160: "4K", 1440: "2K"}
 
 # (format, settings, source, heights, offer "Best")
 #   source "mp4": h264 mp4 + m4a audio (the base for MP4 and for the converted MOV/AVI)
@@ -58,7 +60,11 @@ def _video_selector(source: str, height):
     """yt-dlp format string for a source kind and height (None = no limit)."""
     limit = f"[height<={height}]" if height else ""
     if source == "mp4":
-        return (f"bestvideo{limit}[ext=mp4]+bestaudio[ext=m4a]/best{limit}[ext=mp4]/best")
+        # Above 1080p YouTube has no H.264 stream, only AV1 (mp4) or VP9 (webm): the second
+        # step takes any codec and the merge still writes an mp4, before falling back to a
+        # low-resolution progressive file.
+        return (f"bestvideo{limit}[ext=mp4]+bestaudio[ext=m4a]"
+                f"/bestvideo{limit}+bestaudio/best{limit}[ext=mp4]/best")
     if source == "webm":
         return (f"bestvideo{limit}[ext=webm]+bestaudio[ext=webm]/best{limit}[ext=webm]/best")
     return f"bestvideo{limit}+bestaudio/best{limit}/best" if height else "bestvideo+bestaudio/best"
@@ -90,6 +96,9 @@ def _build_video():
         for height in steps:
             label = f"{height}p" if height else "Best"
             name = f"{container} ({label})"
+            note = _HEIGHT_NOTES.get(height)
+            if note:
+                label = f"{label} ({note})"
             formats[name] = {**info, "ydl_format": _video_selector(source, height)}
             quality = {"label": label, "name": name}
             if not height:

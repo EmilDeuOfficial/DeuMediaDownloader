@@ -13,7 +13,7 @@ Save audio (MP3, AAC, OGG, FLAC, AIFF, WAV) or video (MP4, MOV, AVI, MKV, WebM) 
 
 ## Features
 
-- **Audio and video** - Music as MP3, AAC, OGG Vorbis, FLAC, AIFF or WAV; videos as MP4, MOV, AVI, MKV or WebM up to 1080p
+- **Audio and video** - Music as MP3, AAC, OGG Vorbis, FLAC, AIFF or WAV; videos as MP4, MOV, AVI, MKV or WebM up to 4K
 - **Three sources** - Spotify (tracks, playlists, albums), YouTube (videos, playlists), TikTok (videos, profiles, hashtags, sounds)
 - **Format and quality** - Pick the format and the quality separately; the quality list follows the format
 - **Queue** - Live progress, plus pause, resume and cancel for every download
@@ -90,7 +90,7 @@ The YouTube and TikTok downloaders work without any credentials.
    a Spotify track, playlist or album, a YouTube video or playlist,
    or a TikTok video, profile, hashtag or sound
 3. YouTube and TikTok: choose **Audio** or **Video** (Spotify downloads are audio)
-4. Choose a **Format** and a **Quality** (MP3 320 kbps, FLAC, MP4 1080p, MKV Best, ...)
+4. Choose a **Format** and a **Quality** (MP3 320 kbps, FLAC, MP4 1080p, MKV 4K, ...)
 5. Select an output folder with **Browse**
 6. Click **Download**
 
@@ -158,11 +158,16 @@ Video (YouTube and TikTok):
 
 | Format | Qualities | Notes |
 |---|---|---|
-| MP4 | 1080p / 720p / 480p / 360p | Widely compatible |
-| MOV | 1080p / 720p / 480p / 360p | Converted with FFmpeg |
-| AVI | 1080p / 720p / 480p / 360p | Converted with FFmpeg (Xvid) |
-| MKV | Best / 1080p / 720p / 480p / 360p | Best available quality |
-| WebM | Best / 1080p / 720p / 480p / 360p | Open format |
+| MP4 | 2160p (4K) / 1440p (2K) / 1080p / 720p / 480p / 360p | Widely compatible |
+| MOV | 2160p (4K) / 1440p (2K) / 1080p / 720p / 480p / 360p | Converted with FFmpeg |
+| AVI | 2160p (4K) / 1440p (2K) / 1080p / 720p / 480p / 360p | Converted with FFmpeg (Xvid) |
+| MKV | Best / 2160p (4K) / 1440p (2K) / 1080p / 720p / 480p / 360p | Best available quality |
+| WebM | Best / 2160p (4K) / 1440p (2K) / 1080p / 720p / 480p / 360p | Open format |
+
+The heights are upper bounds: a video that only exists in 1080p is saved in 1080p. Above
+1080p YouTube only offers AV1 and VP9 streams, so 2K and 4K files use those codecs (some
+older players need an AV1 extension). 4K files are large, and MOV and AVI are re-encoded
+after the download, so 4K in those two takes a long time.
 
 The lists are generated from two small tables in `config.py` (`_AUDIO_SPEC`,
 `_VIDEO_SPEC`); audio below 129 kbps and video below 360p are not offered.
