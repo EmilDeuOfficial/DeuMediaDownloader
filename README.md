@@ -3,6 +3,12 @@
 A modern desktop application to download Spotify tracks, playlists, and albums
 as high-quality audio files (MP3, FLAC, WAV, AAC, OGG).
 
+![Version](https://img.shields.io/badge/version-v1.7.0-brightgreen)
+![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-blue)
+![Backend](https://img.shields.io/badge/backend-Python%203.10%2B-lightgrey)
+![Frontend](https://img.shields.io/badge/frontend-HTML%20%2B%20CSS%20%2B%20JS-lightgrey)
+![Languages](https://img.shields.io/badge/languages-2-orange)
+
 ---
 
 ## Requirements
