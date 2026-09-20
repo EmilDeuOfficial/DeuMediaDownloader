@@ -1,13 +1,28 @@
-# Spotify Song Downloader
+# DeuMediaDownloader
 
-A modern desktop application to download Spotify tracks, playlists, and albums
-as high-quality audio files (MP3, FLAC, WAV, AAC, OGG).
+A modern Windows desktop app to download **music and videos** from Spotify, YouTube and TikTok.
+Save audio (MP3, AAC, OGG, FLAC, AIFF, WAV) or video (MP4, MOV, AVI, MKV, WebM) in the quality you choose.
 
 ![Version](https://img.shields.io/badge/version-v1.7.0-brightgreen)
 ![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-blue)
 ![Backend](https://img.shields.io/badge/backend-Python%203.10%2B-lightgrey)
 ![Frontend](https://img.shields.io/badge/frontend-HTML%20%2B%20CSS%20%2B%20JS-lightgrey)
 ![Languages](https://img.shields.io/badge/languages-2-orange)
+
+---
+
+## Features
+
+- **Audio and video** - Music as MP3, AAC, OGG Vorbis, FLAC, AIFF or WAV; videos as MP4, MOV, AVI, MKV or WebM up to 1080p
+- **Three sources** - Spotify (tracks, playlists, albums), YouTube (videos, playlists), TikTok (videos, profiles, hashtags, sounds)
+- **Format and quality** - Pick the format and the quality separately; the quality list follows the format
+- **Queue** - Live progress, plus pause, resume and cancel for every download
+- **Metadata** - Title, artist, album, year and cover art are embedded in the audio files
+- **YouTube extras** - Subtitles, SponsorBlock and a speed limit
+- **Two languages** - German and English interface
+- **Installer** - Sets up FFmpeg and the WebView2 runtime when they are missing
+
+Full documentation is in the [wiki](https://github.com/EmilDeuOfficial/DeuMediaDownloader/wiki).
 
 ---
 
@@ -18,7 +33,7 @@ as high-quality audio files (MP3, FLAC, WAV, AAC, OGG).
 | Python 3.10+ | Runtime |
 | Microsoft Edge WebView2 Runtime | Renders the UI (preinstalled on Windows 11, the installer adds it if missing) |
 | FFmpeg | Audio conversion & quality control |
-| Spotify Developer Account | API credentials (free) |
+| Spotify Developer Account | API credentials (free, only for the Spotify downloader) |
 
 ---
 
@@ -47,7 +62,7 @@ pip install -r requirements.txt
 
 ---
 
-### 3 - Get Spotify API credentials (free)
+### 3 - Get Spotify API credentials (free, Spotify downloader only)
 
 1. Go to https://developer.spotify.com/dashboard
 2. Log in and click **Create app**
@@ -64,19 +79,23 @@ python main.py
 
 On first launch, open the Spotify downloader, click the **gear icon** in the
 top-right and paste your Spotify Client ID and Client Secret, then click **Save**.
+The YouTube and TikTok downloaders work without any credentials.
 
 ---
 
 ## Usage
 
-1. Copy a Spotify URL (track, playlist, or album)
-2. Paste it into the URL field (or click **Paste**)
-3. Choose your output **Format** (MP3 320, FLAC, WAV, …)
-4. Select an output folder with **Browse**
-5. Click **Download**
+1. Open the launcher and pick **Spotify**, **YouTube** or **TikTok**
+2. Copy a URL and paste it into the URL field (or click **Paste**):
+   a Spotify track, playlist or album, a YouTube video or playlist,
+   or a TikTok video, profile, hashtag or sound
+3. YouTube and TikTok: choose **Audio** or **Video** (Spotify downloads are audio)
+4. Choose a **Format** and a **Quality** (MP3 320 kbps, FLAC, MP4 1080p, MKV Best, ...)
+5. Select an output folder with **Browse**
+6. Click **Download**
 
-Tracks are added to the queue and downloaded in parallel.
-Metadata (title, artist, album, cover art) is automatically embedded.
+Items are added to the queue and downloaded in parallel; every entry can be paused,
+resumed or cancelled. Audio files get title, artist, album and cover art embedded automatically.
 
 ---
 
