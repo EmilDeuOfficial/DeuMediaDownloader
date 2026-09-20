@@ -1,5 +1,6 @@
 import { h } from "../dom.js";
 import { T } from "../i18n.js";
+import { linkify } from "../linkify.js";
 
 const MAX_LINES = 1000;
 
@@ -25,7 +26,7 @@ export function createLogPanel() {
 
   function append(msg) {
     const stick = box.scrollTop + box.clientHeight >= box.scrollHeight - 8;
-    box.append(h("div", { class: "log-line" }, `[${timestamp()}] ${msg}`));
+    box.append(h("div", { class: "log-line" }, `[${timestamp()}] `, linkify(msg)));
     while (box.childElementCount > MAX_LINES) box.firstElementChild.remove();
     if (stick) box.scrollTop = box.scrollHeight;
   }

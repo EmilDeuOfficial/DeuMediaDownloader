@@ -219,3 +219,21 @@ def test_run_ydl_lets_pause_and_cancel_through(tmp_path, monkeypatch):
     monkeypatch.setattr(d.yt_dlp, "YoutubeDL", Stopper)
     with pytest.raises(TaskInterrupted):
         d._run_ydl(make_task(tmp_path), {}, "http://x")
+
+
+# ------------------------------------------------------------ friendly tiktok errors
+def test_tiktok_cookie_errors_point_to_the_wiki_tutorial():
+    from config import WIKI_PAGES
+    url = WIKI_PAGES["tiktok_cookies"]
+    assert url in d._friendly_tiktok_error("Failed to decrypt with DPAPI")
+    assert url in d._friendly_tiktok_error("could not find chrome cookies database")
+    assert d._friendly_tiktok_error("something else") == "something else"
+
+
+def test_long_explanations_are_short_and_point_to_a_tutorial():
+    from config import STRINGS
+    for lang in STRINGS.values():
+        for key in ("tt_cookies_desc", "tt_cookies_file_desc"):
+            assert len(lang[key]) <= 100, key
+        for key in ("tt_err_dpapi", "tt_err_no_browser", "mb_api_msg"):
+            assert "{}" in lang[key], key      # the tutorial URL is filled in

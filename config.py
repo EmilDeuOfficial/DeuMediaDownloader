@@ -3,6 +3,13 @@ from pathlib import Path
 
 APP_NAME = "DeuMediaDownloader"
 APP_VERSION = "1.7.0"
+
+# Tutorials live in the GitHub wiki; the app links to these pages.
+WIKI_URL = "https://github.com/EmilDeuOfficial/DeuMediaDownloader/wiki"
+WIKI_PAGES = {
+    "tiktok_cookies": WIKI_URL + "/TikTok-Cookies",
+    "spotify_api":    WIKI_URL + "/Spotify-API-Setup",
+}
 CONFIG_FILE   = Path.home() / ".spotify_downloader" / "config.json"
 LANGUAGE_FILE = Path.home() / ".spotify_downloader" / "language"
 
@@ -165,6 +172,8 @@ STRINGS: dict[str, dict[str, str]] = {
         "tip_pause":           "Pause",
         "tip_resume":          "Resume",
         "tip_cancel":          "Cancel",
+        "wiki_tutorial":       "Tutorial in the GitHub wiki",
+        "tip_clear_done":      "Remove finished items",
         # Panel titles
         "download_queue":      "Download Queue",
         "log_panel":           "Log",
@@ -182,13 +191,13 @@ STRINGS: dict[str, dict[str, str]] = {
         "sp_redirect_uri_lbl":     "Redirect URI (select & copy):",
         "sp_sec_options":          "Download Options",
         "sp_skip_existing_lbl":    "Skip Existing Files",
-        "sp_skip_existing_desc":   "Don't re-download tracks that already exist on disk",
+        "sp_skip_existing_desc":   "Skip tracks that already exist",
         "sp_embed_cover_lbl":      "Embed Cover Art",
         "sp_embed_cover_desc":     "Embed the album artwork into the audio file",
         "sp_normalize_lbl":        "Normalize Audio",
-        "sp_normalize_desc":       "Apply loudnorm filter for consistent volume across tracks",
+        "sp_normalize_desc":       "Even out the volume (loudnorm)",
         "sp_open_folder_lbl":      "Open Folder When Done",
-        "sp_open_folder_desc":     "Open the output folder once all queued downloads finish",
+        "sp_open_folder_desc":     "Open the folder when all downloads finish",
         # Launcher
         "launcher_title":      "DeuMediaDownloader",
         "choose_downloader":   "Choose a Downloader",
@@ -226,7 +235,7 @@ STRINGS: dict[str, dict[str, str]] = {
         "mb_no_outdir_title":  "No Output Directory",
         "mb_no_outdir":        "Please choose an output directory.",
         "mb_api_title":        "API Credentials Required",
-        "mb_api_msg":          "Please open Settings and enter your Spotify API credentials\n(Client ID and Client Secret).\n\nGet them for free at: developer.spotify.com",
+        "mb_api_msg":          "Spotify API credentials are missing. Enter Client ID and Client Secret in Settings.\n\nTutorial: {}",
         "mb_error_title":      "Error",
         "select_outdir":       "Select Output Directory",
         # FFmpeg install note
@@ -289,7 +298,7 @@ STRINGS: dict[str, dict[str, str]] = {
         "tt_rate_limit_lbl":      "Speed Limit",
         "tt_sec_auth":            "Authentication",
         "tt_cookies_lbl":         "Browser Cookies",
-        "tt_cookies_desc":        "TikTok blocks most anonymous downloads. Using a logged-in browser's cookies usually fixes “Unexpected response” errors. Chrome and Edge currently can't be read on Windows due to a browser security feature - use Firefox if you have it installed, or the cookie file option below otherwise.",
+        "tt_cookies_desc":        "TikTok blocks anonymous downloads. Your browser's login cookies usually fix it.",
         "tt_cookies_none":        "Don't use cookies",
         "tt_cookies_chrome":      "Chrome",
         "tt_cookies_edge":        "Edge",
@@ -298,11 +307,11 @@ STRINGS: dict[str, dict[str, str]] = {
         "tt_cookies_opera":       "Opera",
         "tt_cookies_vivaldi":     "Vivaldi",
         "tt_cookies_file_lbl":    "Cookie File (alternative)",
-        "tt_cookies_file_desc":   "Works even when Chrome/Edge don't and Firefox isn't installed: export your TikTok cookies to a .txt file with a browser extension (e.g. “Get cookies.txt LOCALLY”) and select it here. Takes priority over Browser Cookies above when set.",
+        "tt_cookies_file_desc":   "Alternative if browser cookies fail: an exported cookies .txt file (takes priority).",
         "tt_cookies_file_ph":     "No file selected",
         "tt_cookies_file_clear":  "Clear",
-        "tt_err_dpapi":           "This browser's cookies can't be read due to a Windows security feature with no available fix. Please try Firefox instead, or use the Cookie File option below.",
-        "tt_err_no_browser":      "This browser (or its saved TikTok login) wasn't found on your PC. Please pick a different browser, or use the Cookie File option below.",
+        "tt_err_dpapi":           "This browser's cookies can't be read (Windows security feature). Use Firefox or a cookie file. Tutorial: {}",
+        "tt_err_no_browser":      "Browser or TikTok login not found. Pick another browser or use a cookie file. Tutorial: {}",
     },
     "de": {
         # Labels
@@ -319,7 +328,7 @@ STRINGS: dict[str, dict[str, str]] = {
         "clear":               "L\u00f6schen",
         "audio_btn":           "Audio",
         "video_btn":           "Video",
-        "clear_done":          "Erledigte leeren",
+        "clear_done":          "Aufräumen",
         "clear_log":           "L\u00f6schen",
         "save_btn":            "Speichern",
         "cancel_btn":          "Abbrechen",
@@ -352,6 +361,8 @@ STRINGS: dict[str, dict[str, str]] = {
         "tip_pause":           "Pausieren",
         "tip_resume":          "Fortsetzen",
         "tip_cancel":          "Abbrechen",
+        "wiki_tutorial":       "Anleitung im GitHub-Wiki",
+        "tip_clear_done":      "Erledigte Einträge entfernen",
         # Panel titles
         "download_queue":      "Download-Warteschlange",
         "log_panel":           "Protokoll",
@@ -369,13 +380,13 @@ STRINGS: dict[str, dict[str, str]] = {
         "sp_redirect_uri_lbl":     "Redirect URI (markieren & kopieren):",
         "sp_sec_options":          "Download-Optionen",
         "sp_skip_existing_lbl":    "Vorhandene Dateien \u00fcberspringen",
-        "sp_skip_existing_desc":   "Tracks nicht erneut herunterladen, wenn sie bereits vorhanden sind",
+        "sp_skip_existing_desc":   "Vorhandene Tracks überspringen",
         "sp_embed_cover_lbl":      "Cover einbetten",
         "sp_embed_cover_desc":     "Albumcover in die Audiodatei einbetten",
         "sp_normalize_lbl":        "Audio normalisieren",
-        "sp_normalize_desc":       "Loudnorm-Filter f\u00fcr gleichm\u00e4\u00dfige Lautst\u00e4rke anwenden",
+        "sp_normalize_desc":       "Einheitliche Lautstärke (Loudnorm)",
         "sp_open_folder_lbl":      "Ordner nach Fertigstellung \u00f6ffnen",
-        "sp_open_folder_desc":     "Ausgabeordner \u00f6ffnen, wenn alle Downloads abgeschlossen sind",
+        "sp_open_folder_desc":     "Ordner öffnen, wenn alle Downloads fertig sind",
         # Launcher
         "launcher_title":      "DeuMediaDownloader",
         "choose_downloader":   "Downloader w\u00e4hlen",
@@ -413,7 +424,7 @@ STRINGS: dict[str, dict[str, str]] = {
         "mb_no_outdir_title":  "Kein Ausgabeordner",
         "mb_no_outdir":        "Bitte einen Ausgabeordner w\u00e4hlen.",
         "mb_api_title":        "API-Zugangsdaten erforderlich",
-        "mb_api_msg":          "Bitte \u00f6ffne die Einstellungen und gib deine Spotify-API-Zugangsdaten ein\n(Client-ID und Client-Secret).\n\nKostenlos erh\u00e4ltlich unter: developer.spotify.com",
+        "mb_api_msg":          "Spotify-Zugangsdaten fehlen. Trage Client-ID und Client-Secret in den Einstellungen ein.\n\nAnleitung: {}",
         "mb_error_title":      "Fehler",
         "select_outdir":       "Ausgabeordner w\u00e4hlen",
         # FFmpeg install note
@@ -476,7 +487,7 @@ STRINGS: dict[str, dict[str, str]] = {
         "tt_rate_limit_lbl":      "Geschwindigkeitsbegrenzung",
         "tt_sec_auth":            "Anmeldung",
         "tt_cookies_lbl":         "Browser-Cookies",
-        "tt_cookies_desc":        "TikTok blockiert die meisten anonymen Downloads. Die Cookies eines eingeloggten Browsers beheben meist den „Unexpected response“-Fehler. Chrome und Edge lassen sich unter Windows wegen eines Browser-Sicherheitsfeatures derzeit nicht auslesen - nutze Firefox, falls installiert, sonst die Cookie-Datei-Option unten.",
+        "tt_cookies_desc":        "TikTok blockiert anonyme Downloads. Die Login-Cookies deines Browsers beheben das meist.",
         "tt_cookies_none":        "Keine Cookies verwenden",
         "tt_cookies_chrome":      "Chrome",
         "tt_cookies_edge":        "Edge",
@@ -485,11 +496,11 @@ STRINGS: dict[str, dict[str, str]] = {
         "tt_cookies_opera":       "Opera",
         "tt_cookies_vivaldi":     "Vivaldi",
         "tt_cookies_file_lbl":    "Cookie-Datei (Alternative)",
-        "tt_cookies_file_desc":   "Funktioniert auch wenn Chrome/Edge nicht gehen und Firefox nicht installiert ist: TikTok-Cookies mit einer Browser-Erweiterung (z. B. „Get cookies.txt LOCALLY“) als .txt-Datei exportieren und hier auswählen. Hat Vorrang vor Browser-Cookies oben, wenn gesetzt.",
+        "tt_cookies_file_desc":   "Alternative, falls Browser-Cookies nicht gehen: exportierte cookies.txt (hat Vorrang).",
         "tt_cookies_file_ph":     "Keine Datei ausgewählt",
         "tt_cookies_file_clear":  "Entfernen",
-        "tt_err_dpapi":           "Die Cookies dieses Browsers können wegen eines Windows-Sicherheitsfeatures ohne verfügbaren Fix nicht gelesen werden. Bitte Firefox probieren oder die Cookie-Datei-Option unten nutzen.",
-        "tt_err_no_browser":      "Dieser Browser (oder der gespeicherte TikTok-Login darin) wurde auf deinem PC nicht gefunden. Bitte einen anderen Browser wählen oder die Cookie-Datei-Option unten nutzen.",
+        "tt_err_dpapi":           "Die Cookies dieses Browsers sind nicht lesbar (Windows-Sicherheitsfeature). Nutze Firefox oder eine Cookie-Datei. Anleitung: {}",
+        "tt_err_no_browser":      "Browser oder TikTok-Login nicht gefunden. Wähle einen anderen Browser oder eine Cookie-Datei. Anleitung: {}",
     },
 }
 

@@ -15,7 +15,7 @@
     "clear": "Löschen",
     "audio_btn": "Audio",
     "video_btn": "Video",
-    "clear_done": "Erledigte leeren",
+    "clear_done": "Aufräumen",
     "clear_log": "Löschen",
     "save_btn": "Speichern",
     "cancel_btn": "Abbrechen",
@@ -47,6 +47,8 @@
     "tip_pause": "Pausieren",
     "tip_resume": "Fortsetzen",
     "tip_cancel": "Abbrechen",
+    "wiki_tutorial": "Anleitung im GitHub-Wiki",
+    "tip_clear_done": "Erledigte Einträge entfernen",
     "download_queue": "Download-Warteschlange",
     "log_panel": "Protokoll",
     "settings_title": "Einstellungen",
@@ -61,13 +63,13 @@
     "sp_redirect_uri_lbl": "Redirect URI (markieren & kopieren):",
     "sp_sec_options": "Download-Optionen",
     "sp_skip_existing_lbl": "Vorhandene Dateien überspringen",
-    "sp_skip_existing_desc": "Tracks nicht erneut herunterladen, wenn sie bereits vorhanden sind",
+    "sp_skip_existing_desc": "Vorhandene Tracks überspringen",
     "sp_embed_cover_lbl": "Cover einbetten",
     "sp_embed_cover_desc": "Albumcover in die Audiodatei einbetten",
     "sp_normalize_lbl": "Audio normalisieren",
-    "sp_normalize_desc": "Loudnorm-Filter für gleichmäßige Lautstärke anwenden",
+    "sp_normalize_desc": "Einheitliche Lautstärke (Loudnorm)",
     "sp_open_folder_lbl": "Ordner nach Fertigstellung öffnen",
-    "sp_open_folder_desc": "Ausgabeordner öffnen, wenn alle Downloads abgeschlossen sind",
+    "sp_open_folder_desc": "Ordner öffnen, wenn alle Downloads fertig sind",
     "launcher_title": "DeuMediaDownloader",
     "choose_downloader": "Downloader wählen",
     "spotify_desc": "Tracks, Playlisten\nund Alben",
@@ -101,7 +103,7 @@
     "mb_no_outdir_title": "Kein Ausgabeordner",
     "mb_no_outdir": "Bitte einen Ausgabeordner wählen.",
     "mb_api_title": "API-Zugangsdaten erforderlich",
-    "mb_api_msg": "Bitte öffne die Einstellungen und gib deine Spotify-API-Zugangsdaten ein\n(Client-ID und Client-Secret).\n\nKostenlos erhältlich unter: developer.spotify.com",
+    "mb_api_msg": "Spotify-Zugangsdaten fehlen. Trage Client-ID und Client-Secret in den Einstellungen ein.\n\nAnleitung: {}",
     "mb_error_title": "Fehler",
     "select_outdir": "Ausgabeordner wählen",
     "ffmpeg_will_install": "FFmpeg: wird automatisch installiert",
@@ -158,7 +160,7 @@
     "tt_rate_limit_lbl": "Geschwindigkeitsbegrenzung",
     "tt_sec_auth": "Anmeldung",
     "tt_cookies_lbl": "Browser-Cookies",
-    "tt_cookies_desc": "TikTok blockiert die meisten anonymen Downloads. Die Cookies eines eingeloggten Browsers beheben meist den „Unexpected response“-Fehler. Chrome und Edge lassen sich unter Windows wegen eines Browser-Sicherheitsfeatures derzeit nicht auslesen - nutze Firefox, falls installiert, sonst die Cookie-Datei-Option unten.",
+    "tt_cookies_desc": "TikTok blockiert anonyme Downloads. Die Login-Cookies deines Browsers beheben das meist.",
     "tt_cookies_none": "Keine Cookies verwenden",
     "tt_cookies_chrome": "Chrome",
     "tt_cookies_edge": "Edge",
@@ -167,11 +169,11 @@
     "tt_cookies_opera": "Opera",
     "tt_cookies_vivaldi": "Vivaldi",
     "tt_cookies_file_lbl": "Cookie-Datei (Alternative)",
-    "tt_cookies_file_desc": "Funktioniert auch wenn Chrome/Edge nicht gehen und Firefox nicht installiert ist: TikTok-Cookies mit einer Browser-Erweiterung (z. B. „Get cookies.txt LOCALLY“) als .txt-Datei exportieren und hier auswählen. Hat Vorrang vor Browser-Cookies oben, wenn gesetzt.",
+    "tt_cookies_file_desc": "Alternative, falls Browser-Cookies nicht gehen: exportierte cookies.txt (hat Vorrang).",
     "tt_cookies_file_ph": "Keine Datei ausgewählt",
     "tt_cookies_file_clear": "Entfernen",
-    "tt_err_dpapi": "Die Cookies dieses Browsers können wegen eines Windows-Sicherheitsfeatures ohne verfügbaren Fix nicht gelesen werden. Bitte Firefox probieren oder die Cookie-Datei-Option unten nutzen.",
-    "tt_err_no_browser": "Dieser Browser (oder der gespeicherte TikTok-Login darin) wurde auf deinem PC nicht gefunden. Bitte einen anderen Browser wählen oder die Cookie-Datei-Option unten nutzen."
+    "tt_err_dpapi": "Die Cookies dieses Browsers sind nicht lesbar (Windows-Sicherheitsfeature). Nutze Firefox oder eine Cookie-Datei. Anleitung: {}",
+    "tt_err_no_browser": "Browser oder TikTok-Login nicht gefunden. Wähle einen anderen Browser oder eine Cookie-Datei. Anleitung: {}"
   },
   "config": {
     "spotify_client_id": "",
@@ -308,7 +310,11 @@
         "vivaldi",
         "tt_cookies_vivaldi"
       ]
-    ]
+    ],
+    "wiki": {
+      "tiktok_cookies": "https://github.com/EmilDeuOfficial/DeuMediaDownloader/wiki/TikTok-Cookies",
+      "spotify_api": "https://github.com/EmilDeuOfficial/DeuMediaDownloader/wiki/Spotify-API-Setup"
+    }
   },
   "tasks": {}
 }

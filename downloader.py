@@ -11,7 +11,7 @@ from typing import Optional, Callable, List, Dict, Any
 import requests
 import yt_dlp
 
-from config import AUDIO_FORMATS, VIDEO_FORMATS, load_config, T
+from config import AUDIO_FORMATS, VIDEO_FORMATS, WIKI_PAGES, load_config, T
 from converter import embed_metadata, fetch_cover, find_ffmpeg
 
 
@@ -90,9 +90,9 @@ def _friendly_tiktok_error(msg: str) -> str:
     https://github.com/yt-dlp/yt-dlp/issues/10927. There is no fix on yt-dlp's or our
     side; Firefox (if installed) or a manually exported cookie file still work."""
     if "Failed to decrypt with DPAPI" in msg:
-        return T("tt_err_dpapi")
+        return T("tt_err_dpapi").format(WIKI_PAGES["tiktok_cookies"])
     if "could not find" in msg and "cookies database" in msg:
-        return T("tt_err_no_browser")
+        return T("tt_err_no_browser").format(WIKI_PAGES["tiktok_cookies"])
     return msg
 
 

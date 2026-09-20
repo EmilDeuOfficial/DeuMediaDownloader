@@ -27,6 +27,7 @@ from config import (
     TT_COOKIE_BROWSERS,
     TT_FILENAME_TEMPLATES,
     VIDEO_FORMATS,
+    WIKI_PAGES,
     YT_FILENAME_TEMPLATES,
     active_strings,
     current_language,
@@ -162,6 +163,7 @@ class Api:
                 "yt_templates": [[k, v] for k, v in YT_FILENAME_TEMPLATES.items()],
                 "tt_templates": [[k, v] for k, v in TT_FILENAME_TEMPLATES.items()],
                 "cookie_browsers": [[k, v] for k, v in TT_COOKIE_BROWSERS.items()],
+                "wiki": dict(WIKI_PAGES),
             },
             "tasks": {sid: rt.tasks() for sid, rt in self._rt.items()},
         }

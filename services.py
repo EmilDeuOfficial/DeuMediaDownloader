@@ -9,7 +9,7 @@ import uuid
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional
 
-from config import T
+from config import T, WIKI_PAGES
 from downloader import (
     DownloadStatus,
     DownloadTask,
@@ -146,7 +146,7 @@ class ServiceRuntime:
     def submit(self, url: str, out_dir: str, fmt: str) -> None:
         if self._spec.needs_client and self._client is None:
             self._em.emit("resolve_error", {
-                "service": self._spec.id, "message": T("mb_api_msg"), "kind": "api",
+                "service": self._spec.id, "message": T("mb_api_msg").format(WIKI_PAGES["spotify_api"]), "kind": "api",
             })
             return
         self._spawn(lambda: self._resolve_and_queue(url, out_dir, fmt))

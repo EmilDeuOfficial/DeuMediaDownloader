@@ -10,6 +10,7 @@ const PATHS = {
   close: '<path d="M6 6l12 12"/><path d="M18 6L6 18"/>',
   "chevron-down": '<path d="M6 9l6 6 6-6"/>',
   "chevron-up": '<path d="M6 15l6-6 6 6"/>',
+  check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
   note: '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
   pause: '<rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor"/><rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor"/>',
   play: '<path d="M7 4l13 8-13 8z" fill="currentColor"/>',

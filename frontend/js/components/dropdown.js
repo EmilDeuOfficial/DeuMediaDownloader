@@ -29,7 +29,6 @@ export function createDropdown({ values, value, width = 210, onChange }) {
     popup = null;
     el.classList.remove("open");
     el.setAttribute("aria-expanded", "false");
-    arrow.replaceChildren(icon("chevron-down"));
     document.removeEventListener("pointerdown", onOutside, true);
     window.removeEventListener("blur", close);
     window.removeEventListener("resize", close);
@@ -66,8 +65,8 @@ export function createDropdown({ values, value, width = 210, onChange }) {
             onClick: () => choose(i),
             onMouseenter: () => highlight(i),
           },
-          h("span", { class: "dd-bar" }),
           h("span", { class: "dd-text" }, item),
+          h("span", { class: "dd-check" }, icon("check")),
         ),
       ),
     );
@@ -79,7 +78,6 @@ export function createDropdown({ values, value, width = 210, onChange }) {
     popup.style.maxHeight = `${Math.max(120, maxHeight)}px`;
     el.classList.add("open");
     el.setAttribute("aria-expanded", "true");
-    arrow.replaceChildren(icon("chevron-up"));
     document.addEventListener("pointerdown", onOutside, true);
     window.addEventListener("blur", close);
     window.addEventListener("resize", close);

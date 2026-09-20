@@ -1,6 +1,7 @@
 import { h } from "../dom.js";
 import { icon } from "../icons.js";
 import { T } from "../i18n.js";
+import { linkify } from "../linkify.js";
 
 // Promise based dialogs that replace tkinter's messagebox.
 // showModal resolves with the `value` of the clicked button (or `cancelValue` on Escape).
@@ -30,7 +31,7 @@ export function showModal({ title, message, kind = "info", buttons, cancelValue 
         "div",
         { class: "modal", role: "dialog", "aria-modal": "true" },
         h("div", { class: `modal-head ${kind}` }, icon(kind === "warning" || kind === "error" ? "warning" : "info"), h("span", {}, title)),
-        h("div", { class: "modal-body" }, message),
+        h("div", { class: "modal-body" }, linkify(message)),
         h("div", { class: "modal-actions" }, buttonEls),
       ),
     );

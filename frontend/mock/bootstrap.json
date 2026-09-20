@@ -47,6 +47,8 @@
     "tip_pause": "Pause",
     "tip_resume": "Resume",
     "tip_cancel": "Cancel",
+    "wiki_tutorial": "Tutorial in the GitHub wiki",
+    "tip_clear_done": "Remove finished items",
     "download_queue": "Download Queue",
     "log_panel": "Log",
     "settings_title": "Settings",
@@ -61,13 +63,13 @@
     "sp_redirect_uri_lbl": "Redirect URI (select & copy):",
     "sp_sec_options": "Download Options",
     "sp_skip_existing_lbl": "Skip Existing Files",
-    "sp_skip_existing_desc": "Don't re-download tracks that already exist on disk",
+    "sp_skip_existing_desc": "Skip tracks that already exist",
     "sp_embed_cover_lbl": "Embed Cover Art",
     "sp_embed_cover_desc": "Embed the album artwork into the audio file",
     "sp_normalize_lbl": "Normalize Audio",
-    "sp_normalize_desc": "Apply loudnorm filter for consistent volume across tracks",
+    "sp_normalize_desc": "Even out the volume (loudnorm)",
     "sp_open_folder_lbl": "Open Folder When Done",
-    "sp_open_folder_desc": "Open the output folder once all queued downloads finish",
+    "sp_open_folder_desc": "Open the folder when all downloads finish",
     "launcher_title": "DeuMediaDownloader",
     "choose_downloader": "Choose a Downloader",
     "spotify_desc": "Tracks, playlists\nand albums",
@@ -101,7 +103,7 @@
     "mb_no_outdir_title": "No Output Directory",
     "mb_no_outdir": "Please choose an output directory.",
     "mb_api_title": "API Credentials Required",
-    "mb_api_msg": "Please open Settings and enter your Spotify API credentials\n(Client ID and Client Secret).\n\nGet them for free at: developer.spotify.com",
+    "mb_api_msg": "Spotify API credentials are missing. Enter Client ID and Client Secret in Settings.\n\nTutorial: {}",
     "mb_error_title": "Error",
     "select_outdir": "Select Output Directory",
     "ffmpeg_will_install": "FFmpeg: will be installed automatically",
@@ -158,7 +160,7 @@
     "tt_rate_limit_lbl": "Speed Limit",
     "tt_sec_auth": "Authentication",
     "tt_cookies_lbl": "Browser Cookies",
-    "tt_cookies_desc": "TikTok blocks most anonymous downloads. Using a logged-in browser's cookies usually fixes “Unexpected response” errors. Chrome and Edge currently can't be read on Windows due to a browser security feature - use Firefox if you have it installed, or the cookie file option below otherwise.",
+    "tt_cookies_desc": "TikTok blocks anonymous downloads. Your browser's login cookies usually fix it.",
     "tt_cookies_none": "Don't use cookies",
     "tt_cookies_chrome": "Chrome",
     "tt_cookies_edge": "Edge",
@@ -167,11 +169,11 @@
     "tt_cookies_opera": "Opera",
     "tt_cookies_vivaldi": "Vivaldi",
     "tt_cookies_file_lbl": "Cookie File (alternative)",
-    "tt_cookies_file_desc": "Works even when Chrome/Edge don't and Firefox isn't installed: export your TikTok cookies to a .txt file with a browser extension (e.g. “Get cookies.txt LOCALLY”) and select it here. Takes priority over Browser Cookies above when set.",
+    "tt_cookies_file_desc": "Alternative if browser cookies fail: an exported cookies .txt file (takes priority).",
     "tt_cookies_file_ph": "No file selected",
     "tt_cookies_file_clear": "Clear",
-    "tt_err_dpapi": "This browser's cookies can't be read due to a Windows security feature with no available fix. Please try Firefox instead, or use the Cookie File option below.",
-    "tt_err_no_browser": "This browser (or its saved TikTok login) wasn't found on your PC. Please pick a different browser, or use the Cookie File option below."
+    "tt_err_dpapi": "This browser's cookies can't be read (Windows security feature). Use Firefox or a cookie file. Tutorial: {}",
+    "tt_err_no_browser": "Browser or TikTok login not found. Pick another browser or use a cookie file. Tutorial: {}"
   },
   "config": {
     "spotify_client_id": "",
@@ -308,7 +310,11 @@
         "vivaldi",
         "tt_cookies_vivaldi"
       ]
-    ]
+    ],
+    "wiki": {
+      "tiktok_cookies": "https://github.com/EmilDeuOfficial/DeuMediaDownloader/wiki/TikTok-Cookies",
+      "spotify_api": "https://github.com/EmilDeuOfficial/DeuMediaDownloader/wiki/Spotify-API-Setup"
+    }
   },
   "tasks": {}
 }

@@ -29,7 +29,7 @@ export function openSettings(serviceId) {
       case "link":
         return h(
           "a",
-          { class: "sm-link", href: "#", onClick: (ev) => { ev.preventDefault(); api.open_url(field.url).catch(() => {}); } },
+          { class: "sm-link", href: "#", onClick: (ev) => { ev.preventDefault(); api.open_url(field.url || (options.wiki || {})[field.wiki]).catch(() => {}); } },
           icon("link"),
           h("span", {}, T(field.labelKey)),
         );

@@ -45,7 +45,7 @@ pip install -r requirements.txt
 
 1. Go to https://developer.spotify.com/dashboard
 2. Log in and click **Create app**
-3. Set any name/description; Redirect URI: `http://localhost:8888`
+3. Set any name/description; Redirect URI: `http://127.0.0.1:8888/callback`
 4. Copy your **Client ID** and **Client Secret**
 
 ---
@@ -100,6 +100,10 @@ python -m pytest                          # backend tests
 node --test frontend/tests/*.test.mjs     # frontend unit tests
 python tools/smoke_test.py                # drive the real window (no downloads)
 ```
+
+Tutorials linked from the app are drafted in `docs/wiki/`. Copy those pages into the
+GitHub wiki (page names `TikTok-Cookies` and `Spotify-API-Setup`); the app links to
+`https://github.com/EmilDeuOfficial/DeuMediaDownloader/wiki/<page>` (see `WIKI_PAGES` in `config.py`).
 
 To work on the UI without Python, serve `frontend/` (for example
 `python -m http.server --directory frontend`) and open `index.html?mock=1`;

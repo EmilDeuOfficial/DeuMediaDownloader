@@ -3,7 +3,7 @@ from typing import Callable, Optional
 
 import pytest
 
-from config import T
+from config import T, WIKI_PAGES
 from downloader import DownloadStatus
 from services import ServiceRuntime, ServiceSpec, serialize_task
 
@@ -197,7 +197,7 @@ def test_missing_client_emits_api_error_without_resolving():
     rt._client = None
     rt.submit("http://x", "out", "MP3")
     assert em.payloads("resolve_error") == [
-        {"service": "youtube", "message": T("mb_api_msg"), "kind": "api"}
+        {"service": "youtube", "message": T("mb_api_msg").format(WIKI_PAGES["spotify_api"]), "kind": "api"}
     ]
     assert "log" not in em.names()
 

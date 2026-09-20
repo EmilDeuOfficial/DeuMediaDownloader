@@ -182,7 +182,7 @@ export function createToolView(service, { onBack, onSettings }) {
       h("span", { class: "panel-title" }, T("download_queue")),
       countLabel,
       h("span", { class: "tb-spacer" }),
-      h("button", { class: "btn neutral small", type: "button", style: { minWidth: "90px" }, onClick: clearDone }, T("clear_done")),
+      h("button", { class: "btn neutral small", type: "button", style: { minWidth: "90px" }, title: T("tip_clear_done"), onClick: clearDone }, T("clear_done")),
     ),
     queueList,
   );

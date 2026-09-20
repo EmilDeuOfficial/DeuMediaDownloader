@@ -314,3 +314,10 @@ def test_task_control_with_unknown_service_returns_error(env):
     for call in (api.pause_task, api.resume_task, api.cancel_task):
         res = call("vimeo", "t1")
         assert res["ok"] is False and "vimeo" in res["error"]
+
+
+def test_bootstrap_offers_wiki_pages(env):
+    api, *_ = env
+    wiki = api.bootstrap()["data"]["options"]["wiki"]
+    assert wiki == config.WIKI_PAGES
+    assert all(url.startswith("https://github.com/") and "/wiki/" in url for url in wiki.values())

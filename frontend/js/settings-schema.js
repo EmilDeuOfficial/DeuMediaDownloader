@@ -2,7 +2,7 @@
 //
 // Section:  { titleKey, inside, fields }   inside=true draws the title inside the card
 // Field types:
-//   link      { labelKey, url }
+//   link      { labelKey, url | wiki }   wiki = key in the bootstrap wiki pages
 //   readonly  { labelKey, value }
 //   text      { key, labelKey, placeholderKey, secret?, enabledBy? }
 //   slider    { key, labelKey?, min, max, default }
@@ -39,6 +39,7 @@ export const SETTINGS_SCHEMA = {
         inside: true,
         fields: [
           { type: "link", labelKey: "sp_open_dashboard", url: "https://developer.spotify.com/dashboard" },
+          { type: "link", labelKey: "wiki_tutorial", wiki: "spotify_api" },
           { type: "readonly", labelKey: "sp_redirect_uri_lbl", value: "http://127.0.0.1:8888/callback" },
           { type: "text", key: "spotify_client_id", labelKey: "client_id", placeholderKey: "client_id_ph" },
           { type: "text", key: "spotify_client_secret", labelKey: "client_secret", placeholderKey: "client_secret_ph", secret: true },
@@ -125,6 +126,7 @@ export const SETTINGS_SCHEMA = {
         inside: true,
         fields: [
           { type: "note", textKey: "tt_cookies_desc" },
+          { type: "link", labelKey: "wiki_tutorial", wiki: "tiktok_cookies" },
           { type: "select", key: "tt_cookies_browser", labelKey: "tt_cookies_lbl", options: "cookie_browsers", width: 260, default: "" },
           { type: "file", key: "tt_cookies_file", labelKey: "tt_cookies_file_lbl", descKey: "tt_cookies_file_desc", placeholderKey: "tt_cookies_file_ph", clearKey: "tt_cookies_file_clear" },
         ],
