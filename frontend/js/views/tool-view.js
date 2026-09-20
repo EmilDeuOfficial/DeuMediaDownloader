@@ -169,29 +169,29 @@ export function createToolView(service, { onBack, onSettings }) {
     videoBtn = h("button", { class: "seg-btn", type: "button", onClick: () => setMediaType("Video") }, icon("play"), T("video_btn"));
     optionsPanel = h(
       "section",
-      { class: "panel options-panel media" },
+      { class: "panel options-panel" },
       label(T("type")),
-      h("div", { class: "segmented" }, audioBtn, videoBtn),
-      label(T("format")),
-      formatCell,
-      label(T("quality")),
-      qualityCell,
+      h(
+        "div",
+        { class: "opt-selectors" },
+        h("div", { class: "segmented" }, audioBtn, videoBtn),
+        label(T("format")),
+        formatCell,
+        label(T("quality")),
+        qualityCell,
+      ),
       label(T("save_to")),
-      outWrap,
-      actions,
+      h("div", { class: "opt-path" }, outWrap, actions),
     );
     paintMediaType();
   } else {
     optionsPanel = h(
       "section",
-      { class: "panel options-panel single" },
+      { class: "panel options-panel" },
       label(T("format")),
-      formatCell,
-      label(T("quality")),
-      qualityCell,
+      h("div", { class: "opt-selectors" }, formatCell, label(T("quality")), qualityCell),
       label(T("save_to")),
-      outWrap,
-      actions,
+      h("div", { class: "opt-path" }, outWrap, actions),
     );
   }
 
