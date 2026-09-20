@@ -159,6 +159,7 @@ STRINGS: dict[str, dict[str, str]] = {
         "status_embedding":    "Embedding…",
         "status_done":         "Done",
         "status_error":        "Error",
+        "err_no_match":        "No YouTube match found for: {}",
         # Panel titles
         "download_queue":      "Download Queue",
         "log_panel":           "Log",
@@ -340,6 +341,7 @@ STRINGS: dict[str, dict[str, str]] = {
         "status_embedding":    "Bette ein…",
         "status_done":         "Fertig",
         "status_error":        "Fehler",
+        "err_no_match":        "Kein YouTube-Treffer gefunden für: {}",
         # Panel titles
         "download_queue":      "Download-Warteschlange",
         "log_panel":           "Protokoll",

@@ -270,11 +270,9 @@ class SpotifyClient:
         )
 
 
-def _find_best_youtube_match(artist: str, title: str, duration_ms: int) -> str:
-    """Search 5 YouTube results and return the URL whose duration is closest to the Spotify track."""
-    target_s = duration_ms / 1000 if duration_ms > 0 else 0
-
-    search_opts = {
+def _search_entries(query: str) -> List[Dict[str, Any]]:
+    """Top 5 YouTube results (flat metadata) for `query`. A failed search counts as no result."""
+    opts = {
         "quiet":         True,
         "no_warnings":   True,
         "extract_flat":  True,
@@ -282,36 +280,55 @@ def _find_best_youtube_match(artist: str, title: str, duration_ms: int) -> str:
         **_ffmpeg_opts(),
     }
     try:
-        with yt_dlp.YoutubeDL(search_opts) as ydl:
-            info = ydl.extract_info(f"ytsearch5:{artist} - {title}", download=False)
-        entries = (info or {}).get("entries") or []
+        with yt_dlp.YoutubeDL(opts) as ydl:
+            info = ydl.extract_info(f"ytsearch5:{query}", download=False)
+        return [e for e in ((info or {}).get("entries") or []) if e]
     except Exception:
-        entries = []
+        return []
 
-    if not entries:
-        return f"ytsearch1:{artist} - {title}"
 
-    # If Spotify gave no duration, just take first result
+def _search_queries(artist: str, title: str) -> List[str]:
+    """Queries in the order they are tried.
+
+    Spotify joins several artists with ", " and YouTube often finds nothing for the
+    combined string (for example "HARDX, NX!ZE - ELECTROSOULS"), so each artist alone
+    is tried afterwards.
+    """
+    queries = [f"{artist} - {title}"]
+    for name in artist.split(", "):
+        name = name.strip()
+        query = f"{name} - {title}"
+        if name and query not in queries:
+            queries.append(query)
+    return queries
+
+
+def _pick_by_duration(entries: List[Dict[str, Any]], target_s: float) -> Optional[Dict[str, Any]]:
+    """Result whose duration is closest to the Spotify track (first result if unknown)."""
+    valid = [e for e in entries if e.get("id")]
+    if not valid:
+        return None
     if target_s <= 0:
-        vid_id = (entries[0] or {}).get("id", "")
-        return f"https://www.youtube.com/watch?v={vid_id}" if vid_id else f"ytsearch1:{artist} - {title}"
+        return valid[0]
+    timed = [e for e in valid if (e.get("duration") or 0) > 0]
+    if not timed:
+        return valid[0]
+    return min(timed, key=lambda e: abs(e["duration"] - target_s))
 
-    best_url  = None
-    best_diff = float("inf")
 
-    for entry in entries:
-        if not entry:
-            continue
-        dur    = entry.get("duration") or 0
-        vid_id = entry.get("id", "")
-        if not vid_id or dur <= 0:
-            continue
-        diff = abs(dur - target_s)
-        if diff < best_diff:
-            best_diff = diff
-            best_url  = f"https://www.youtube.com/watch?v={vid_id}"
+def _find_best_youtube_match(artist: str, title: str, duration_ms: int) -> str:
+    """URL of the YouTube video that best matches the Spotify track.
 
-    return best_url or f"ytsearch1:{artist} - {title}"
+    Raises LookupError when none of the search queries finds anything, instead of
+    handing yt-dlp an empty search (it would finish without error and without a file).
+    """
+    target_s = duration_ms / 1000 if duration_ms > 0 else 0
+    queries = _search_queries(artist, title)
+    for query in queries:
+        best = _pick_by_duration(_search_entries(query), target_s)
+        if best:
+            return f"https://www.youtube.com/watch?v={best['id']}"
+    raise LookupError(T("err_no_match").format(queries[0]))
 
 
 def download_spotify_track(task: DownloadTask, ffmpeg_ok: bool) -> None:
