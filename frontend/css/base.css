@@ -17,12 +17,12 @@
   --accent-hover: #17a347;
   --accent-dim: #145c30;
   --item-accent: #1db954;
-  --on-accent: #06210f;   /* text on accent surfaces: dark on the light Spotify green */
+  --on-accent: #ffffff;   /* text on accent surfaces (buttons, active toggles) */
 }
 
 [data-service="spotify"] { --accent: #1db954; --accent-hover: #17a347; --accent-dim: #145c30; --item-accent: #1db954; }
-[data-service="youtube"] { --accent: #cc2222; --accent-hover: #aa1111; --accent-dim: #3a0a0a; --item-accent: #ff4444; --on-accent: #ffffff; }
-[data-service="tiktok"]  { --accent: #dc1a4b; --accent-hover: #c71542; --accent-dim: #4a0a1a; --item-accent: #ee1d52; --on-accent: #ffffff; }
+[data-service="youtube"] { --accent: #cc2222; --accent-hover: #aa1111; --accent-dim: #3a0a0a; --item-accent: #ff4444; }
+[data-service="tiktok"]  { --accent: #dc1a4b; --accent-hover: #c71542; --accent-dim: #4a0a1a; --item-accent: #ee1d52; }
 
 *, *::before, *::after { box-sizing: border-box; }
 

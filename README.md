@@ -113,29 +113,34 @@ a simulated backend answers the API calls.
 
 ## Supported Output Formats
 
+Pick a **Format** and then a **Quality**; the quality list changes with the format.
+
 Audio:
 
-| Format | Quality | Notes |
+| Format | Qualities | Notes |
 |---|---|---|
-| MP3 | 320 kbps | Widely compatible |
-| AAC (M4A) | 256 kbps | Great for Apple devices |
-| OGG Vorbis | ~320 kbps | Open format |
+| MP3 | 320 / 256 / 192 kbps | Widely compatible |
+| AAC (M4A) | 256 / 192 kbps | Great for Apple devices |
+| OGG Vorbis | 320 / 256 / 192 kbps | Open format |
 | FLAC | Lossless | Compressed, tags and cover art |
 | AIFF | Lossless | Uncompressed, tags and cover art (Spotify downloads) |
 | WAV | Lossless | Uncompressed, large files |
 
 The audio source is YouTube (about 256 kbps at best), so the lossless formats are
-convenient containers, not better sound than the 320 kbps MP3.
+convenient containers, not better sound than a 320 kbps MP3.
 
 Video (YouTube and TikTok):
 
-| Format | Quality | Notes |
+| Format | Qualities | Notes |
 |---|---|---|
-| MP4 | 1080p / 720p | Widely compatible |
-| MOV | 1080p | Converted with FFmpeg |
-| AVI | 1080p | Converted with FFmpeg (Xvid) |
-| MKV | best | Best available quality |
-| WebM | best | Open format |
+| MP4 | 1080p / 720p / 480p / 360p | Widely compatible |
+| MOV | 1080p / 720p / 480p / 360p | Converted with FFmpeg |
+| AVI | 1080p / 720p / 480p / 360p | Converted with FFmpeg (Xvid) |
+| MKV | Best / 1080p / 720p / 480p / 360p | Best available quality |
+| WebM | Best / 1080p / 720p / 480p / 360p | Open format |
+
+The lists are generated from two small tables in `config.py` (`_AUDIO_SPEC`,
+`_VIDEO_SPEC`); audio below 129 kbps and video below 360p are not offered.
 
 ---
 

@@ -90,11 +90,21 @@ def _audio_postprocessor(fmt_info: Dict[str, Any]) -> Dict[str, Any]:
     if fmt_info.get("convert"):
         # yt-dlp's audio extractor cannot write this container (AIFF); the converter can
         return {"key": "FFmpegVideoConvertor", "preferedformat": ext}
-    pp: Dict[str, Any] = {"key": "FFmpegExtractAudio", "preferredcodec": ext}
+    # yt-dlp names the codec "vorbis" (it writes an .ogg file); "ogg" is not a codec name for it
+    pp: Dict[str, Any] = {"key": "FFmpegExtractAudio", "preferredcodec": "vorbis" if ext == "ogg" else ext}
     quality = fmt_info.get("ydl_quality", "0")
     if quality and quality != "0":
         pp["preferredquality"] = quality
     return pp
+
+
+def _merge_opts(is_video: bool, fmt_info: Dict[str, Any], ext: str) -> Dict[str, Any]:
+    """Video and audio streams are merged into the container the user picked. Without this
+    yt-dlp chooses itself (MKV would come out as .webm for AV1 + Opus). MOV and AVI are merged
+    as mp4 first and converted afterwards."""
+    if not is_video:
+        return {}
+    return {"merge_output_format": "mp4" if fmt_info.get("convert") else ext}
 
 
 def _friendly_tiktok_error(msg: str) -> str:
@@ -789,6 +799,7 @@ def download_youtube_task(task: YouTubeTask, ffmpeg_ok: bool) -> None:
         ydl_opts: Dict[str, Any] = {
             "format":         fmt_info["ydl_format"] if is_video else "bestaudio/best",
             "outtmpl":        str(out_dir / f"{safe_title}.%(ext)s"),
+            **_merge_opts(is_video, fmt_info, ext),
             "quiet":          True,
             "no_warnings":    True,
             "progress_hooks": [ydl_hook],
@@ -1005,6 +1016,7 @@ def download_tiktok_task(task: TikTokTask, ffmpeg_ok: bool) -> None:
         ydl_opts: Dict[str, Any] = {
             "format":         fmt_info["ydl_format"] if is_video else "bestaudio/best",
             "outtmpl":        str(out_dir / f"{safe_title}.%(ext)s"),
+            **_merge_opts(is_video, fmt_info, ext),
             "quiet":          True,
             "no_warnings":    True,
             "progress_hooks": [ydl_hook],

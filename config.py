@@ -13,30 +13,94 @@ WIKI_PAGES = {
 CONFIG_FILE   = Path.home() / ".spotify_downloader" / "config.json"
 LANGUAGE_FILE = Path.home() / ".spotify_downloader" / "language"
 
-# The source is YouTube (max ~256 kbps AAC/Opus). The lossless containers (FLAC, AIFF, WAV)
-# hold the decoded audio: playable everywhere, but not better than the source.
-# "convert": True means yt-dlp's audio extractor cannot write the container, so the
-# ffmpeg converter post-processor is used instead.
-AUDIO_FORMATS = {
-    "MP3 (320 kbps)":        {"ext": "mp3",  "codec": "libmp3lame", "bitrate": "320k", "ydl_quality": "320"},
-    "AAC (256 kbps)":        {"ext": "m4a",  "codec": "aac",        "bitrate": "256k", "ydl_quality": "256"},
-    "OGG Vorbis (320 kbps)": {"ext": "ogg",  "codec": "libvorbis",  "bitrate": "320k", "ydl_quality": "320"},
-    "FLAC (Lossless)":       {"ext": "flac", "codec": "flac",       "bitrate": None,   "ydl_quality": "0"},
-    "AIFF (Lossless)":       {"ext": "aiff", "codec": "pcm_s16be",  "bitrate": None,   "ydl_quality": "0", "convert": True},
-    "WAV (Lossless)":        {"ext": "wav",  "codec": "pcm_s16le",  "bitrate": None,   "ydl_quality": "0"},
-}
+# ---------------------------------------------------------------------------
+# Formats and qualities
+#
+# The UI has two dropdowns, format and quality. The downloaders work with one flat name per
+# combination, for example "MP3 (320 kbps)" or "MKV (720p)"; those names are also what is
+# stored in the config. Everything below is generated from the two spec tables, so a new
+# quality step is a one-line change. Limits: audio never below 129 kbps, video never below 360p.
+#
+# The source is YouTube (max ~256 kbps AAC/Opus): the lossless containers (FLAC, AIFF, WAV)
+# hold the decoded audio, they are not better than the source.
+# "convert": True means yt-dlp's audio extractor cannot write the container (AIFF) or the
+# video needs re-encoding (MOV, AVI), so the ffmpeg converter post-processor is used.
+# ---------------------------------------------------------------------------
 
-_MP4_1080 = "bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[height<=1080][ext=mp4]/best"
-_MP4_720 = "bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/best[height<=720][ext=mp4]/best"
+_LOSSLESS = "Lossless"
 
-VIDEO_FORMATS = {
-    "MP4 (1080p)": {"ext": "mp4",  "ydl_format": _MP4_1080},
-    "MP4 (720p)":  {"ext": "mp4",  "ydl_format": _MP4_720},
-    "MOV (1080p)": {"ext": "mov",  "ydl_format": _MP4_1080, "convert": True},
-    "AVI (1080p)": {"ext": "avi",  "ydl_format": _MP4_1080, "convert": True},
-    "MKV (Best)":  {"ext": "mkv",  "ydl_format": "bestvideo+bestaudio/best"},
-    "WebM (Best)": {"ext": "webm", "ydl_format": "bestvideo[ext=webm]+bestaudio[ext=webm]/best[ext=webm]/best"},
-}
+# (format, settings, quality steps in kbps, None = lossless)
+_AUDIO_SPEC = [
+    ("MP3",        {"ext": "mp3",  "codec": "libmp3lame"},                   (320, 256, 192)),
+    ("AAC",        {"ext": "m4a",  "codec": "aac"},                          (256, 192)),
+    ("OGG Vorbis", {"ext": "ogg",  "codec": "libvorbis"},                    (320, 256, 192)),
+    ("FLAC",       {"ext": "flac", "codec": "flac"},                         None),
+    ("AIFF",       {"ext": "aiff", "codec": "pcm_s16be", "convert": True},   None),
+    ("WAV",        {"ext": "wav",  "codec": "pcm_s16le"},                    None),
+]
+
+_VIDEO_HEIGHTS = (1080, 720, 480, 360)
+
+# (format, settings, source, heights, offer "Best")
+#   source "mp4": h264 mp4 + m4a audio (the base for MP4 and for the converted MOV/AVI)
+#   source "any": whatever is best, merged into the container yt-dlp picks (MKV)
+#   source "webm": webm video + webm audio
+_VIDEO_SPEC = [
+    ("MP4",  {"ext": "mp4"},                     "mp4",  False),
+    ("MOV",  {"ext": "mov",  "convert": True},   "mp4",  False),
+    ("AVI",  {"ext": "avi",  "convert": True},   "mp4",  False),
+    ("MKV",  {"ext": "mkv"},                     "any",  True),
+    ("WebM", {"ext": "webm"},                    "webm", True),
+]
+
+
+def _video_selector(source: str, height):
+    """yt-dlp format string for a source kind and height (None = no limit)."""
+    limit = f"[height<={height}]" if height else ""
+    if source == "mp4":
+        return (f"bestvideo{limit}[ext=mp4]+bestaudio[ext=m4a]/best{limit}[ext=mp4]/best")
+    if source == "webm":
+        return (f"bestvideo{limit}[ext=webm]+bestaudio[ext=webm]/best{limit}[ext=webm]/best")
+    return f"bestvideo{limit}+bestaudio/best{limit}/best" if height else "bestvideo+bestaudio/best"
+
+
+def _build_audio():
+    formats, groups = {}, []
+    for container, info, steps in _AUDIO_SPEC:
+        qualities = []
+        for kbps in (steps or (None,)):
+            if kbps:
+                label = f"{kbps} kbps"
+                entry = {**info, "bitrate": f"{kbps}k", "ydl_quality": str(kbps)}
+            else:
+                label = _LOSSLESS
+                entry = {**info, "bitrate": None, "ydl_quality": "0"}
+            name = f"{container} ({label})"
+            formats[name] = entry
+            qualities.append({"label": label, "name": name})
+        groups.append({"format": container, "qualities": qualities})
+    return formats, groups
+
+
+def _build_video():
+    formats, groups = {}, []
+    for container, info, source, offer_best in _VIDEO_SPEC:
+        qualities = []
+        steps = ([None] if offer_best else []) + list(_VIDEO_HEIGHTS)
+        for height in steps:
+            label = f"{height}p" if height else "Best"
+            name = f"{container} ({label})"
+            formats[name] = {**info, "ydl_format": _video_selector(source, height)}
+            quality = {"label": label, "name": name}
+            if not height:
+                quality["label_key"] = "quality_best"
+            qualities.append(quality)
+        groups.append({"format": container, "qualities": qualities})
+    return formats, groups
+
+
+AUDIO_FORMATS, AUDIO_GROUPS = _build_audio()
+VIDEO_FORMATS, VIDEO_GROUPS = _build_video()
 
 QUALITY_LABELS = {
     "Standard (128 kbps)": "128",
@@ -134,6 +198,8 @@ STRINGS: dict[str, dict[str, str]] = {
         "spotify_url":         "Spotify URL",
         "youtube_url":         "YouTube URL",
         "format":              "Format",
+        "quality":             "Quality",
+        "quality_best":        "Best",
         "save_to":             "Save to",
         "type":                "Type",
         # Buttons
@@ -337,6 +403,8 @@ STRINGS: dict[str, dict[str, str]] = {
         "spotify_url":         "Spotify URL",
         "youtube_url":         "YouTube URL",
         "format":              "Format",
+        "quality":             "Qualität",
+        "quality_best":        "Beste",
         "save_to":             "Speichern in",
         "type":                "Typ",
         # Buttons

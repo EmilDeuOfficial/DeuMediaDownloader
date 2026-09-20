@@ -9,21 +9,47 @@ from converter import embed_metadata, find_ffmpeg
 
 
 # ------------------------------------------------------------------ format lists
-def test_audio_formats_offer_only_the_best_mp3_and_add_flac_and_aiff():
+def test_audio_formats_cover_all_qualities_but_nothing_under_129_kbps():
     names = list(AUDIO_FORMATS)
-    assert [n for n in names if n.startswith("MP3")] == ["MP3 (320 kbps)"]
+    assert [n for n in names if n.startswith("MP3")] == ["MP3 (320 kbps)", "MP3 (256 kbps)", "MP3 (192 kbps)"]
+    assert [n for n in names if n.startswith("AAC")] == ["AAC (256 kbps)", "AAC (192 kbps)"]
+    assert [n for n in names if n.startswith("OGG")] == [
+        "OGG Vorbis (320 kbps)", "OGG Vorbis (256 kbps)", "OGG Vorbis (192 kbps)"]
+    for name, info in AUDIO_FORMATS.items():
+        if info["bitrate"]:
+            assert int(info["bitrate"].rstrip("k")) >= 129, name
     assert AUDIO_FORMATS["FLAC (Lossless)"]["ext"] == "flac"
     assert AUDIO_FORMATS["AIFF (Lossless)"]["ext"] == "aiff"
-    assert {"AAC (256 kbps)", "OGG Vorbis (320 kbps)", "WAV (Lossless)"} <= set(names)
+    assert AUDIO_FORMATS["WAV (Lossless)"]["ext"] == "wav"
 
 
-def test_video_formats_start_at_720p_and_add_mov_and_avi():
+def test_video_formats_offer_1080p_down_to_360p_and_never_less():
     names = list(VIDEO_FORMATS)
-    assert [n for n in names if n.startswith("MP4")] == ["MP4 (1080p)", "MP4 (720p)"]
-    assert not any(low in " ".join(names) for low in ("480p", "360p"))
-    assert VIDEO_FORMATS["MOV (1080p)"]["ext"] == "mov"
-    assert VIDEO_FORMATS["AVI (1080p)"]["ext"] == "avi"
-    assert {"MKV (Best)", "WebM (Best)"} <= set(names)
+    for container in ("MP4", "MOV", "AVI"):
+        assert [n for n in names if n.startswith(container)] == [
+            f"{container} (1080p)", f"{container} (720p)", f"{container} (480p)", f"{container} (360p)"]
+    for container in ("MKV", "WebM"):
+        assert [n for n in names if n.startswith(container)] == [
+            f"{container} (Best)", f"{container} (1080p)", f"{container} (720p)",
+            f"{container} (480p)", f"{container} (360p)"]
+    assert not any("240p" in n or "144p" in n for n in names)
+    assert VIDEO_FORMATS["MOV (1080p)"]["ext"] == "mov" and VIDEO_FORMATS["MOV (1080p)"]["convert"] is True
+    assert VIDEO_FORMATS["AVI (360p)"]["ext"] == "avi" and VIDEO_FORMATS["AVI (360p)"]["convert"] is True
+
+
+@pytest.mark.parametrize("name, needle", [
+    ("MP4 (720p)", "height<=720"),
+    ("MOV (480p)", "height<=480"),
+    ("MKV (360p)", "height<=360"),
+    ("WebM (1080p)", "height<=1080"),
+])
+def test_video_quality_limits_the_yt_dlp_format_string(name, needle):
+    assert needle in VIDEO_FORMATS[name]["ydl_format"]
+
+
+def test_best_quality_has_no_height_limit():
+    assert "height" not in VIDEO_FORMATS["MKV (Best)"]["ydl_format"]
+    assert "height" not in VIDEO_FORMATS["WebM (Best)"]["ydl_format"]
 
 
 def test_saved_defaults_exist_in_the_format_lists():
@@ -31,6 +57,35 @@ def test_saved_defaults_exist_in_the_format_lists():
         assert DEFAULT_CONFIG[key] in AUDIO_FORMATS, key
     for key in ("yt_format_video", "tt_format_video"):
         assert DEFAULT_CONFIG[key] in VIDEO_FORMATS, key
+
+
+# ------------------------------------------------- format + quality for the two dropdowns
+def test_groups_describe_format_and_its_qualities_for_the_ui():
+    from config import AUDIO_GROUPS, VIDEO_GROUPS
+    assert [g["format"] for g in AUDIO_GROUPS] == ["MP3", "AAC", "OGG Vorbis", "FLAC", "AIFF", "WAV"]
+    assert [g["format"] for g in VIDEO_GROUPS] == ["MP4", "MOV", "AVI", "MKV", "WebM"]
+    mp3 = AUDIO_GROUPS[0]
+    assert [q["label"] for q in mp3["qualities"]] == ["320 kbps", "256 kbps", "192 kbps"]
+    assert [q["name"] for q in mp3["qualities"]] == ["MP3 (320 kbps)", "MP3 (256 kbps)", "MP3 (192 kbps)"]
+    flac = AUDIO_GROUPS[3]
+    assert flac["qualities"] == [{"label": "Lossless", "name": "FLAC (Lossless)"}]
+
+
+def test_every_group_quality_points_at_a_real_format_and_best_is_translatable():
+    from config import AUDIO_GROUPS, VIDEO_GROUPS
+    for group in AUDIO_GROUPS:
+        for q in group["qualities"]:
+            assert q["name"] in AUDIO_FORMATS
+    for group in VIDEO_GROUPS:
+        for q in group["qualities"]:
+            assert q["name"] in VIDEO_FORMATS
+    mkv = next(g for g in VIDEO_GROUPS if g["format"] == "MKV")
+    assert mkv["qualities"][0] == {"label": "Best", "name": "MKV (Best)", "label_key": "quality_best"}
+
+
+def test_quality_strings_exist_in_every_language():
+    for lang in config.STRINGS.values():
+        assert lang["quality"] and lang["quality_best"]
 
 
 @pytest.mark.parametrize("name", list(AUDIO_FORMATS))
@@ -140,3 +195,40 @@ def test_aiff_files_get_title_artist_album_and_cover(tmp_path):
     assert str(tags["TPE1"]) == "Artist"
     assert str(tags["TALB"]) == "Album"
     assert any(key.startswith("APIC") for key in tags.keys())
+
+
+# ----------------------------------------------- regressions found with real downloads
+def test_every_extractor_codec_we_ask_for_is_supported_by_yt_dlp():
+    """OGG used to fail with KeyError 'ogg': yt-dlp's extractor calls that codec 'vorbis'."""
+    import yt_dlp.postprocessor as pp
+    for name, info in AUDIO_FORMATS.items():
+        post = d._audio_postprocessor(info)
+        if post["key"] == "FFmpegExtractAudio":
+            assert post["preferredcodec"] in pp.FFmpegExtractAudioPP.SUPPORTED_EXTS, name
+
+
+def test_ogg_uses_the_vorbis_codec_name_and_keeps_the_bitrate():
+    assert d._audio_postprocessor(AUDIO_FORMATS["OGG Vorbis (192 kbps)"]) == {
+        "key": "FFmpegExtractAudio", "preferredcodec": "vorbis", "preferredquality": "192"}
+
+
+@pytest.mark.parametrize("fmt, container", [
+    ("MKV (720p)", "mkv"),        # yt-dlp would otherwise merge AV1 + Opus into .webm
+    ("MKV (Best)", "mkv"),
+    ("WebM (480p)", "webm"),
+    ("MP4 (1080p)", "mp4"),
+    ("MOV (1080p)", "mp4"),       # merged as mp4 first, then converted to mov
+    ("AVI (360p)", "mp4"),
+])
+def test_video_is_merged_into_the_chosen_container(capture, fmt, container):
+    assert youtube_opts(capture, fmt)["merge_output_format"] == container
+
+
+def test_audio_download_has_no_merge_format(capture):
+    assert "merge_output_format" not in youtube_opts(capture, "MP3 (192 kbps)")
+
+
+def test_tiktok_video_is_merged_into_the_chosen_container(capture):
+    task = d.TikTokTask(task_id="t", url="http://x", title="Clip", output_dir=str(capture), format_name="MKV (Best)")
+    d.download_tiktok_task(task, True)
+    assert CaptureYDL.opts["merge_output_format"] == "mkv"

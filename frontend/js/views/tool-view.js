@@ -10,6 +10,7 @@ import { createLogPanel } from "../components/log-panel.js";
 import { alertModal, showModal } from "../components/modal.js";
 import { setResizable } from "../components/resize-handles.js";
 import { icon } from "../icons.js";
+import { initialSelection, resolveQuality, qualityText } from "../formats.js";
 
 const label = (text, cls = "") => h("span", { class: `field-label ${cls}`.trim() }, text);
 
@@ -20,21 +21,28 @@ export function createToolView(service, { onBack, onSettings }) {
   const options = () => app.get().options;
 
   // ---- state helpers ------------------------------------------------------
-  const isAudio = (kind) => kind === "Audio";
-  const formatList = (kind) => (isAudio(kind) ? options().audio_formats : options().video_formats);
-  const formatKey = (kind) => (isAudio(kind) ? cfgKeys.formatAudio : cfgKeys.formatVideo);
-
-  function savedFormat(kind) {
-    if (!service.mediaToggle) {
-      const value = cfg()[cfgKeys.format];
-      return options().audio_formats.includes(value) ? value : AUDIO_DEFAULT;
-    }
-    const value = cfg()[formatKey(kind)];
-    return formatList(kind).includes(value) ? value : isAudio(kind) ? AUDIO_DEFAULT : VIDEO_DEFAULT;
-  }
+  // The user picks a format and a quality; the downloaders and the config use the flat name
+  // of that pair (for example "MP3 (320 kbps)"), which is what selection.quality.name is.
+  const groupsFor = (kind) => (kind === "Audio" ? options().audio_groups : options().video_groups);
+  const configKey = (kind) => (service.mediaToggle ? (kind === "Audio" ? cfgKeys.formatAudio : cfgKeys.formatVideo) : cfgKeys.format);
+  const defaultName = (kind) => (kind === "Audio" ? AUDIO_DEFAULT : VIDEO_DEFAULT);
 
   let mediaType = service.mediaToggle ? cfg()[cfgKeys.mediaType] || cfgKeys.mediaDefault : "Audio";
   if (mediaType !== "Audio" && mediaType !== "Video") mediaType = cfgKeys.mediaDefault || "Audio";
+
+  let selection = null;
+  const loadSelection = (kind) => {
+    selection = initialSelection(groupsFor(kind), cfg()[configKey(kind)], defaultName(kind));
+  };
+  loadSelection(mediaType);
+  const currentName = () => selection.quality.name;
+  const qualityTexts = () => selection.group.qualities.map((q) => qualityText(q, T));
+
+  function persistSelection() {
+    const patch = { [configKey(mediaType)]: currentName() };
+    if (service.mediaToggle) patch[cfgKeys.mediaType] = mediaType;
+    saveConfig(patch);
+  }
 
   // ---- header -------------------------------------------------------------
   let maximized = false;
@@ -104,17 +112,39 @@ export function createToolView(service, { onBack, onSettings }) {
   outInput.addEventListener("input", () => persistOutDir(outInput.value));
 
   const formatDropdown = createDropdown({
-    values: service.mediaToggle ? formatList(mediaType) : options().audio_formats,
-    value: savedFormat(mediaType),
-    width: service.dropdownWidth,
-    onChange(value) {
-      if (service.mediaToggle) saveConfig({ [formatKey(mediaType)]: value, [cfgKeys.mediaType]: mediaType });
-      else saveConfig({ [cfgKeys.format]: value });
+    values: groupsFor(mediaType).map((g) => g.format),
+    value: selection.group.format,
+    width: "100%",
+    onChange(format) {
+      const group = groupsFor(mediaType).find((g) => g.format === format);
+      selection = { group, quality: resolveQuality(group, selection.quality.label) };
+      syncQuality();
+      persistSelection();
     },
   });
 
+  const qualityDropdown = createDropdown({
+    values: qualityTexts(),
+    value: qualityText(selection.quality, T),
+    width: "100%",
+    onChange(text) {
+      const quality = selection.group.qualities.find((q) => qualityText(q, T) === text);
+      if (quality) selection = { group: selection.group, quality };
+      persistSelection();
+    },
+  });
+
+  // Quality list follows the format; a format with one quality (Lossless) cannot be changed.
+  function syncQuality() {
+    qualityDropdown.setValues(qualityTexts(), qualityText(selection.quality, T));
+    qualityDropdown.setDisabled(selection.group.qualities.length < 2);
+  }
+  syncQuality();
+
   const browseBtn = h("button", { class: "btn neutral browse", type: "button", onClick: browse }, T("browse"));
   const dlBtn = h("button", { class: "btn accent download", type: "button", onClick: start }, T("download").trim());
+  const actions = h("div", { class: "a-actions" }, browseBtn, dlBtn);
+  const outWrap = h("div", { class: "a-out" }, outInput);
 
   async function browse() {
     try {
@@ -128,6 +158,9 @@ export function createToolView(service, { onBack, onSettings }) {
     }
   }
 
+  const formatCell = h("div", { class: "a-dd" }, formatDropdown.el);
+  const qualityCell = h("div", { class: "a-dd" }, qualityDropdown.el);
+
   let audioBtn = null;
   let videoBtn = null;
   let optionsPanel;
@@ -137,14 +170,15 @@ export function createToolView(service, { onBack, onSettings }) {
     optionsPanel = h(
       "section",
       { class: "panel options-panel media" },
-      label(T("type"), "a-type"),
-      h("div", { class: "segmented a-toggle" }, audioBtn, videoBtn),
-      label(T("format"), "a-fmt"),
-      h("div", { class: "a-dd" }, formatDropdown.el),
-      dlBtn,
-      label(T("save_to"), "a-out-label"),
-      outInput,
-      browseBtn,
+      label(T("type")),
+      h("div", { class: "segmented" }, audioBtn, videoBtn),
+      label(T("format")),
+      formatCell,
+      label(T("quality")),
+      qualityCell,
+      label(T("save_to")),
+      outWrap,
+      actions,
     );
     paintMediaType();
   } else {
@@ -152,11 +186,12 @@ export function createToolView(service, { onBack, onSettings }) {
       "section",
       { class: "panel options-panel single" },
       label(T("format")),
-      h("div", { class: "a-dd" }, formatDropdown.el),
+      formatCell,
+      label(T("quality")),
+      qualityCell,
       label(T("save_to")),
-      outInput,
-      browseBtn,
-      dlBtn,
+      outWrap,
+      actions,
     );
   }
 
@@ -168,7 +203,9 @@ export function createToolView(service, { onBack, onSettings }) {
   function setMediaType(kind) {
     mediaType = kind;
     paintMediaType();
-    formatDropdown.setValues(formatList(kind), savedFormat(kind));
+    loadSelection(kind);
+    formatDropdown.setValues(groupsFor(kind).map((g) => g.format), selection.group.format);
+    syncQuality();
     saveConfig({ [cfgKeys.mediaType]: kind });
   }
 
@@ -243,7 +280,7 @@ export function createToolView(service, { onBack, onSettings }) {
     if (dlBtn.disabled) return;
     setBusy(true);
     try {
-      await api.submit(service.id, urlInput.value, outInput.value, formatDropdown.getValue());
+      await api.submit(service.id, urlInput.value, outInput.value, currentName());
       urlInput.value = "";
     } catch (err) {
       setBusy(false);

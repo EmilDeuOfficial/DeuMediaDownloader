@@ -13,7 +13,7 @@ export function createDropdown({ values, value, width = 210, onChange }) {
   const arrow = h("span", { class: "dd-arrow" }, icon("chevron-down"));
   const el = h(
     "div",
-    { class: "dropdown", style: { width: `${width}px`, maxWidth: "100%" }, tabIndex: 0, role: "combobox", "aria-expanded": "false" },
+    { class: "dropdown", style: { width: typeof width === "number" ? `${width}px` : width, maxWidth: "100%" }, tabIndex: 0, role: "combobox", "aria-expanded": "false" },
     h("div", { class: "dd-inner" }, label, arrow),
   );
 
@@ -84,7 +84,12 @@ export function createDropdown({ values, value, width = 210, onChange }) {
     highlight(Math.max(0, items.indexOf(current)));
   }
 
-  el.addEventListener("click", () => (popup ? close() : open()));
+  let disabled = false;
+  el.addEventListener("click", () => {
+    if (disabled) return;
+    if (popup) close();
+    else open();
+  });
   el.addEventListener("keydown", (ev) => {
     if (ev.key === "Escape") {
       close();
@@ -107,6 +112,14 @@ export function createDropdown({ values, value, width = 210, onChange }) {
     setValues(nextValues, nextValue) {
       items = [...nextValues];
       setValue(nextValue, false);
+    },
+    /** A dropdown with a single possible value (for example "Lossless") is shown but not openable. */
+    setDisabled(value) {
+      disabled = value;
+      if (value) close();
+      el.classList.toggle("disabled", value);
+      el.tabIndex = value ? -1 : 0;
+      el.setAttribute("aria-disabled", String(value));
     },
     close,
   };

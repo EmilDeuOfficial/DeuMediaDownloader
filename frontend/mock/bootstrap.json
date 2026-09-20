@@ -6,6 +6,8 @@
     "spotify_url": "Spotify URL",
     "youtube_url": "YouTube URL",
     "format": "Format",
+    "quality": "Quality",
+    "quality_best": "Best",
     "save_to": "Save to",
     "type": "Type",
     "browse": "Browse",
@@ -60,6 +62,7 @@
     "err_short_no_file": "File not found",
     "err_short_ffmpeg": "FFmpeg missing",
     "err_short_disk": "Cannot write file",
+    "err_short_path": "Folder not found",
     "err_short_tiktok_cookies": "TikTok cookie problem",
     "err_short_unknown": "Unknown error",
     "download_queue": "Download Queue",
@@ -105,7 +108,7 @@
     "queued_n_videos": "Queued {} video(s)  [{}]",
     "err_resolving": "Error resolving URL: {}",
     "log_done": "Done:  {}",
-    "log_error": "Error: {} — {}",
+    "log_error": "Error: {} - {}",
     "log_queued": "Queued: {}",
     "ffmpeg_ok": "FFmpeg ✓",
     "ffmpeg_fail": "FFmpeg ✗",
@@ -229,8 +232,13 @@
   "options": {
     "audio_formats": [
       "MP3 (320 kbps)",
+      "MP3 (256 kbps)",
+      "MP3 (192 kbps)",
       "AAC (256 kbps)",
+      "AAC (192 kbps)",
       "OGG Vorbis (320 kbps)",
+      "OGG Vorbis (256 kbps)",
+      "OGG Vorbis (192 kbps)",
       "FLAC (Lossless)",
       "AIFF (Lossless)",
       "WAV (Lossless)"
@@ -238,10 +246,219 @@
     "video_formats": [
       "MP4 (1080p)",
       "MP4 (720p)",
+      "MP4 (480p)",
+      "MP4 (360p)",
       "MOV (1080p)",
+      "MOV (720p)",
+      "MOV (480p)",
+      "MOV (360p)",
       "AVI (1080p)",
+      "AVI (720p)",
+      "AVI (480p)",
+      "AVI (360p)",
       "MKV (Best)",
-      "WebM (Best)"
+      "MKV (1080p)",
+      "MKV (720p)",
+      "MKV (480p)",
+      "MKV (360p)",
+      "WebM (Best)",
+      "WebM (1080p)",
+      "WebM (720p)",
+      "WebM (480p)",
+      "WebM (360p)"
+    ],
+    "audio_groups": [
+      {
+        "format": "MP3",
+        "qualities": [
+          {
+            "label": "320 kbps",
+            "name": "MP3 (320 kbps)"
+          },
+          {
+            "label": "256 kbps",
+            "name": "MP3 (256 kbps)"
+          },
+          {
+            "label": "192 kbps",
+            "name": "MP3 (192 kbps)"
+          }
+        ]
+      },
+      {
+        "format": "AAC",
+        "qualities": [
+          {
+            "label": "256 kbps",
+            "name": "AAC (256 kbps)"
+          },
+          {
+            "label": "192 kbps",
+            "name": "AAC (192 kbps)"
+          }
+        ]
+      },
+      {
+        "format": "OGG Vorbis",
+        "qualities": [
+          {
+            "label": "320 kbps",
+            "name": "OGG Vorbis (320 kbps)"
+          },
+          {
+            "label": "256 kbps",
+            "name": "OGG Vorbis (256 kbps)"
+          },
+          {
+            "label": "192 kbps",
+            "name": "OGG Vorbis (192 kbps)"
+          }
+        ]
+      },
+      {
+        "format": "FLAC",
+        "qualities": [
+          {
+            "label": "Lossless",
+            "name": "FLAC (Lossless)"
+          }
+        ]
+      },
+      {
+        "format": "AIFF",
+        "qualities": [
+          {
+            "label": "Lossless",
+            "name": "AIFF (Lossless)"
+          }
+        ]
+      },
+      {
+        "format": "WAV",
+        "qualities": [
+          {
+            "label": "Lossless",
+            "name": "WAV (Lossless)"
+          }
+        ]
+      }
+    ],
+    "video_groups": [
+      {
+        "format": "MP4",
+        "qualities": [
+          {
+            "label": "1080p",
+            "name": "MP4 (1080p)"
+          },
+          {
+            "label": "720p",
+            "name": "MP4 (720p)"
+          },
+          {
+            "label": "480p",
+            "name": "MP4 (480p)"
+          },
+          {
+            "label": "360p",
+            "name": "MP4 (360p)"
+          }
+        ]
+      },
+      {
+        "format": "MOV",
+        "qualities": [
+          {
+            "label": "1080p",
+            "name": "MOV (1080p)"
+          },
+          {
+            "label": "720p",
+            "name": "MOV (720p)"
+          },
+          {
+            "label": "480p",
+            "name": "MOV (480p)"
+          },
+          {
+            "label": "360p",
+            "name": "MOV (360p)"
+          }
+        ]
+      },
+      {
+        "format": "AVI",
+        "qualities": [
+          {
+            "label": "1080p",
+            "name": "AVI (1080p)"
+          },
+          {
+            "label": "720p",
+            "name": "AVI (720p)"
+          },
+          {
+            "label": "480p",
+            "name": "AVI (480p)"
+          },
+          {
+            "label": "360p",
+            "name": "AVI (360p)"
+          }
+        ]
+      },
+      {
+        "format": "MKV",
+        "qualities": [
+          {
+            "label": "Best",
+            "name": "MKV (Best)",
+            "label_key": "quality_best"
+          },
+          {
+            "label": "1080p",
+            "name": "MKV (1080p)"
+          },
+          {
+            "label": "720p",
+            "name": "MKV (720p)"
+          },
+          {
+            "label": "480p",
+            "name": "MKV (480p)"
+          },
+          {
+            "label": "360p",
+            "name": "MKV (360p)"
+          }
+        ]
+      },
+      {
+        "format": "WebM",
+        "qualities": [
+          {
+            "label": "Best",
+            "name": "WebM (Best)",
+            "label_key": "quality_best"
+          },
+          {
+            "label": "1080p",
+            "name": "WebM (1080p)"
+          },
+          {
+            "label": "720p",
+            "name": "WebM (720p)"
+          },
+          {
+            "label": "480p",
+            "name": "WebM (480p)"
+          },
+          {
+            "label": "360p",
+            "name": "WebM (360p)"
+          }
+        ]
+      }
     ],
     "sp_templates": [
       [

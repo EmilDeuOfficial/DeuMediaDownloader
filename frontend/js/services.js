@@ -3,7 +3,7 @@ export const SERVICES = {
   spotify: {
     id: "spotify",
     title: "Spotify",
-    launcher: { btn: "#1db954", btnHover: "#17a347", btnText: "#06210f", descKey: "spotify_desc", openKey: "open_spotify" },
+    launcher: { btn: "#1db954", btnHover: "#17a347", btnText: "#ffffff", descKey: "spotify_desc", openKey: "open_spotify" },
     urlLabelKey: "spotify_url",
     urlPlaceholderKey: "spotify_url_ph",
     queueGlyph: "note",

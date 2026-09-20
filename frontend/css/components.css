@@ -133,6 +133,11 @@
 .dropdown:hover, .dropdown.open { background: var(--accent); }
 .dropdown:hover .dd-inner, .dropdown.open .dd-inner { background: var(--bg-card); }
 
+.dropdown.disabled { opacity: 0.55; cursor: default; }
+.dropdown.disabled:hover { background: var(--border); }
+.dropdown.disabled:hover .dd-inner { background: var(--bg-input); }
+.dropdown.disabled .dd-arrow { visibility: hidden; }
+
 .dd-popup {
   position: fixed;
   z-index: 3000;
