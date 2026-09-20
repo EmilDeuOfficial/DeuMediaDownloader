@@ -2,16 +2,21 @@ import { h } from "../dom.js";
 import { icon } from "../icons.js";
 import { T } from "../i18n.js";
 import { linkify } from "../linkify.js";
+import { trapFocus } from "../focus-trap.js";
 
 // Promise based dialogs that replace tkinter's messagebox.
 // showModal resolves with the `value` of the clicked button (or `cancelValue` on Escape).
 export function showModal({ title, message, kind = "info", buttons, cancelValue = null }) {
   return new Promise((resolve) => {
-    const previous = document.activeElement;
+    let releaseFocus = () => {};
+    const isTop = () => {
+      const all = document.querySelectorAll(".modal-overlay");
+      return all[all.length - 1] === overlay;
+    };
     const finish = (value) => {
       document.removeEventListener("keydown", onKey, true);
       overlay.remove();
-      if (previous && previous.focus) previous.focus();
+      releaseFocus();
       resolve(value);
     };
     const onKey = (ev) => {
@@ -37,6 +42,7 @@ export function showModal({ title, message, kind = "info", buttons, cancelValue 
     );
     document.addEventListener("keydown", onKey, true);
     document.body.append(overlay);
+    releaseFocus = trapFocus(overlay, isTop);
     (buttonEls[buttonEls.length - 1] || overlay).focus();
   });
 }

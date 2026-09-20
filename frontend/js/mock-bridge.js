@@ -21,6 +21,7 @@ let config = {};
 let bootstrapData = null;
 const tasks = { spotify: [], youtube: [], tiktok: [] };
 let counter = 0;
+let maximized = false;
 
 const emit = (name, payload) => window.__bridge.emit(name, payload);
 const ok = (data = null) => ({ ok: true, data });
@@ -200,9 +201,9 @@ export const mockApi = {
   async open_folder() { return ok(); },
   async open_url(url) { window.open(url, "_blank", "noopener"); return ok(); },
   async minimize() { return ok(); },
-  async toggle_maximize() { return ok(); },
+  async toggle_maximize() { maximized = !maximized; return ok(maximized); },
   async close() { return ok(); },
-  async set_view() { return ok(); },
+  async set_view() { maximized = false; return ok(); },
   async save_geometry() { return ok(); },
   async clear_data() { return ok(); },
   async uninstall_ffmpeg() { return ok(); },

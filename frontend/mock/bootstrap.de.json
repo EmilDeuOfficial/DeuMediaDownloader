@@ -49,6 +49,7 @@
     "tip_cancel": "Abbrechen",
     "wiki_tutorial": "Anleitung im GitHub-Wiki",
     "tip_clear_done": "Erledigte Einträge entfernen",
+    "queue_empty": "Noch keine Downloads. Füge oben einen Link ein.",
     "download_queue": "Download-Warteschlange",
     "log_panel": "Protokoll",
     "settings_title": "Einstellungen",

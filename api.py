@@ -252,7 +252,8 @@ class Api:
         self._window.minimize()
 
     @_safe
-    def toggle_maximize(self) -> None:
+    def toggle_maximize(self) -> bool:
+        """Maximize or restore; returns True when the window is maximized afterwards."""
         if self._maximized:
             self._window.restore()
             self._maximized = False
@@ -260,6 +261,7 @@ class Api:
             self._normal_geo = self._current_geometry()
             self._window.maximize()
             self._maximized = True
+        return self._maximized
 
     @_safe
     def get_rect(self) -> dict:

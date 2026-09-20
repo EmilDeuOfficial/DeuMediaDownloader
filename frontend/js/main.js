@@ -12,6 +12,16 @@ document.addEventListener("contextmenu", (ev) => {
   if (!ev.target.closest("input, textarea, .log-box, .modal-body")) ev.preventDefault();
 });
 
+// This is an app window, not a web page: no reload or browser zoom by keyboard.
+document.addEventListener(
+  "keydown",
+  (ev) => {
+    const key = ev.key.toLowerCase();
+    if (key === "f5" || (ev.ctrlKey && ["r", "+", "-", "=", "0"].includes(key))) ev.preventDefault();
+  },
+  true,
+);
+
 const root = document.getElementById("app");
 const views = {};
 let current = null;
@@ -25,7 +35,10 @@ async function navigate(name) {
   current = name;
   for (const [id, view] of Object.entries(views)) view.el.hidden = id !== name;
   setResizable(name !== "launcher");
-  if (views[name].refresh) views[name].refresh();
+  // Api.set_view restores a maximized window, so no view may keep showing "restore".
+  for (const view of Object.values(views)) view.setMaximized?.(false);
+  views[name].refresh?.();
+  views[name].focus?.();
 }
 
 async function boot() {
@@ -42,6 +55,7 @@ async function boot() {
   views.launcher = createLauncher({
     appTitle: data.strings.launcher_title || data.app_name,
     onChoose: (id) => navigate(id),
+    onMinimize: () => api.minimize().catch(() => {}),
     onClose: () => api.close().catch(() => {}),
   });
 

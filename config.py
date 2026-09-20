@@ -174,6 +174,7 @@ STRINGS: dict[str, dict[str, str]] = {
         "tip_cancel":          "Cancel",
         "wiki_tutorial":       "Tutorial in the GitHub wiki",
         "tip_clear_done":      "Remove finished items",
+        "queue_empty":         "No downloads yet. Paste a link above to start.",
         # Panel titles
         "download_queue":      "Download Queue",
         "log_panel":           "Log",
@@ -363,6 +364,7 @@ STRINGS: dict[str, dict[str, str]] = {
         "tip_cancel":          "Abbrechen",
         "wiki_tutorial":       "Anleitung im GitHub-Wiki",
         "tip_clear_done":      "Erledigte Einträge entfernen",
+        "queue_empty":         "Noch keine Downloads. Füge oben einen Link ein.",
         # Panel titles
         "download_queue":      "Download-Warteschlange",
         "log_panel":           "Protokoll",

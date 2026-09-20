@@ -12,11 +12,14 @@
   border: 1px solid var(--border);
   border-radius: 12px;
   background: var(--bg-card);
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.15s;
 }
+.launcher-card:hover { border-color: var(--text-muted); transform: translateY(-2px); }
 .launcher-card .brand-icon { margin-bottom: 4px; }
 .lc-title { font-size: 16px; font-weight: 700; }
 .lc-desc { margin: 4px 0 16px; font-size: 11px; color: var(--text-secondary); text-align: center; white-space: pre-line; }
-.lc-open { height: 36px; background: var(--btn); font-weight: 700; color: #fff; }
+.lc-open { height: 36px; background: var(--btn); font-weight: 700; color: var(--btn-text, #fff); }
 .lc-open:hover { background: var(--btn-hover); }
 
 /* ---- Tool view ---- */

@@ -7,7 +7,8 @@ import { createToolBar } from "../components/titlebar.js";
 import { createDropdown } from "../components/dropdown.js";
 import { createQueueItem } from "../components/queue-item.js";
 import { createLogPanel } from "../components/log-panel.js";
-import { alertModal } from "../components/modal.js";
+import { alertModal, showModal } from "../components/modal.js";
+import { setResizable } from "../components/resize-handles.js";
 import { icon } from "../icons.js";
 
 const label = (text, cls = "") => h("span", { class: `field-label ${cls}`.trim() }, text);
@@ -49,9 +50,9 @@ export function createToolView(service, { onBack, onSettings }) {
 
   async function toggleMaximize() {
     try {
-      await api.toggle_maximize();
-      maximized = !maximized;
+      maximized = await api.toggle_maximize();   // the backend knows the real window state
       bar.setMaximized(maximized);
+      setResizable(!maximized);
     } catch (err) {
       console.error(err);
     }
@@ -62,6 +63,7 @@ export function createToolView(service, { onBack, onSettings }) {
     class: "entry url-entry",
     type: "text",
     placeholder: T(service.urlPlaceholderKey),
+    "aria-label": T(service.urlLabelKey),
     spellcheck: false,
     autocomplete: "off",
   });
@@ -96,6 +98,7 @@ export function createToolView(service, { onBack, onSettings }) {
     class: "entry out-entry",
     type: "text",
     value: cfg()[cfgKeys.outDir] || "",
+    "aria-label": T("save_to"),
     spellcheck: false,
   });
   outInput.addEventListener("input", () => persistOutDir(outInput.value));
@@ -171,7 +174,8 @@ export function createToolView(service, { onBack, onSettings }) {
 
   // ---- queue panel --------------------------------------------------------
   const items = new Map();
-  const queueList = h("div", { class: "queue-list" });
+  const queueEmpty = h("div", { class: "queue-empty" }, T("queue_empty"));
+  const queueList = h("div", { class: "queue-list" }, queueEmpty);
   const countLabel = h("span", { class: "queue-count" });
   const queuePanel = h(
     "section",
@@ -190,6 +194,7 @@ export function createToolView(service, { onBack, onSettings }) {
   function updateCount() {
     const n = items.size;
     countLabel.textContent = n ? T(n === 1 ? "queue_count_one" : "queue_count_many", n) : "";
+    queueEmpty.hidden = n > 0;
   }
 
   function addTask(task) {
@@ -257,7 +262,22 @@ export function createToolView(service, { onBack, onSettings }) {
   on("resolve_done", mine(() => setBusy(false)));
   on("resolve_error", mine((p) => {
     setBusy(false);
-    if (!el.hidden) alertModal(p.kind === "api" ? T("mb_api_title") : T("mb_error_title"), p.message, "error");
+    if (el.hidden) return;
+    if (p.kind === "api") {
+      // Missing Spotify credentials: offer to open the settings right away.
+      showModal({
+        title: T("mb_api_title"),
+        message: p.message,
+        kind: "error",
+        cancelValue: false,
+        buttons: [
+          { label: T("btn_ok"), value: false, kind: "neutral" },
+          { label: T("tip_settings"), value: true, kind: "accent" },
+        ],
+      }).then((openSettings) => openSettings && onSettings(service.id));
+    } else {
+      alertModal(T("mb_error_title"), p.message, "error");
+    }
   }));
 
   // ---- assemble -----------------------------------------------------------
@@ -276,6 +296,9 @@ export function createToolView(service, { onBack, onSettings }) {
     setMaximized(value) {
       maximized = value;
       bar.setMaximized(value);
+    },
+    focus() {
+      urlInput.focus();
     },
     /** Called when the view becomes visible again: pick up config changed elsewhere (settings). */
     refresh() {

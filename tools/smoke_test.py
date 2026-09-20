@@ -88,6 +88,17 @@ def probe(window):
         time.sleep(1.5)
         report["resize"] = {"before": before, "after": [window.width, window.height]}
 
+        # maximize icon must follow the real window state, also after leaving the view
+        max_btn = "document.querySelector('.tool-view[data-service=\"youtube\"] [data-action=\"maximize\"]')"
+        js(window, f"{max_btn}.click()")
+        time.sleep(1.0)
+        report["maximized"] = {"window": [window.width, window.height], "button_title": js(window, f"{max_btn}.title")}
+        js(window, "document.querySelector('.tool-view[data-service=\"youtube\"] [data-action=\"back\"]').click()")
+        time.sleep(1.0)
+        js(window, "document.querySelector('.launcher-card[data-service=\"youtube\"]').click()")
+        time.sleep(1.0)
+        report["after_reenter"] = {"window": [window.width, window.height], "button_title": js(window, f"{max_btn}.title")}
+
         # back to the launcher
         js(window, "document.querySelector('.tool-view[data-service=\"youtube\"] .tb-btn[data-action=\"back\"]').click()")
         time.sleep(1.0)

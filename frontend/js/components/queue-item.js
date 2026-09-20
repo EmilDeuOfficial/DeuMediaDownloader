@@ -48,8 +48,14 @@ export function createQueueItem(task, glyph, handlers = {}) {
   }
 
   function update(next) {
-    if (next.name != null) name.textContent = next.name;
-    if (next.label != null) status.textContent = next.label;
+    if (next.name != null) {
+      name.textContent = next.name;
+      name.title = next.name;
+    }
+    if (next.label != null) {
+      status.textContent = next.label;
+      status.title = next.error || next.label;   // full error text on hover
+    }
     if (next.status != null) {
       el.dataset.status = next.status;
       renderActions(next.status);

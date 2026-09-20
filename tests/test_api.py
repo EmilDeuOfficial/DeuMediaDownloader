@@ -321,3 +321,18 @@ def test_bootstrap_offers_wiki_pages(env):
     wiki = api.bootstrap()["data"]["options"]["wiki"]
     assert wiki == config.WIKI_PAGES
     assert all(url.startswith("https://github.com/") and "/wiki/" in url for url in wiki.values())
+
+
+def test_toggle_maximize_reports_the_new_state(env):
+    api, rts, win, _ = env
+    assert api.toggle_maximize() == {"ok": True, "data": True}
+    assert api.toggle_maximize() == {"ok": True, "data": False}
+
+
+def test_leaving_a_maximized_view_restores_the_window(env):
+    api, rts, win, _ = env
+    api.set_view("youtube")
+    api.toggle_maximize()
+    api.set_view("launcher")
+    assert ("restore",) in win.calls
+    assert api.toggle_maximize()["data"] is True      # the next toggle maximizes again

@@ -4,13 +4,13 @@ import { SERVICES, SERVICE_ORDER } from "../services.js";
 import { createLauncherBar } from "../components/titlebar.js";
 
 // Start screen: three cards, one per service (720x330, not resizable).
-export function createLauncher({ appTitle, onChoose, onClose }) {
+export function createLauncher({ appTitle, onChoose, onMinimize, onClose }) {
   const cards = SERVICE_ORDER.map((id) => {
     const svc = SERVICES[id];
     const l = svc.launcher;
     return h(
       "div",
-      { class: "launcher-card", dataset: { service: id } },
+      { class: "launcher-card", dataset: { service: id }, onClick: () => onChoose(id) },
       h("span", { class: `brand-icon brand-${id}`, style: { width: "44px", height: "44px" } }),
       h("div", { class: "lc-title" }, svc.title),
       h("div", { class: "lc-desc" }, T(l.descKey)),
@@ -19,8 +19,7 @@ export function createLauncher({ appTitle, onChoose, onClose }) {
         {
           class: "btn lc-open",
           type: "button",
-          style: { "--btn": l.btn, "--btn-hover": l.btnHover },
-          onClick: () => onChoose(id),
+          style: { "--btn": l.btn, "--btn-hover": l.btnHover, "--btn-text": l.btnText },
         },
         T(l.openKey),
       ),
@@ -30,7 +29,7 @@ export function createLauncher({ appTitle, onChoose, onClose }) {
   const el = h(
     "div",
     { class: "view launcher-view" },
-    createLauncherBar({ title: appTitle, onClose }),
+    createLauncherBar({ title: appTitle, onMinimize, onClose }),
     h(
       "div",
       { class: "launcher-body" },

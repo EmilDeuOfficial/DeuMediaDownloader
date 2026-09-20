@@ -5,7 +5,7 @@
   --bg-input: #1c2128;
   --text-primary: #e6edf3;
   --text-secondary: #8b949e;
-  --text-muted: #484f58;
+  --text-muted: #6e7681;
   --success: #1db954;
   --warning: #e3b341;
   --error: #f85149;
@@ -17,11 +17,12 @@
   --accent-hover: #17a347;
   --accent-dim: #145c30;
   --item-accent: #1db954;
+  --on-accent: #06210f;   /* text on accent surfaces: dark on the light Spotify green */
 }
 
 [data-service="spotify"] { --accent: #1db954; --accent-hover: #17a347; --accent-dim: #145c30; --item-accent: #1db954; }
-[data-service="youtube"] { --accent: #cc2222; --accent-hover: #aa1111; --accent-dim: #3a0a0a; --item-accent: #ff4444; }
-[data-service="tiktok"]  { --accent: #ee1d52; --accent-hover: #c71542; --accent-dim: #4a0a1a; --item-accent: #ee1d52; }
+[data-service="youtube"] { --accent: #cc2222; --accent-hover: #aa1111; --accent-dim: #3a0a0a; --item-accent: #ff4444; --on-accent: #ffffff; }
+[data-service="tiktok"]  { --accent: #dc1a4b; --accent-hover: #c71542; --accent-dim: #4a0a1a; --item-accent: #ee1d52; --on-accent: #ffffff; }
 
 *, *::before, *::after { box-sizing: border-box; }
 
@@ -67,3 +68,11 @@ svg.icon { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-wid
 .rz.ne { top: 0; right: 0; width: 8px; height: 8px; cursor: nesw-resize; }
 .rz.sw { bottom: 0; left: 0; width: 8px; height: 8px; cursor: nesw-resize; }
 body.no-resize .rz { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

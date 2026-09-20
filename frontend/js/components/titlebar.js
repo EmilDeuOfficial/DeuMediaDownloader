@@ -7,12 +7,12 @@ function barButton(iconName, title, onClick, extraClass = "", action = "") {
 }
 
 // Launcher variant: 40 px bar with title and close button.
-export function createLauncherBar({ title, onClose }) {
+export function createLauncherBar({ title, onMinimize, onClose }) {
   return h(
     "div",
     { class: "titlebar launcher-bar pywebview-drag-region" },
     h("span", { class: "tb-title" }, title),
-    barButton("close", T("tip_close"), onClose, "danger", "close"),
+    h("span", { class: "tb-group" }, barButton("minimize", T("tip_minimize"), onMinimize, "", "minimize"), barButton("close", T("tip_close"), onClose, "danger", "close")),
   );
 }
 

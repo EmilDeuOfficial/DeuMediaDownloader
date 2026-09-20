@@ -6,6 +6,7 @@ import { icon } from "../icons.js";
 import { SETTINGS_SCHEMA, UNINSTALL_ROWS, RATE_OPTIONS } from "../settings-schema.js";
 import { createDropdown } from "./dropdown.js";
 import { alertModal, confirmModal } from "./modal.js";
+import { trapFocus } from "../focus-trap.js";
 
 // Schema driven settings dialog (Settings tab + Uninstall tab) for one service.
 export function openSettings(serviceId) {
@@ -239,11 +240,19 @@ export function openSettings(serviceId) {
     if (overlays[overlays.length - 1] === overlay) close();
   }
 
+  let releaseFocus = () => {};
   function close() {
     document.removeEventListener("keydown", onKey, true);
     overlay.remove();
+    releaseFocus();
   }
 
   document.addEventListener("keydown", onKey, true);
   document.body.append(overlay);
+  releaseFocus = trapFocus(overlay, () => {
+    const all = document.querySelectorAll(".modal-overlay");
+    return all[all.length - 1] === overlay;
+  });
+  dialog.tabIndex = -1;
+  dialog.focus();
 }

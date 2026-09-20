@@ -49,6 +49,7 @@
     "tip_cancel": "Cancel",
     "wiki_tutorial": "Tutorial in the GitHub wiki",
     "tip_clear_done": "Remove finished items",
+    "queue_empty": "No downloads yet. Paste a link above to start.",
     "download_queue": "Download Queue",
     "log_panel": "Log",
     "settings_title": "Settings",
