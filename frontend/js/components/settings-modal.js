@@ -75,9 +75,25 @@ export function openSettings(serviceId) {
       case "slider": {
         const value = h("span", { class: "sm-slider-value" }, String(current(field)));
         const input = h("input", { type: "range", min: field.min, max: field.max, step: 1, value: current(field), class: "sm-slider" });
-        input.addEventListener("input", () => { value.textContent = input.value; });
+        const ticks = [];
+        for (let n = field.min; n <= field.max; n++) ticks.push(h("span", {}, String(n)));
+        // The track is filled up to the thumb through --f (0..1); the active tick is highlighted.
+        const sync = () => {
+          const n = Number(input.value);
+          input.style.setProperty("--f", String((n - field.min) / (field.max - field.min)));
+          value.textContent = String(n);
+          ticks.forEach((tick, i) => tick.classList.toggle("active", field.min + i === n));
+        };
+        input.addEventListener("input", sync);
+        sync();
         controls.set(field.key, { get: () => Number(input.value) });
-        return h("div", { class: "sm-row" }, field.labelKey ? h("span", { class: "sm-label" }, T(field.labelKey)) : null, input, value);
+        return h(
+          "div",
+          { class: "sm-row" },
+          field.labelKey ? h("span", { class: "sm-label" }, T(field.labelKey)) : null,
+          h("div", { class: "slider-wrap" }, input, h("div", { class: "slider-ticks" }, ticks)),
+          value,
+        );
       }
 
       case "select": {

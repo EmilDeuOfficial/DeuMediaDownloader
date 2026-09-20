@@ -38,8 +38,51 @@
 .sm-link:hover { color: var(--accent-hover); }
 
 .sm-row { display: flex; align-items: center; gap: 12px; }
-.sm-slider { flex: 1; accent-color: var(--accent); max-width: 260px; }
-.sm-slider-value { min-width: 20px; text-align: right; font-size: 12px; font-weight: 700; color: var(--accent); }
+.slider-wrap { flex: 1; max-width: 260px; display: flex; flex-direction: column; gap: 2px; }
+.sm-slider {
+  --f: 0.5;
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 20px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  outline: none;
+}
+.sm-slider::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 3px;
+  /* fill ends at the centre of the thumb (thumb is 18px wide) */
+  background: linear-gradient(to right, var(--accent) calc(9px + (100% - 18px) * var(--f)), var(--border) calc(9px + (100% - 18px) * var(--f)));
+}
+.sm-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  margin-top: -6px;
+  border-radius: 50%;
+  border: 4px solid var(--accent);
+  background: var(--text-primary);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  transition: box-shadow 0.12s, transform 0.12s;
+}
+.sm-slider:hover::-webkit-slider-thumb { box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 28%, transparent); }
+.sm-slider:active::-webkit-slider-thumb { transform: scale(1.1); box-shadow: 0 0 0 7px color-mix(in srgb, var(--accent) 34%, transparent); }
+.sm-slider:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 45%, transparent); }
+.slider-ticks { display: flex; justify-content: space-between; padding: 0 5px; font-size: 10px; line-height: 1; color: var(--text-muted); user-select: none; }
+.slider-ticks .active { color: var(--accent); font-weight: 700; }
+.sm-slider-value {
+  min-width: 30px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--accent-dim);
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+}
 
 .sm-toggle { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .sm-toggle-text { max-width: 340px; }
