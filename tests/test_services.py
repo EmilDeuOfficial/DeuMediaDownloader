@@ -36,7 +36,6 @@ class FakeTask:
     error_msg: str = ""
     stop: Optional[str] = None
     run_id: int = 0
-    work_stem: str = ""
     on_progress: Optional[Callable] = field(default=None, repr=False)
     on_status: Optional[Callable] = field(default=None, repr=False)
     on_done: Optional[Callable] = field(default=None, repr=False)
@@ -309,8 +308,9 @@ def test_cancel_waiting_task_finishes_it_as_cancelled():
 def test_cancel_paused_task_removes_partial_files(tmp_path):
     rt, em, _, tasks = queued_runtime()
     tasks[0].output_dir = str(tmp_path)
-    tasks[0].work_stem = "song"
-    (tmp_path / "song.webm.part").write_bytes(b"x")
+    work = tmp_path / f".dmd-{tasks[0].task_id[:8]}"
+    work.mkdir()
+    (work / "song.webm.part").write_bytes(b"x")
     (tmp_path / "song.mp3").write_bytes(b"x")
     rt.pause("id-a")
     assert rt.cancel("id-a") is True

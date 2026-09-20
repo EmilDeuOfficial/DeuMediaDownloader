@@ -4,10 +4,12 @@ import { T } from "../i18n.js";
 import { actionsFor } from "../task-actions.js";
 
 // One row of the download queue. `task` is the serialized task from Python:
-// {id, service, name, status, label, progress, error}. All text goes in as text nodes.
+// {id, service, name, format, ext, status, label, progress, error}. All text goes in as text nodes.
 // `handlers` = {onPause(id), onResume(id), onCancel(id)}.
 export function createQueueItem(task, glyph, handlers = {}) {
-  const name = h("div", { class: "qi-name" }, task.name);
+  const title = h("span", { class: "qi-title" });
+  const ext = h("span", { class: "qi-ext" });
+  const name = h("div", { class: "qi-name" }, title, ext);
   const status = h("div", { class: "qi-status" }, task.label);
   const fill = h("div", { class: "qi-fill" });
 
@@ -49,8 +51,13 @@ export function createQueueItem(task, glyph, handlers = {}) {
 
   function update(next) {
     if (next.name != null) {
-      name.textContent = next.name;
+      title.textContent = next.name;
       name.title = next.name;
+    }
+    if (next.ext != null) {
+      ext.textContent = next.ext.toUpperCase();
+      ext.title = next.format || next.ext;
+      ext.hidden = !next.ext;
     }
     if (next.label != null) {
       status.textContent = next.label;

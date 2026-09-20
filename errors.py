@@ -21,11 +21,13 @@ _RULES = [
     (re.compile(r"downloaded file not found", re.I), "err_short_no_file"),
     (re.compile(r"ffmpeg[^\n]*not (found|installed)|ffprobe and ffmpeg not found", re.I), "err_short_ffmpeg"),
     (re.compile(r"getaddrinfo failed|name resolution|network is unreachable|timed out|connection (reset|aborted|refused|error)|max retries exceeded|urlopen error|remotedisconnected", re.I), "err_short_network"),
+    (re.compile(r"winerror (32|33)(?!\d)|used by another process|von einem anderen prozess verwendet|sharing violation", re.I), "err_short_file_in_use"),
     (re.compile(r"winerror (2|3)\b|errno 2\b|no such file or directory|cannot find the (path|file)", re.I), "err_short_path"),
     (re.compile(r"permission denied|errno 13|winerror 5|access is denied|no space left|errno 28", re.I), "err_short_disk"),
 ]
 
 _ERROR_PREFIX = re.compile(r"^\s*ERROR:\s*", re.I)
+_OS_ERROR_PREFIX = re.compile(r"^\[(WinError|Errno) \d+\]\s*", re.I)
 _EXTRACTOR_PREFIX = re.compile(r"^\[[\w:.-]+\]\s+[\w-]+:\s*")
 
 
@@ -51,7 +53,7 @@ def short_error(message: str) -> str:
 
     # Unknown: first line without yt-dlp's "ERROR: [youtube] id:" noise.
     first = next((line for line in text.splitlines() if line.strip()), "")
-    first = _EXTRACTOR_PREFIX.sub("", _ERROR_PREFIX.sub("", first)).strip()
+    first = _OS_ERROR_PREFIX.sub("", _EXTRACTOR_PREFIX.sub("", _ERROR_PREFIX.sub("", first))).strip()
     if not first:
         return T("err_short_unknown")
     return first if len(first) <= _FALLBACK_MAX else first[:_FALLBACK_MAX] + "…"

@@ -257,6 +257,7 @@ STRINGS: dict[str, dict[str, str]] = {
         "err_short_ffmpeg":    "FFmpeg missing",
         "err_short_disk":      "Cannot write file",
         "err_short_path":      "Folder not found",
+        "err_short_file_in_use": "File in use",
         "err_short_tiktok_cookies": "TikTok cookie problem",
         "err_short_unknown":   "Unknown error",
         # Panel titles
@@ -462,6 +463,7 @@ STRINGS: dict[str, dict[str, str]] = {
         "err_short_ffmpeg":    "FFmpeg fehlt",
         "err_short_disk":      "Datei nicht schreibbar",
         "err_short_path":      "Ordner nicht gefunden",
+        "err_short_file_in_use": "Datei in Benutzung",
         "err_short_tiktok_cookies": "TikTok-Cookie-Problem",
         "err_short_unknown":   "Unbekannter Fehler",
         # Panel titles

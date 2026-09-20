@@ -1,3 +1,4 @@
+from pathlib import Path
 import subprocess
 
 import pytest
@@ -232,3 +233,23 @@ def test_tiktok_video_is_merged_into_the_chosen_container(capture):
     task = d.TikTokTask(task_id="t", url="http://x", title="Clip", output_dir=str(capture), format_name="MKV (Best)")
     d.download_tiktok_task(task, True)
     assert CaptureYDL.opts["merge_output_format"] == "mkv"
+
+
+def test_download_is_written_to_a_private_work_folder_not_the_output_folder(capture):
+    opts = youtube_opts(capture, "MP3 (192 kbps)")
+    outtmpl = Path(opts["outtmpl"])
+    assert outtmpl.parent.name.startswith(".dmd-")
+    assert outtmpl.parent.parent == capture
+
+
+def test_the_same_title_in_two_formats_gets_two_work_folders(capture):
+    def outtmpl(task_id, fmt):
+        task = d.YouTubeTask(task_id=task_id, url="http://x", title="Song", output_dir=str(capture), format_name=fmt)
+        d.download_youtube_task(task, True)
+        return CaptureYDL.opts["outtmpl"]
+    assert outtmpl("11111111-a", "MP3 (192 kbps)") != outtmpl("22222222-b", "WAV (Lossless)")
+
+
+def test_failed_download_leaves_no_work_folder_behind(capture):
+    youtube_opts(capture, "MP3 (192 kbps)")      # the fake downloads nothing, so the task fails
+    assert not any(p.name.startswith(".dmd-") for p in capture.iterdir())

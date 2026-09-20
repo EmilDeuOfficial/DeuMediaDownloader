@@ -21,6 +21,8 @@ from errors import short_error
     ("[Errno 13] Permission denied: 'C:\\\\out\\\\song.mp3'", "err_short_disk", ()),
     ("[Errno 28] No space left on device", "err_short_disk", ()),
     ("[WinError 3] Das System kann den angegebenen Pfad nicht finden: 'Z:\\\\'", "err_short_path", ()),
+    ("ERROR: Unable to rename file: [WinError 32] Der Prozess kann nicht auf die Datei zugreifen, da sie von einem anderen Prozess verwendet wird: 'a.webm' -> 'a.webm'", "err_short_file_in_use", ()),
+    ("[WinError 32] The process cannot access the file because it is being used by another process: 'a.webm'", "err_short_file_in_use", ()),
     ("[Errno 2] No such file or directory: 'C:\\\\out'", "err_short_path", ()),
 ])
 def test_known_errors_get_a_short_translated_text(message, key, args):
@@ -65,3 +67,7 @@ def test_every_language_has_all_short_texts():
         for key in keys:
             assert key in lang and lang[key], key
             assert len(lang[key]) <= 32, key       # short means short
+
+
+def test_unknown_os_error_loses_its_error_code_prefix():
+    assert short_error("[WinError 1234] Something odd happened") == "Something odd happened"

@@ -40,6 +40,12 @@ function statusText(status) {
   return (strings && strings["status_" + status.toLowerCase()]) || LABELS[status] || status;
 }
 
+// File extension of a format name like "OGG Vorbis (192 kbps)" (the real one comes from Python).
+function mockExt(fmt) {
+  const base = String(fmt || "").split(" ")[0].toLowerCase();
+  return base === "aac" ? "m4a" : base;
+}
+
 function view(task) {
   const label =
     task.status === "ERROR" && task.error
@@ -158,7 +164,7 @@ export const mockApi = {
       const names = SAMPLE_NAMES[service];
       emit("log", { service, msg: strings[service === "spotify" ? "queued_n_tracks" : "queued_n_videos"].replace("{}", names.length).replace("{}", fmt) });
       names.forEach((name, idx) => {
-        const task = { id: `mock-${++counter}`, service, name: name.length > 60 ? name.slice(0, 57) + "\u2026" : name, status: "QUEUED", progress: 0, error: "" };
+        const task = { id: `mock-${++counter}`, service, name: name.length > 60 ? name.slice(0, 57) + "\u2026" : name, format: fmt, ext: mockExt(fmt), status: "QUEUED", progress: 0, error: "" };
         tasks[service].push(task);
         emit("task_added", view(task));
         emit("log", { service, msg: strings.log_queued.replace("{}", name) });

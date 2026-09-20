@@ -1,5 +1,8 @@
+import ctypes
 import glob
+import os
 import re
+import shutil
 import threading
 import queue
 import time
@@ -140,30 +143,59 @@ def _check_stop(task) -> None:
 _PARTIAL_SUFFIXES = (".part", ".ytdl", ".temp", ".webp", ".jpg", ".jpeg", ".png")
 
 
-def remove_partial_files(task) -> None:
-    """Delete the unfinished download files of `task` (see _PARTIAL_SUFFIXES).
+def _work_dir(task) -> Path:
+    """Private folder of `task` inside its output folder, for download and conversion files.
 
-    Finished media files are never touched, only names that start with the task's
-    file name and end in one of those suffixes.
+    Two tasks with the same file name (one song in two formats) would otherwise write the
+    same temporary files and fail with "file in use".
     """
-    stem = getattr(task, "work_stem", "")
-    if not stem:
-        return
-    for path in Path(task.output_dir).glob(glob.escape(stem) + ".*"):
-        name = path.name.lower()
-        if name.endswith(_PARTIAL_SUFFIXES) or ".part-frag" in name:
-            try:
-                path.unlink()
-            except OSError:
-                pass
+    return Path(task.output_dir) / f".dmd-{task.task_id[:8]}"
+
+
+def _make_work_dir(task) -> Path:
+    work = _work_dir(task)
+    work.mkdir(parents=True, exist_ok=True)
+    if os.name == "nt":
+        try:
+            ctypes.windll.kernel32.SetFileAttributesW(str(work), 0x02)   # hidden
+        except Exception:
+            pass
+    return work
+
+
+def _is_partial(path: Path) -> bool:
+    name = path.name.lower()
+    return name.endswith(_PARTIAL_SUFFIXES) or ".part-frag" in name
+
+
+def remove_partial_files(task) -> None:
+    """Delete everything `task` has downloaded so far (its private work folder)."""
+    shutil.rmtree(_work_dir(task), ignore_errors=True)
 
 
 def _has_partial_files(task) -> bool:
-    stem = getattr(task, "work_stem", "")
-    if not stem:
-        return False
-    return any(p.name.lower().endswith((".part", ".ytdl"))
-               for p in Path(task.output_dir).glob(glob.escape(stem) + ".*"))
+    work = _work_dir(task)
+    return work.is_dir() and any(p.name.lower().endswith((".part", ".ytdl")) for p in work.iterdir())
+
+
+def _publish_result(task, stem: str, ext: str) -> Path:
+    """Move the finished file from the work folder next to the other downloads.
+
+    The file is normally `stem.ext`; when yt-dlp ended up with another container, the
+    biggest file that is not a leftover is taken instead.
+    """
+    work = _work_dir(task)
+    produced = work / f"{stem}.{ext}"
+    if not produced.exists():
+        found = work.glob(glob.escape(stem) + ".*") if work.is_dir() else []
+        candidates = [p for p in found if not _is_partial(p)]
+        if not candidates:
+            raise FileNotFoundError("Downloaded file not found.")
+        produced = max(candidates, key=lambda p: p.stat().st_size)
+    final = Path(task.output_dir) / f"{stem}{produced.suffix}"
+    os.replace(produced, final)
+    shutil.rmtree(work, ignore_errors=True)
+    return final
 
 
 def _run_ydl(task, ydl_opts: Dict[str, Any], url: str) -> None:
@@ -282,7 +314,6 @@ class DownloadTask:
     output_file:  str            = ""
     stop:         Optional[str]  = None    # "pause" or "cancel", set by the user
     run_id:       int            = 0       # bumped on every submit (see _TaskManager)
-    work_stem:    str            = ""      # file name stem, used to clean up partial files
 
     on_progress: Optional[Callable] = field(default=None, repr=False)
     on_status:   Optional[Callable] = field(default=None, repr=False)
@@ -519,7 +550,6 @@ def download_spotify_track(task: DownloadTask, ffmpeg_ok: bool) -> None:
         safe_filename = _apply_template(tmpl, artist=track.artist, title=track.title,
                                         album=track.album, year=track.year or "")
         final_path    = out_dir / f"{safe_filename}.{ext}"
-        task.work_stem = safe_filename
 
         if final_path.exists() and cfg.get("sp_skip_existing", True):
             task.output_file = str(final_path)
@@ -548,9 +578,10 @@ def download_spotify_track(task: DownloadTask, ffmpeg_ok: bool) -> None:
         )
         _check_stop(task)
 
+        work = _make_work_dir(task)
         ydl_opts: Dict[str, Any] = {
             "format":         "bestaudio/best",
-            "outtmpl":        str(out_dir / f"{safe_filename}.%(ext)s"),
+            "outtmpl":        str(work / f"{safe_filename}.%(ext)s"),
             "quiet":          True,
             "no_warnings":    True,
             "progress_hooks": [ydl_hook],
@@ -570,13 +601,7 @@ def download_spotify_track(task: DownloadTask, ffmpeg_ok: bool) -> None:
         _check_stop(task)
         _run_ydl(task, ydl_opts, search_url)
 
-        if not final_path.exists():
-            candidates = list(out_dir.glob(f"{safe_filename}.*"))
-            if candidates:
-                final_path = candidates[0]
-            else:
-                raise FileNotFoundError("Downloaded file not found in output directory.")
-
+        final_path = _publish_result(task, safe_filename, ext)
         task.output_file = str(final_path)
 
         _status(DownloadStatus.EMBEDDING)
@@ -605,6 +630,7 @@ def download_spotify_track(task: DownloadTask, ffmpeg_ok: bool) -> None:
         _finish_interrupted(task, stop.reason, _status, _progress)
 
     except Exception as exc:
+        remove_partial_files(task)
         _status(DownloadStatus.ERROR, str(exc))
         _progress(0.0)
         if task.on_done:
@@ -690,7 +716,6 @@ class YouTubeTask:
     output_file: str            = ""
     stop:        Optional[str]  = None
     run_id:      int            = 0
-    work_stem:   str            = ""
 
     on_progress: Optional[Callable] = field(default=None, repr=False)
     on_status:   Optional[Callable] = field(default=None, repr=False)
@@ -770,7 +795,6 @@ def download_youtube_task(task: YouTubeTask, ffmpeg_ok: bool) -> None:
         safe_title = _apply_template(tmpl, artist=_yt_artist.strip(),
                                      title=_yt_title.strip())
         final_path = out_dir / f"{safe_title}.{ext}"
-        task.work_stem = safe_title
 
         if final_path.exists():
             task.output_file = str(final_path)
@@ -796,9 +820,10 @@ def download_youtube_task(task: YouTubeTask, ffmpeg_ok: bool) -> None:
 
         postprocessors: List[Dict[str, Any]] = []
 
+        work = _make_work_dir(task)
         ydl_opts: Dict[str, Any] = {
             "format":         fmt_info["ydl_format"] if is_video else "bestaudio/best",
-            "outtmpl":        str(out_dir / f"{safe_title}.%(ext)s"),
+            "outtmpl":        str(work / f"{safe_title}.%(ext)s"),
             **_merge_opts(is_video, fmt_info, ext),
             "quiet":          True,
             "no_warnings":    True,
@@ -838,13 +863,7 @@ def download_youtube_task(task: YouTubeTask, ffmpeg_ok: bool) -> None:
         _check_stop(task)
         _run_ydl(task, ydl_opts, task.url)
 
-        if not final_path.exists():
-            candidates = list(out_dir.glob(f"{safe_title}.*"))
-            if candidates:
-                final_path = candidates[0]
-            else:
-                raise FileNotFoundError("Downloaded file not found.")
-
+        final_path = _publish_result(task, safe_title, ext)
         task.output_file = str(final_path)
         _status(DownloadStatus.DONE)
         _progress(1.0)
@@ -855,6 +874,7 @@ def download_youtube_task(task: YouTubeTask, ffmpeg_ok: bool) -> None:
         _finish_interrupted(task, stop.reason, _status, _progress)
 
     except Exception as exc:
+        remove_partial_files(task)
         _status(DownloadStatus.ERROR, str(exc))
         _progress(0.0)
         if task.on_done:
@@ -907,7 +927,6 @@ class TikTokTask:
     output_file: str            = ""
     stop:        Optional[str]  = None
     run_id:      int            = 0
-    work_stem:   str            = ""
 
     on_progress: Optional[Callable] = field(default=None, repr=False)
     on_status:   Optional[Callable] = field(default=None, repr=False)
@@ -987,7 +1006,6 @@ def download_tiktok_task(task: TikTokTask, ffmpeg_ok: bool) -> None:
         safe_title = _apply_template(tmpl, artist=_tt_artist.strip(),
                                      title=_tt_title.strip())
         final_path = out_dir / f"{safe_title}.{ext}"
-        task.work_stem = safe_title
 
         if final_path.exists():
             task.output_file = str(final_path)
@@ -1013,9 +1031,10 @@ def download_tiktok_task(task: TikTokTask, ffmpeg_ok: bool) -> None:
 
         postprocessors: List[Dict[str, Any]] = []
 
+        work = _make_work_dir(task)
         ydl_opts: Dict[str, Any] = {
             "format":         fmt_info["ydl_format"] if is_video else "bestaudio/best",
-            "outtmpl":        str(out_dir / f"{safe_title}.%(ext)s"),
+            "outtmpl":        str(work / f"{safe_title}.%(ext)s"),
             **_merge_opts(is_video, fmt_info, ext),
             "quiet":          True,
             "no_warnings":    True,
@@ -1045,13 +1064,7 @@ def download_tiktok_task(task: TikTokTask, ffmpeg_ok: bool) -> None:
         _check_stop(task)
         _run_ydl(task, ydl_opts, task.url)
 
-        if not final_path.exists():
-            candidates = list(out_dir.glob(f"{safe_title}.*"))
-            if candidates:
-                final_path = candidates[0]
-            else:
-                raise FileNotFoundError("Downloaded file not found.")
-
+        final_path = _publish_result(task, safe_title, ext)
         task.output_file = str(final_path)
         _status(DownloadStatus.DONE)
         _progress(1.0)
@@ -1062,6 +1075,7 @@ def download_tiktok_task(task: TikTokTask, ffmpeg_ok: bool) -> None:
         _finish_interrupted(task, stop.reason, _status, _progress)
 
     except Exception as exc:
+        remove_partial_files(task)
         _status(DownloadStatus.ERROR, _friendly_tiktok_error(str(exc)))
         _progress(0.0)
         if task.on_done:

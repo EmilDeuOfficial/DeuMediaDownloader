@@ -17,30 +17,82 @@ def wait_for(cond, timeout=3.0):
     return False
 
 
-def make_task(tmp_path, stem="song", **kw):
-    return YouTubeTask(task_id="t1", url="http://x", title="Artist - Song", output_dir=str(tmp_path),
-                       format_name="MP3 (320 kbps)", work_stem=stem, **kw)
+def make_task(tmp_path, task_id="t1-abcdef", **kw):
+    return YouTubeTask(task_id=task_id, url="http://x", title="Artist - Song", output_dir=str(tmp_path),
+                       format_name="MP3 (320 kbps)", **kw)
 
 
-# ---------------------------------------------------------------- partial files
-def test_remove_partial_files_only_deletes_partials_of_this_task(tmp_path):
-    for name in ["song.webm.part", "song.f137.mp4.part", "song.ytdl", "song.temp", "song.webp", "song.jpg", "song.mp3", "other.webm.part", "song.webm.part-Frag3"]:
-        (tmp_path / name).write_bytes(b"x")
+def put(folder, *names):
+    folder.mkdir(parents=True, exist_ok=True)
+    for name in names:
+        (folder / name).write_bytes(b"x")
+
+
+# ------------------------------------------------------------------- work folder
+def test_work_folders_of_two_tasks_with_the_same_title_differ(tmp_path):
+    """One song in two formats used to write the same temp file and fail with WinError 32."""
+    a, b = make_task(tmp_path, "aaaaaaaa-1"), make_task(tmp_path, "bbbbbbbb-2")
+    assert d._work_dir(a) != d._work_dir(b)
+    assert d._work_dir(a).parent == tmp_path
+
+
+def test_remove_partial_files_deletes_only_the_work_folder_of_this_task(tmp_path):
+    task, other = make_task(tmp_path, "aaaaaaaa-1"), make_task(tmp_path, "bbbbbbbb-2")
+    put(d._work_dir(task), "song.webm.part", "song.webp")
+    put(d._work_dir(other), "song.webm.part")
+    put(tmp_path, "song.mp3")
+    remove_partial_files(task)
+    assert not d._work_dir(task).exists()
+    assert (d._work_dir(other) / "song.webm.part").exists()
+    assert (tmp_path / "song.mp3").exists()
+
+
+def test_remove_partial_files_without_work_folder_is_noop(tmp_path):
     remove_partial_files(make_task(tmp_path))
-    assert sorted(p.name for p in tmp_path.iterdir()) == ["other.webm.part", "song.mp3"]
 
 
-def test_remove_partial_files_handles_glob_characters_in_name(tmp_path):
-    (tmp_path / "a [b].webm.part").write_bytes(b"x")
-    (tmp_path / "a b.webm.part").write_bytes(b"x")
-    remove_partial_files(make_task(tmp_path, stem="a [b]"))
-    assert [p.name for p in tmp_path.iterdir()] == ["a b.webm.part"]
+def test_has_partial_files_only_counts_unfinished_downloads(tmp_path):
+    task = make_task(tmp_path)
+    assert d._has_partial_files(task) is False
+    put(d._work_dir(task), "song.webm")
+    assert d._has_partial_files(task) is False
+    put(d._work_dir(task), "song.webm.part")
+    assert d._has_partial_files(task) is True
 
 
-def test_remove_partial_files_without_stem_is_noop(tmp_path):
-    (tmp_path / "x.part").write_bytes(b"x")
-    remove_partial_files(make_task(tmp_path, stem=""))
-    assert len(list(tmp_path.iterdir())) == 1
+def test_publish_result_moves_the_file_next_to_the_downloads_and_removes_the_work_folder(tmp_path):
+    task = make_task(tmp_path)
+    put(d._work_dir(task), "song.mp3", "song.webp")
+    final = d._publish_result(task, "song", "mp3")
+    assert final == tmp_path / "song.mp3"
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["song.mp3"]
+
+
+def test_publish_result_overwrites_an_older_file(tmp_path):
+    task = make_task(tmp_path)
+    (tmp_path / "song.mp3").write_bytes(b"old")
+    put(d._work_dir(task), "song.mp3")
+    d._publish_result(task, "song", "mp3")
+    assert (tmp_path / "song.mp3").read_bytes() == b"x"
+
+
+def test_publish_result_takes_the_other_container_when_the_expected_one_is_missing(tmp_path):
+    task = make_task(tmp_path)
+    put(d._work_dir(task), "song.webm", "song.webp", "song.webm.part")
+    assert d._publish_result(task, "song", "mp3") == tmp_path / "song.webm"
+
+
+def test_publish_result_handles_glob_characters_in_the_name(tmp_path):
+    task = make_task(tmp_path)
+    put(d._work_dir(task), "a [b].webm", "a b.webm")
+    assert d._publish_result(task, "a [b]", "mp3") == tmp_path / "a [b].webm"
+
+
+def test_publish_result_without_a_file_raises_file_not_found(tmp_path):
+    task = make_task(tmp_path)
+    put(d._work_dir(task), "song.webm.part")
+    with pytest.raises(FileNotFoundError, match="Downloaded file not found"):
+        d._publish_result(task, "song", "mp3")
 
 
 # ---------------------------------------------------------------------- manager
@@ -133,7 +185,7 @@ def run_youtube(out, stop_when_hook=None):
 
         def download(self, urls):
             task.stop = stop_when_hook
-            (out / "Song.webm.part").write_bytes(b"partial")
+            (d._work_dir(task) / "Song.webm.part").write_bytes(b"partial")
             return original(self, urls)
 
         FakeYDL.download = download
@@ -149,7 +201,7 @@ def run_youtube(out, stop_when_hook=None):
 def test_pause_keeps_partial_file_and_progress_and_does_not_finish(isolated):
     task, events = run_youtube(isolated, stop_when_hook="pause")
     assert task.status == DownloadStatus.PAUSED
-    assert (isolated / "Song.webm.part").exists()
+    assert (d._work_dir(task) / "Song.webm.part").exists()
     assert ("done", "PAUSED") not in events and not any(e[0] == "done" for e in events)
 
 
@@ -157,7 +209,7 @@ def test_cancel_removes_partial_file_and_finishes_as_cancelled(isolated):
     task, events = run_youtube(isolated, stop_when_hook="cancel")
     assert task.status == DownloadStatus.CANCELLED
     assert task.progress == 0.0
-    assert not (isolated / "Song.webm.part").exists()
+    assert not d._work_dir(task).exists()
     assert events[-1] == ("done", "CANCELLED")
 
 
@@ -197,10 +249,11 @@ class Flaky416:
 def test_run_ydl_starts_over_once_when_server_refuses_to_resume(tmp_path, monkeypatch):
     monkeypatch.setattr(d.yt_dlp, "YoutubeDL", Flaky416)
     Flaky416.attempts = 0
-    (tmp_path / "song.webm.part").write_bytes(b"partial")
-    d._run_ydl(make_task(tmp_path), {}, "http://x")
+    task = make_task(tmp_path)
+    put(d._work_dir(task), "song.webm.part")
+    d._run_ydl(task, {}, "http://x")
     assert Flaky416.attempts == 2
-    assert not (tmp_path / "song.webm.part").exists()
+    assert not (d._work_dir(task) / "song.webm.part").exists()
 
 
 def test_run_ydl_416_without_partial_file_is_a_real_error(tmp_path, monkeypatch):

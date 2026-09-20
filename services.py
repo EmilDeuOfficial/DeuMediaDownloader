@@ -10,7 +10,7 @@ import uuid
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional
 
-from config import T, WIKI_PAGES
+from config import AUDIO_FORMATS, T, VIDEO_FORMATS, WIKI_PAGES
 from errors import short_error
 from downloader import (
     DownloadStatus,
@@ -87,10 +87,14 @@ def serialize_task(spec: ServiceSpec, task: Any, config: dict) -> dict:
     if status == DownloadStatus.ERROR and task.error_msg:
         # Short version for the queue; the full text goes to the log, the tooltip and stderr.
         label = f"{label}: {short_error(task.error_msg)}"
+    fmt = getattr(task, "format_name", "")
+    info = AUDIO_FORMATS.get(fmt) or VIDEO_FORMATS.get(fmt) or {}
     return {
         "id": task.task_id,
         "service": spec.id,
         "name": spec.task_name(task, config),
+        "format": fmt,
+        "ext": info.get("ext", ""),
         "status": status.name,
         "label": label,
         "progress": task.progress,
