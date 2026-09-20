@@ -8,9 +8,8 @@ import { createDropdown } from "../components/dropdown.js";
 import { createQueueItem } from "../components/queue-item.js";
 import { createLogPanel } from "../components/log-panel.js";
 import { alertModal } from "../components/modal.js";
+import { icon } from "../icons.js";
 
-// Force text (not emoji) presentation for glyphs such as the play triangle.
-const textGlyph = (s) => s.replace(/[\u266a\u25b6]/g, (c) => c + "\ufe0e");
 const label = (text, cls = "") => h("span", { class: `field-label ${cls}`.trim() }, text);
 
 // One generic downloader screen. `service` is a descriptor from services.js.
@@ -62,7 +61,7 @@ export function createToolView(service, { onBack, onSettings }) {
   const urlInput = h("input", {
     class: "entry url-entry",
     type: "text",
-    placeholder: service.urlPlaceholder,
+    placeholder: T(service.urlPlaceholderKey),
     spellcheck: false,
     autocomplete: "off",
   });
@@ -72,7 +71,7 @@ export function createToolView(service, { onBack, onSettings }) {
   const inputPanel = h(
     "section",
     { class: "panel input-panel" },
-    h("div", { class: "input-label" }, service.urlLabel(T)),
+    h("div", { class: "input-label" }, T(service.urlLabelKey)),
     h(
       "div",
       { class: "input-row" },
@@ -130,8 +129,8 @@ export function createToolView(service, { onBack, onSettings }) {
   let videoBtn = null;
   let optionsPanel;
   if (service.mediaToggle) {
-    audioBtn = h("button", { class: "seg-btn", type: "button", onClick: () => setMediaType("Audio") }, textGlyph(T("audio_btn")));
-    videoBtn = h("button", { class: "seg-btn", type: "button", onClick: () => setMediaType("Video") }, textGlyph(T("video_btn")));
+    audioBtn = h("button", { class: "seg-btn", type: "button", onClick: () => setMediaType("Audio") }, icon("note"), T("audio_btn"));
+    videoBtn = h("button", { class: "seg-btn", type: "button", onClick: () => setMediaType("Video") }, icon("play"), T("video_btn"));
     optionsPanel = h(
       "section",
       { class: "panel options-panel media" },
@@ -190,7 +189,7 @@ export function createToolView(service, { onBack, onSettings }) {
 
   function updateCount() {
     const n = items.size;
-    countLabel.textContent = n ? `(${n} item${n !== 1 ? "s" : ""})` : "";
+    countLabel.textContent = n ? T(n === 1 ? "queue_count_one" : "queue_count_many", n) : "";
   }
 
   function addTask(task) {

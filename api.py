@@ -32,7 +32,7 @@ from config import (
     current_language,
 )
 
-LAUNCHER_SIZE = (720, 360)
+LAUNCHER_SIZE = (720, 330)
 TOOL_DEFAULT_SIZE = (820, 720)
 TOOL_MIN_SIZE = (700, 600)
 GEOMETRY_KEYS = {

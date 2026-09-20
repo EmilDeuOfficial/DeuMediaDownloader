@@ -65,7 +65,7 @@ def probe(window):
         js(window, "document.querySelector('.modal-overlay .btn')?.click()")
 
         # settings open + close
-        js(window, "document.querySelector('.tool-view[data-service=\"youtube\"] .tb-btn[title=\"Settings\"]').click()")
+        js(window, "document.querySelector('.tool-view[data-service=\"youtube\"] .tb-btn[data-action=\"settings\"]').click()")
         time.sleep(0.4)
         report["settings_open"] = js(window, "!!document.querySelector('.settings-modal')")
         js(window, "document.querySelector('.settings-modal .sm-head .tb-btn').click()")
@@ -89,7 +89,7 @@ def probe(window):
         report["resize"] = {"before": before, "after": [window.width, window.height]}
 
         # back to the launcher
-        js(window, "document.querySelector('.tool-view[data-service=\"youtube\"] .tb-btn[title=\"Back\"]').click()")
+        js(window, "document.querySelector('.tool-view[data-service=\"youtube\"] .tb-btn[data-action=\"back\"]').click()")
         time.sleep(1.0)
         report["back_size"] = [window.width, window.height]
         report["saved_keys"] = sorted(k for k in json.loads(config.CONFIG_FILE.read_text(encoding="utf-8")) if k.endswith("_geo") or k == "launcher_pos")

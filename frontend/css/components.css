@@ -16,7 +16,7 @@
   flex: none;
   background: var(--bg-secondary);
 }
-.tool-bar { height: 46px; padding: 0 6px; gap: 2px; }
+.tool-bar { height: 46px; padding: 0 6px; gap: 4px; }
 .tool-bar .brand-icon { margin: 0 4px 0 12px; pointer-events: none; }
 .launcher-bar { height: 40px; padding: 0 6px 0 14px; justify-content: space-between; }
 .tb-title { font-size: 14px; font-weight: 700; color: var(--text-primary); pointer-events: none; }
@@ -83,7 +83,7 @@
 /* ---- Segmented Audio/Video toggle ---- */
 .segmented {
   display: inline-flex;
-  gap: 0;
+  gap: 4px;
   padding: 3px;
   border-radius: 8px;
   background: var(--bg-card);
@@ -97,9 +97,14 @@
   border-radius: 6px;
   background: transparent;
   color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   font-size: 12px;
-  white-space: pre;
+  white-space: nowrap;
 }
+.seg-btn .icon { font-size: 14px; }
 .seg-btn:hover:not(.active) { background: var(--bg-secondary); }
 .seg-btn.active { background: var(--accent); color: #fff; }
 
@@ -135,8 +140,14 @@
   border-radius: 8px;
   background: var(--bg-card);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 .dd-item {
+  flex: none;
+  overflow: hidden;
+  border-radius: 6px;
   display: flex;
   align-items: stretch;
   height: 36px;
@@ -219,5 +230,5 @@
 .modal-head.error { color: var(--error); }
 .modal-head.info { color: var(--accent); }
 .modal-body { padding: 16px; white-space: pre-line; font-size: 13px; color: var(--text-primary); user-select: text; -webkit-user-select: text; }
-.modal-actions { display: flex; justify-content: flex-end; gap: 8px; padding: 0 16px 16px; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; padding: 0 16px 16px; }
 .modal-actions .btn { height: 32px; min-width: 76px; }

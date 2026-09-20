@@ -68,11 +68,18 @@ class ServiceSpec:
     needs_client: bool = False
 
 
+def _status_text(status: DownloadStatus) -> str:
+    """Status name in the active language (falls back to the enum's English value)."""
+    key = f"status_{status.name.lower()}"
+    text = T(key)
+    return status.value if text == key else text
+
+
 def serialize_task(spec: ServiceSpec, task: Any, config: dict) -> dict:
     status: DownloadStatus = task.status
-    label = status.value
+    label = _status_text(status)
     if status == DownloadStatus.ERROR and task.error_msg:
-        label = f"Error: {_short(task.error_msg, _NAME_MAX)}"
+        label = f"{label}: {_short(task.error_msg, _NAME_MAX)}"
     return {
         "id": task.task_id,
         "service": spec.id,
@@ -89,7 +96,7 @@ def _status_log_line(name: str, task: Any) -> str:
         return T("log_done").format(name)
     if task.status == DownloadStatus.ERROR:
         return T("log_error").format(name, task.error_msg)
-    return f"{task.status.value}: {name}"
+    return f"{_status_text(task.status)}: {name}"
 
 
 class ServiceRuntime:

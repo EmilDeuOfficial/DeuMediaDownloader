@@ -3,7 +3,7 @@ import { T } from "../i18n.js";
 import { SERVICES, SERVICE_ORDER } from "../services.js";
 import { createLauncherBar } from "../components/titlebar.js";
 
-// Start screen: three cards, one per service (720x360, not resizable).
+// Start screen: three cards, one per service (720x330, not resizable).
 export function createLauncher({ appTitle, onChoose, onClose }) {
   const cards = SERVICE_ORDER.map((id) => {
     const svc = SERVICES[id];

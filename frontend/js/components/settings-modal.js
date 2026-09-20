@@ -211,7 +211,7 @@ export function openSettings(serviceId) {
       h("span", { class: "sm-head-icon" }, icon("gear")),
       h("span", { class: "sm-head-title" }, title),
       h("span", { class: "tb-spacer" }),
-      h("button", { class: "tb-btn danger", type: "button", "aria-label": "Close", onClick: () => close() }, icon("close")),
+      h("button", { class: "tb-btn danger", type: "button", "aria-label": T("tip_close"), title: T("tip_close"), onClick: () => close() }, icon("close")),
     ),
     h("div", { class: "sm-body" }, h("div", { class: "segmented sm-tabs" }, tabSettings, tabUninstall), settingsPane, uninstallPane, actions),
   );

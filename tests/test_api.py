@@ -3,7 +3,7 @@ import json
 import pytest
 
 import config
-from api import Api, format_geometry, parse_geometry
+from api import LAUNCHER_SIZE, Api, format_geometry, parse_geometry
 from config import T
 
 
@@ -184,7 +184,7 @@ def test_set_view_launcher_size_and_saved_position(env):
     api, rts, win, _ = env
     api.save_config({"launcher_pos": "+100+120"})
     api.set_view("launcher")
-    assert ("resize", 720, 360) in win.calls and ("move", 100, 120) in win.calls
+    assert ("resize", *LAUNCHER_SIZE) in win.calls and ("move", 100, 120) in win.calls
 
 
 def test_leaving_a_view_saves_its_geometry(env):

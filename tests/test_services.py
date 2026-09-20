@@ -225,3 +225,15 @@ def test_spotify_resolve_dispatches_by_kind():
         _spotify_resolve("show|4", ctx)
     with pytest.raises(ValueError):
         _spotify_resolve("track|1", ResolveContext(log=logs.append, client=None, config={}))
+
+
+def test_status_label_and_log_line_follow_active_language(monkeypatch):
+    import config
+    monkeypatch.setattr(config, "_lang", "de")
+    spec = make_runtime()[0]._spec
+    task = FakeTask("t1", "song", "out", "MP3", status=DownloadStatus.DOWNLOADING)
+    assert serialize_task(spec, task, {})["label"] == T("status_downloading")
+    assert serialize_task(spec, task, {})["label"] != DownloadStatus.DOWNLOADING.value
+    task.status = DownloadStatus.ERROR
+    task.error_msg = "boom"
+    assert serialize_task(spec, task, {})["label"] == T("status_error") + ": boom"
