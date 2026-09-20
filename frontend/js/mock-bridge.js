@@ -82,7 +82,8 @@ function simulate(task, failing) {
 export const mockApi = {
   async bootstrap() {
     if (!bootstrapData) {
-      const res = await fetch("mock/bootstrap.json");
+      const lang = new URLSearchParams(location.search).get("lang");
+      const res = await fetch(lang === "de" ? "mock/bootstrap.de.json" : "mock/bootstrap.json");
       bootstrapData = await res.json();
       config = { ...bootstrapData.config };
     }

@@ -13,7 +13,7 @@ export function createDropdown({ values, value, width = 210, onChange }) {
   const arrow = h("span", { class: "dd-arrow" }, icon("chevron-down"));
   const el = h(
     "div",
-    { class: "dropdown", style: { width: `${width}px` }, tabIndex: 0, role: "combobox", "aria-expanded": "false" },
+    { class: "dropdown", style: { width: `${width}px`, maxWidth: "100%" }, tabIndex: 0, role: "combobox", "aria-expanded": "false" },
     h("div", { class: "dd-inner" }, label, arrow),
   );
 

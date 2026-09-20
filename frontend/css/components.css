@@ -40,6 +40,7 @@
 
 /* ---- Buttons ---- */
 .btn {
+  flex: none;
   height: 38px;
   padding: 0 14px;
   border: 0;
@@ -88,8 +89,10 @@
   background: var(--bg-card);
 }
 .seg-btn {
-  width: 90px;
+  flex: none;
+  min-width: 90px;
   height: 28px;
+  padding: 0 12px;
   border: 0;
   border-radius: 6px;
   background: transparent;

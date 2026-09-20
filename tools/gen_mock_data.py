@@ -21,6 +21,12 @@ class _Silent:
 
 
 def main() -> None:
+    for lang, name in (("en", "bootstrap.json"), ("de", "bootstrap.de.json")):
+        write(lang, name)
+
+
+def write(lang: str, name: str) -> None:
+    config._lang = lang
     config.CONFIG_FILE = ROOT / "frontend" / "mock" / "_unused_config.json"
     api = Api(_Silent(), {}, ffmpeg_ok=True, spawn=lambda fn: None)
     api._load = lambda: dict(config.DEFAULT_CONFIG)  # never touch the real config file
@@ -31,7 +37,7 @@ def main() -> None:
     for key, value in res["data"]["config"].items():
         if isinstance(value, str) and value.startswith(home):
             res["data"]["config"][key] = "C:/Users/Demo" + value[len(home):].replace("\\", "/")
-    out = ROOT / "frontend" / "mock" / "bootstrap.json"
+    out = ROOT / "frontend" / "mock" / name
     out.write_text(json.dumps(res["data"], indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"wrote {out}")
 

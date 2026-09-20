@@ -1,0 +1,289 @@
+{
+  "app_name": "DeuMediaDownloader",
+  "version": "1.7.0",
+  "lang": "de",
+  "strings": {
+    "spotify_url": "Spotify URL",
+    "youtube_url": "YouTube URL",
+    "format": "Format",
+    "save_to": "Speichern in",
+    "type": "Typ",
+    "browse": "Durchsuchen",
+    "download": "  Herunterladen",
+    "loading": "  Lädt…",
+    "paste": "Einfügen",
+    "clear": "Löschen",
+    "audio_btn": "♪  Audio",
+    "video_btn": "▶  Video",
+    "clear_done": "Erledigte leeren",
+    "clear_log": "Löschen",
+    "save_btn": "Speichern",
+    "cancel_btn": "Abbrechen",
+    "btn_ok": "OK",
+    "btn_yes": "Ja",
+    "btn_no": "Nein",
+    "download_queue": "Download-Warteschlange",
+    "log_panel": "Protokoll",
+    "settings_title": "Einstellungen",
+    "spotify_api_creds": "Spotify-API-Zugangsdaten",
+    "redirect_hint": "developer.spotify.com  →  Redirect URI: http://127.0.0.1:8888/callback",
+    "client_id": "Client-ID",
+    "client_id_ph": "Client-ID einfügen…",
+    "client_secret": "Client-Secret",
+    "client_secret_ph": "Client-Secret einfügen…",
+    "concurrent_dl": "Gleichzeitige Downloads",
+    "sp_open_dashboard": "Spotify Developer Dashboard öffnen",
+    "sp_redirect_uri_lbl": "Redirect URI (markieren & kopieren):",
+    "sp_sec_options": "Download-Optionen",
+    "sp_skip_existing_lbl": "Vorhandene Dateien überspringen",
+    "sp_skip_existing_desc": "Tracks nicht erneut herunterladen, wenn sie bereits vorhanden sind",
+    "sp_embed_cover_lbl": "Cover einbetten",
+    "sp_embed_cover_desc": "Albumcover in die Audiodatei einbetten",
+    "sp_normalize_lbl": "Audio normalisieren",
+    "sp_normalize_desc": "Loudnorm-Filter für gleichmäßige Lautstärke anwenden",
+    "sp_open_folder_lbl": "Ordner nach Fertigstellung öffnen",
+    "sp_open_folder_desc": "Ausgabeordner öffnen, wenn alle Downloads abgeschlossen sind",
+    "launcher_title": "DeuMediaDownloader",
+    "choose_downloader": "Downloader wählen",
+    "spotify_desc": "Tracks, Playlisten\nund Alben",
+    "youtube_desc": "Videos und\nPlaylisten",
+    "open_spotify": "Spotify öffnen",
+    "open_youtube": "YouTube öffnen",
+    "open_tiktok": "TikTok öffnen",
+    "tiktok_desc": "Videos und\nAudio",
+    "spotify_win_title": "DeuMediaDownloader  v1.7.0",
+    "youtube_win_title": "YouTube Downloader",
+    "tiktok_win_title": "TikTok Downloader",
+    "no_credentials": "Keine Spotify-API-Zugangsdaten. Einstellungen öffnen.",
+    "spotify_init": "Spotify-Client initialisiert.",
+    "spotify_auth_err": "Spotify-Authentifizierungsfehler: {}",
+    "settings_saved": "Einstellungen gespeichert.",
+    "fetching_spotify": "{}-Info von Spotify wird geladen…",
+    "fetching_youtube": "YouTube-Info wird geladen…",
+    "fetching_tiktok": "TikTok-Info wird geladen…",
+    "queued_n_tracks": "{} Track(s) in Warteschlange  [{}]",
+    "queued_n_videos": "{} Video(s) in Warteschlange  [{}]",
+    "err_resolving": "Fehler beim Laden der URL: {}",
+    "log_done": "Fertig:  {}",
+    "log_error": "Fehler: {} — {}",
+    "log_queued": "Eingereiht: {}",
+    "ffmpeg_ok": "FFmpeg ✓",
+    "ffmpeg_fail": "FFmpeg ✗",
+    "mb_no_url_title": "Keine URL",
+    "mb_no_url_spotify": "Bitte zuerst eine Spotify-URL einfügen.",
+    "mb_no_url_youtube": "Bitte zuerst eine YouTube-URL einfügen.",
+    "mb_no_url_tiktok": "Bitte zuerst eine TikTok-URL einfügen.",
+    "mb_no_outdir_title": "Kein Ausgabeordner",
+    "mb_no_outdir": "Bitte einen Ausgabeordner wählen.",
+    "mb_api_title": "API-Zugangsdaten erforderlich",
+    "mb_api_msg": "Bitte öffne die Einstellungen und gib deine Spotify-API-Zugangsdaten ein\n(Client-ID und Client-Secret).\n\nKostenlos erhältlich unter: developer.spotify.com",
+    "mb_error_title": "Fehler",
+    "select_outdir": "Ausgabeordner wählen",
+    "ffmpeg_will_install": "FFmpeg: wird automatisch installiert",
+    "tab_settings": "Einstellungen",
+    "tab_uninstall": "Deinstallieren",
+    "uninstall_section": "Deinstallation & Bereinigung",
+    "clear_data_btn": "Konfigurationsdaten löschen",
+    "clear_data_desc": "Entfernt Einstellungen, API-Zugangsdaten und Cache.",
+    "uninstall_ffmpeg_btn": "FFmpeg deinstallieren",
+    "uninstall_ffmpeg_desc": "Entfernt FFmpeg über winget vom System.",
+    "uninstall_app_btn": "DeuMediaDownloader deinstallieren",
+    "uninstall_app_desc": "Startet den Deinstaller und schließt die App.",
+    "confirm_clear_data": "Alle Einstellungen und Zugangsdaten löschen?\nDies kann nicht rückgängig gemacht werden.",
+    "confirm_uninstall_ffmpeg": "FFmpeg vom System deinstallieren?",
+    "confirm_uninstall_app": "DeuMediaDownloader deinstallieren?\nDie App wird jetzt geschlossen.",
+    "no_uninstaller": "Deinstaller nicht gefunden.\nBitte über Windows-Einstellungen → Apps deinstallieren.",
+    "uninstall_started": "Deinstallation im Hintergrund gestartet.",
+    "yes_btn": "Ja",
+    "no_btn": "Nein",
+    "yt_settings_title": "YouTube Einstellungen",
+    "yt_sec_downloads": "Downloads",
+    "yt_concurrent_lbl": "Parallele Downloads",
+    "yt_sec_media": "Medienverarbeitung",
+    "yt_embed_thumb_lbl": "Thumbnail einbetten",
+    "yt_embed_thumb_desc": "Video-Thumbnail in Audiodateien einbetten",
+    "yt_sponsorblock_lbl": "Werbung überspringen (SponsorBlock)",
+    "yt_sponsorblock_desc": "Gesponserte Segmente automatisch überspringen",
+    "yt_sec_subtitles": "Untertitel",
+    "yt_subtitles_lbl": "Untertitel herunterladen & einbetten",
+    "yt_subtitles_desc": "Untertitel herunterladen und in die Datei einbetten",
+    "yt_subtitle_langs_lbl": "Sprachen (kommagetrennt)",
+    "yt_subtitle_langs_ph": "z.B. de, en",
+    "yt_sec_network": "Netzwerk",
+    "yt_rate_limit_lbl": "Geschwindigkeitsbegrenzung",
+    "yt_rate_no_limit": "Kein Limit",
+    "yt_rate_1m": "1 MB/s",
+    "yt_rate_5m": "5 MB/s",
+    "yt_rate_10m": "10 MB/s",
+    "yt_rate_50m": "50 MB/s",
+    "filename_template_lbl": "Dateiname",
+    "filename_template_desc": "Platzhalter: {artist}, {title}, {year}, {album}",
+    "tmpl_artist_title": "Künstler - Titel",
+    "tmpl_title_artist": "Titel - Künstler",
+    "tmpl_title_only": "Nur Titel",
+    "tmpl_artist_title_year": "Künstler - Titel (Jahr)",
+    "tmpl_title_album": "Titel [Album]",
+    "tt_settings_title": "TikTok Einstellungen",
+    "tt_sec_downloads": "Downloads",
+    "tt_concurrent_lbl": "Parallele Downloads",
+    "tt_sec_media": "Medienverarbeitung",
+    "tt_embed_thumb_lbl": "Thumbnail einbetten",
+    "tt_embed_thumb_desc": "Video-Cover in Audiodateien einbetten",
+    "tt_sec_network": "Netzwerk",
+    "tt_rate_limit_lbl": "Geschwindigkeitsbegrenzung",
+    "tt_sec_auth": "Anmeldung",
+    "tt_cookies_lbl": "Browser-Cookies",
+    "tt_cookies_desc": "TikTok blockiert die meisten anonymen Downloads. Die Cookies eines eingeloggten Browsers beheben meist den „Unexpected response“-Fehler. Chrome und Edge lassen sich unter Windows wegen eines Browser-Sicherheitsfeatures derzeit nicht auslesen - nutze Firefox, falls installiert, sonst die Cookie-Datei-Option unten.",
+    "tt_cookies_none": "Keine Cookies verwenden",
+    "tt_cookies_chrome": "Chrome",
+    "tt_cookies_edge": "Edge",
+    "tt_cookies_firefox": "Firefox (empfohlen)",
+    "tt_cookies_brave": "Brave",
+    "tt_cookies_opera": "Opera",
+    "tt_cookies_vivaldi": "Vivaldi",
+    "tt_cookies_file_lbl": "Cookie-Datei (Alternative)",
+    "tt_cookies_file_desc": "Funktioniert auch wenn Chrome/Edge nicht gehen und Firefox nicht installiert ist: TikTok-Cookies mit einer Browser-Erweiterung (z. B. „Get cookies.txt LOCALLY“) als .txt-Datei exportieren und hier auswählen. Hat Vorrang vor Browser-Cookies oben, wenn gesetzt.",
+    "tt_cookies_file_ph": "Keine Datei ausgewählt",
+    "tt_cookies_file_clear": "Entfernen",
+    "tt_err_dpapi": "Die Cookies dieses Browsers können wegen eines Windows-Sicherheitsfeatures ohne verfügbaren Fix nicht gelesen werden. Bitte Firefox probieren oder die Cookie-Datei-Option unten nutzen.",
+    "tt_err_no_browser": "Dieser Browser (oder der gespeicherte TikTok-Login darin) wurde auf deinem PC nicht gefunden. Bitte einen anderen Browser wählen oder die Cookie-Datei-Option unten nutzen."
+  },
+  "config": {
+    "spotify_client_id": "",
+    "spotify_client_secret": "",
+    "output_dir": "C:/Users/Demo/Music/Spotify Downloads",
+    "yt_output_dir": "C:/Users/Demo/Music/YouTube Downloads",
+    "tt_output_dir": "C:/Users/Demo/Music/TikTok Downloads",
+    "default_format": "MP3 (256 kbps)",
+    "yt_format": "MP3 (256 kbps)",
+    "yt_format_audio": "MP3 (256 kbps)",
+    "yt_format_video": "MP4 (1080p)",
+    "yt_media_type": "Audio",
+    "concurrent_downloads": 2,
+    "sp_skip_existing": true,
+    "sp_embed_cover": true,
+    "sp_normalize": false,
+    "sp_open_folder": true,
+    "yt_concurrent": 2,
+    "yt_embed_thumbnail": true,
+    "yt_write_subtitles": false,
+    "yt_subtitle_langs": "en",
+    "yt_sponsorblock": false,
+    "yt_rate_limit": "",
+    "yt_open_folder": true,
+    "tt_format_video": "MP4 (1080p)",
+    "tt_format_audio": "MP3 (256 kbps)",
+    "tt_media_type": "Video",
+    "tt_concurrent": 2,
+    "tt_embed_thumbnail": true,
+    "tt_rate_limit": "",
+    "tt_open_folder": true,
+    "tt_win_geo": "820x720",
+    "tt_cookies_browser": "",
+    "tt_cookies_file": "",
+    "sp_filename_template": "{artist} - {title}",
+    "yt_filename_template": "{title}",
+    "tt_filename_template": "{title}"
+  },
+  "ffmpeg_ok": true,
+  "options": {
+    "audio_formats": [
+      "MP3 (128 kbps)",
+      "MP3 (192 kbps)",
+      "MP3 (256 kbps)",
+      "MP3 (320 kbps)",
+      "AAC (256 kbps)",
+      "OGG Vorbis (320 kbps)",
+      "WAV (Lossless)"
+    ],
+    "video_formats": [
+      "MP4 (1080p)",
+      "MP4 (720p)",
+      "MP4 (480p)",
+      "MP4 (360p)",
+      "MKV (Best)",
+      "WebM (Best)"
+    ],
+    "sp_templates": [
+      [
+        "{artist} - {title}",
+        "tmpl_artist_title"
+      ],
+      [
+        "{title} - {artist}",
+        "tmpl_title_artist"
+      ],
+      [
+        "{title}",
+        "tmpl_title_only"
+      ],
+      [
+        "{artist} - {title} ({year})",
+        "tmpl_artist_title_year"
+      ],
+      [
+        "{title} [{album}]",
+        "tmpl_title_album"
+      ]
+    ],
+    "yt_templates": [
+      [
+        "{title}",
+        "tmpl_title_only"
+      ],
+      [
+        "{artist} - {title}",
+        "tmpl_artist_title"
+      ],
+      [
+        "{title} - {artist}",
+        "tmpl_title_artist"
+      ]
+    ],
+    "tt_templates": [
+      [
+        "{title}",
+        "tmpl_title_only"
+      ],
+      [
+        "{artist} - {title}",
+        "tmpl_artist_title"
+      ],
+      [
+        "{title} - {artist}",
+        "tmpl_title_artist"
+      ]
+    ],
+    "cookie_browsers": [
+      [
+        "",
+        "tt_cookies_none"
+      ],
+      [
+        "chrome",
+        "tt_cookies_chrome"
+      ],
+      [
+        "edge",
+        "tt_cookies_edge"
+      ],
+      [
+        "firefox",
+        "tt_cookies_firefox"
+      ],
+      [
+        "brave",
+        "tt_cookies_brave"
+      ],
+      [
+        "opera",
+        "tt_cookies_opera"
+      ],
+      [
+        "vivaldi",
+        "tt_cookies_vivaldi"
+      ]
+    ]
+  },
+  "tasks": {}
+}

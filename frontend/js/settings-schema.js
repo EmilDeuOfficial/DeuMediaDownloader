@@ -22,7 +22,7 @@ export const RATE_OPTIONS = [
 
 const filenameSection = (options, key, def) => ({
   titleKey: "filename_template_lbl",
-  inside: false,
+  inside: true,
   fields: [
     { type: "note", textKey: "filename_template_desc" },
     { type: "select", key, options, width: 280, default: def },
@@ -36,7 +36,7 @@ export const SETTINGS_SCHEMA = {
     sections: [
       {
         titleKey: "spotify_api_creds",
-        inside: false,
+        inside: true,
         fields: [
           { type: "link", labelKey: "sp_open_dashboard", url: "https://developer.spotify.com/dashboard" },
           { type: "readonly", labelKey: "sp_redirect_uri_lbl", value: "http://127.0.0.1:8888/callback" },
@@ -46,12 +46,12 @@ export const SETTINGS_SCHEMA = {
       },
       {
         titleKey: "concurrent_dl",
-        inside: false,
+        inside: true,
         fields: [{ type: "slider", key: "concurrent_downloads", min: 1, max: 5, default: 2 }],
       },
       {
         titleKey: "sp_sec_options",
-        inside: false,
+        inside: true,
         fields: [
           { type: "toggle", key: "sp_skip_existing", labelKey: "sp_skip_existing_lbl", descKey: "sp_skip_existing_desc", default: true },
           { type: "toggle", key: "sp_embed_cover", labelKey: "sp_embed_cover_lbl", descKey: "sp_embed_cover_desc", default: true },

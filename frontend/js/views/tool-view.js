@@ -77,8 +77,8 @@ export function createToolView(service, { onBack, onSettings }) {
       "div",
       { class: "input-row" },
       urlInput,
-      h("button", { class: "btn neutral", type: "button", style: { width: "72px" }, onClick: paste }, T("paste")),
-      h("button", { class: "btn neutral", type: "button", style: { width: "66px" }, onClick: () => { urlInput.value = ""; urlInput.focus(); } }, T("clear")),
+      h("button", { class: "btn neutral", type: "button", style: { minWidth: "72px" }, onClick: paste }, T("paste")),
+      h("button", { class: "btn neutral", type: "button", style: { minWidth: "66px" }, onClick: () => { urlInput.value = ""; urlInput.focus(); } }, T("clear")),
     ),
   );
 
@@ -183,7 +183,7 @@ export function createToolView(service, { onBack, onSettings }) {
       h("span", { class: "panel-title" }, T("download_queue")),
       countLabel,
       h("span", { class: "tb-spacer" }),
-      h("button", { class: "btn neutral small", type: "button", style: { width: "90px" }, onClick: clearDone }, T("clear_done")),
+      h("button", { class: "btn neutral small", type: "button", style: { minWidth: "90px" }, onClick: clearDone }, T("clear_done")),
     ),
     queueList,
   );

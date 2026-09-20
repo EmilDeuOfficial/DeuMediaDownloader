@@ -1,6 +1,6 @@
 {
   "app_name": "DeuMediaDownloader",
-  "version": "1.6.3",
+  "version": "1.7.0",
   "lang": "en",
   "strings": {
     "spotify_url": "Spotify URL",
@@ -51,7 +51,7 @@
     "open_youtube": "Open YouTube",
     "open_tiktok": "Open TikTok",
     "tiktok_desc": "Videos and\naudio",
-    "spotify_win_title": "DeuMediaDownloader  v1.6.3",
+    "spotify_win_title": "DeuMediaDownloader  v1.7.0",
     "youtube_win_title": "YouTube Downloader",
     "tiktok_win_title": "TikTok Downloader",
     "no_credentials": "No Spotify API credentials. Open Settings to configure them.",
