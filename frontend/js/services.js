@@ -8,7 +8,7 @@ export const SERVICES = {
     urlPlaceholderKey: "spotify_url_ph",
     queueGlyph: "note",
     mediaToggle: false,
-    dropdownWidth: 270,
+    dropdownWidth: 220,
     cfg: { outDir: "output_dir", format: "default_format", formatDefault: "MP3 (256 kbps)" },
   },
   youtube: {

@@ -1,3 +1,4 @@
+import glob
 import re
 import threading
 import queue
@@ -26,6 +27,8 @@ class DownloadStatus(Enum):
     EMBEDDING   = "Embedding…"
     DONE        = "Done"
     ERROR       = "Error"
+    PAUSED      = "Paused"
+    CANCELLED   = "Cancelled"
 
 
 def _sanitize(name: str) -> str:
@@ -93,6 +96,139 @@ def _friendly_tiktok_error(msg: str) -> str:
     return msg
 
 
+class TaskInterrupted(yt_dlp.utils.DownloadCancelled):
+    """Raised inside a running download when the user pauses or cancels the task.
+
+    Deriving from yt-dlp's DownloadCancelled makes yt-dlp abort at once without
+    retrying other formats. `reason` is "pause" or "cancel".
+    """
+
+    def __init__(self, reason: str):
+        super().__init__(f"task {reason}")
+        self.reason = reason
+
+
+def _check_stop(task) -> None:
+    if task.stop:
+        raise TaskInterrupted(task.stop)
+
+
+# yt-dlp's unfinished download files plus the thumbnail it writes next to the media file.
+_PARTIAL_SUFFIXES = (".part", ".ytdl", ".temp", ".webp", ".jpg", ".jpeg", ".png")
+
+
+def remove_partial_files(task) -> None:
+    """Delete the unfinished download files of `task` (see _PARTIAL_SUFFIXES).
+
+    Finished media files are never touched, only names that start with the task's
+    file name and end in one of those suffixes.
+    """
+    stem = getattr(task, "work_stem", "")
+    if not stem:
+        return
+    for path in Path(task.output_dir).glob(glob.escape(stem) + ".*"):
+        name = path.name.lower()
+        if name.endswith(_PARTIAL_SUFFIXES) or ".part-frag" in name:
+            try:
+                path.unlink()
+            except OSError:
+                pass
+
+
+def _has_partial_files(task) -> bool:
+    stem = getattr(task, "work_stem", "")
+    if not stem:
+        return False
+    return any(p.name.lower().endswith((".part", ".ytdl"))
+               for p in Path(task.output_dir).glob(glob.escape(stem) + ".*"))
+
+
+def _run_ydl(task, ydl_opts: Dict[str, Any], url: str) -> None:
+    """Run the yt-dlp download. YouTube sometimes answers HTTP 416 when yt-dlp tries to
+    resume a paused download from its .part file; then the download starts over once."""
+    for attempt in (1, 2):
+        try:
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                ydl.download([url])
+            return
+        except TaskInterrupted:
+            raise
+        except Exception as exc:
+            if attempt == 1 and "416" in str(exc) and _has_partial_files(task):
+                remove_partial_files(task)
+                continue
+            raise
+
+
+def _finish_interrupted(task, reason: str, status_cb, progress_cb) -> None:
+    """Common end of a download that was stopped by the user."""
+    if reason == "cancel":
+        remove_partial_files(task)
+        status_cb(DownloadStatus.CANCELLED)
+        progress_cb(0.0)
+        if task.on_done:
+            task.on_done(task)
+    else:
+        # Paused: keep the partial file and the progress; resuming re-queues the task
+        # and yt-dlp continues from the .part file.
+        status_cb(DownloadStatus.PAUSED)
+
+
+class _TaskManager:
+    """Runs queued tasks on a limited number of worker threads.
+
+    A task can be re-submitted (resume). Every submit gets a new run id so an older
+    queue entry of the same task is recognised as stale and skipped, as is an entry
+    of a task that was paused or cancelled while it waited.
+    """
+
+    def __init__(self, max_workers: int = 2, ffmpeg_ok: bool = True):
+        self._max_workers = max_workers
+        self._ffmpeg_ok   = ffmpeg_ok
+        self._active      = 0
+        self._lock        = threading.Lock()
+        self._pending: queue.Queue = queue.Queue()
+        self._dispatcher  = threading.Thread(target=self._dispatch_loop, daemon=True)
+        self._dispatcher.start()
+
+    def submit(self, task) -> None:
+        with self._lock:
+            task.run_id += 1
+            token = task.run_id
+        self._pending.put((task, token))
+
+    @staticmethod
+    def _stale(task, token: int) -> bool:
+        return task.run_id != token or bool(task.stop)
+
+    def _dispatch_loop(self) -> None:
+        while True:
+            task, token = self._pending.get()
+            if self._stale(task, token):
+                continue
+            while True:
+                with self._lock:
+                    if self._active < self._max_workers:
+                        self._active += 1
+                        break
+                time.sleep(0.2)
+            if self._stale(task, token):
+                with self._lock:
+                    self._active -= 1
+                continue
+            threading.Thread(target=self._run_task, args=(task,), daemon=True).start()
+
+    def _run_task(self, task) -> None:
+        try:
+            self._run(task)
+        finally:
+            with self._lock:
+                self._active -= 1
+
+    def _run(self, task) -> None:
+        raise NotImplementedError
+
+
 # ===========================================================================
 # SPOTIFY
 # ===========================================================================
@@ -121,6 +257,9 @@ class DownloadTask:
     progress:     float          = 0.0
     error_msg:    str            = ""
     output_file:  str            = ""
+    stop:         Optional[str]  = None    # "pause" or "cancel", set by the user
+    run_id:       int            = 0       # bumped on every submit (see _TaskManager)
+    work_stem:    str            = ""      # file name stem, used to clean up partial files
 
     on_progress: Optional[Callable] = field(default=None, repr=False)
     on_status:   Optional[Callable] = field(default=None, repr=False)
@@ -344,6 +483,7 @@ def download_spotify_track(task: DownloadTask, ffmpeg_ok: bool) -> None:
             task.on_progress(task)
 
     try:
+        _check_stop(task)
         cfg      = load_config()
         fmt_info = AUDIO_FORMATS[task.format_name]
         ext      = fmt_info["ext"]
@@ -356,6 +496,7 @@ def download_spotify_track(task: DownloadTask, ffmpeg_ok: bool) -> None:
         safe_filename = _apply_template(tmpl, artist=track.artist, title=track.title,
                                         album=track.album, year=track.year or "")
         final_path    = out_dir / f"{safe_filename}.{ext}"
+        task.work_stem = safe_filename
 
         if final_path.exists() and cfg.get("sp_skip_existing", True):
             task.output_file = str(final_path)
@@ -367,6 +508,7 @@ def download_spotify_track(task: DownloadTask, ffmpeg_ok: bool) -> None:
 
         def ydl_hook(d: dict):
             if d["status"] == "downloading":
+                _check_stop(task)
                 total      = d.get("total_bytes") or d.get("total_bytes_estimate") or 0
                 downloaded = d.get("downloaded_bytes", 0)
                 if total > 0:
@@ -381,6 +523,7 @@ def download_spotify_track(task: DownloadTask, ffmpeg_ok: bool) -> None:
         search_url = _find_best_youtube_match(
             track.artist, track.title, track.duration_ms
         )
+        _check_stop(task)
 
         ydl_opts: Dict[str, Any] = {
             "format":         "bestaudio/best",
@@ -403,8 +546,8 @@ def download_spotify_track(task: DownloadTask, ffmpeg_ok: bool) -> None:
 
         _status(DownloadStatus.DOWNLOADING)
 
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            ydl.download([search_url])
+        _check_stop(task)
+        _run_ydl(task, ydl_opts, search_url)
 
         if not final_path.exists():
             candidates = list(out_dir.glob(f"{safe_filename}.*"))
@@ -437,6 +580,9 @@ def download_spotify_track(task: DownloadTask, ffmpeg_ok: bool) -> None:
         if task.on_done:
             task.on_done(task)
 
+    except TaskInterrupted as stop:
+        _finish_interrupted(task, stop.reason, _status, _progress)
+
     except Exception as exc:
         _status(DownloadStatus.ERROR, str(exc))
         _progress(0.0)
@@ -444,40 +590,9 @@ def download_spotify_track(task: DownloadTask, ffmpeg_ok: bool) -> None:
             task.on_done(task)
 
 
-class SpotifyDownloadManager:
-    def __init__(self, max_workers: int = 2, ffmpeg_ok: bool = True):
-        self._max_workers = max_workers
-        self._ffmpeg_ok   = ffmpeg_ok
-        self._active      = 0
-        self._lock        = threading.Lock()
-        self._pending: queue.Queue[DownloadTask] = queue.Queue()
-        self._dispatcher  = threading.Thread(target=self._dispatch_loop, daemon=True)
-        self._dispatcher.start()
-
-    def submit(self, task: DownloadTask) -> None:
-        self._pending.put(task)
-
-    def _dispatch_loop(self) -> None:
-        while True:
-            task = self._pending.get()
-            while True:
-                with self._lock:
-                    if self._active < self._max_workers:
-                        self._active += 1
-                        break
-                time.sleep(0.2)
-            threading.Thread(target=self._run_task, args=(task,), daemon=True).start()
-
-    def _run_task(self, task: DownloadTask) -> None:
-        try:
-            download_spotify_track(task, self._ffmpeg_ok)
-        finally:
-            with self._lock:
-                self._active -= 1
-
-
-# Keep alias so old references in ui.py still work during transition
-DownloadManager = SpotifyDownloadManager
+class SpotifyDownloadManager(_TaskManager):
+    def _run(self, task) -> None:
+        download_spotify_track(task, self._ffmpeg_ok)
 
 
 # ===========================================================================
@@ -552,6 +667,9 @@ class YouTubeTask:
     progress:    float          = 0.0
     error_msg:   str            = ""
     output_file: str            = ""
+    stop:        Optional[str]  = None
+    run_id:      int            = 0
+    work_stem:   str            = ""
 
     on_progress: Optional[Callable] = field(default=None, repr=False)
     on_status:   Optional[Callable] = field(default=None, repr=False)
@@ -614,6 +732,7 @@ def download_youtube_task(task: YouTubeTask, ffmpeg_ok: bool) -> None:
             task.on_progress(task)
 
     try:
+        _check_stop(task)
         cfg      = load_config()
         is_video = task.format_name in VIDEO_FORMATS
         fmt_info = VIDEO_FORMATS[task.format_name] if is_video else AUDIO_FORMATS[task.format_name]
@@ -630,6 +749,7 @@ def download_youtube_task(task: YouTubeTask, ffmpeg_ok: bool) -> None:
         safe_title = _apply_template(tmpl, artist=_yt_artist.strip(),
                                      title=_yt_title.strip())
         final_path = out_dir / f"{safe_title}.{ext}"
+        task.work_stem = safe_title
 
         if final_path.exists():
             task.output_file = str(final_path)
@@ -641,6 +761,7 @@ def download_youtube_task(task: YouTubeTask, ffmpeg_ok: bool) -> None:
 
         def ydl_hook(d: dict):
             if d["status"] == "downloading":
+                _check_stop(task)
                 total      = d.get("total_bytes") or d.get("total_bytes_estimate") or 0
                 downloaded = d.get("downloaded_bytes", 0)
                 if total > 0:
@@ -693,8 +814,8 @@ def download_youtube_task(task: YouTubeTask, ffmpeg_ok: bool) -> None:
         if rate and rate in _RATE_MAP:
             ydl_opts["ratelimit"] = _RATE_MAP[rate]
 
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            ydl.download([task.url])
+        _check_stop(task)
+        _run_ydl(task, ydl_opts, task.url)
 
         if not final_path.exists():
             candidates = list(out_dir.glob(f"{safe_title}.*"))
@@ -709,6 +830,9 @@ def download_youtube_task(task: YouTubeTask, ffmpeg_ok: bool) -> None:
         if task.on_done:
             task.on_done(task)
 
+    except TaskInterrupted as stop:
+        _finish_interrupted(task, stop.reason, _status, _progress)
+
     except Exception as exc:
         _status(DownloadStatus.ERROR, str(exc))
         _progress(0.0)
@@ -716,36 +840,9 @@ def download_youtube_task(task: YouTubeTask, ffmpeg_ok: bool) -> None:
             task.on_done(task)
 
 
-class YouTubeDownloadManager:
-    def __init__(self, max_workers: int = 2, ffmpeg_ok: bool = True):
-        self._max_workers = max_workers
-        self._ffmpeg_ok   = ffmpeg_ok
-        self._active      = 0
-        self._lock        = threading.Lock()
-        self._pending: queue.Queue[YouTubeTask] = queue.Queue()
-        self._dispatcher  = threading.Thread(target=self._dispatch_loop, daemon=True)
-        self._dispatcher.start()
-
-    def submit(self, task: YouTubeTask) -> None:
-        self._pending.put(task)
-
-    def _dispatch_loop(self) -> None:
-        while True:
-            task = self._pending.get()
-            while True:
-                with self._lock:
-                    if self._active < self._max_workers:
-                        self._active += 1
-                        break
-                time.sleep(0.2)
-            threading.Thread(target=self._run_task, args=(task,), daemon=True).start()
-
-    def _run_task(self, task: YouTubeTask) -> None:
-        try:
-            download_youtube_task(task, self._ffmpeg_ok)
-        finally:
-            with self._lock:
-                self._active -= 1
+class YouTubeDownloadManager(_TaskManager):
+    def _run(self, task) -> None:
+        download_youtube_task(task, self._ffmpeg_ok)
 
 
 # ===========================================================================
@@ -787,6 +884,9 @@ class TikTokTask:
     progress:    float          = 0.0
     error_msg:   str            = ""
     output_file: str            = ""
+    stop:        Optional[str]  = None
+    run_id:      int            = 0
+    work_stem:   str            = ""
 
     on_progress: Optional[Callable] = field(default=None, repr=False)
     on_status:   Optional[Callable] = field(default=None, repr=False)
@@ -849,6 +949,7 @@ def download_tiktok_task(task: TikTokTask, ffmpeg_ok: bool) -> None:
             task.on_progress(task)
 
     try:
+        _check_stop(task)
         cfg      = load_config()
         is_video = task.format_name in VIDEO_FORMATS
         fmt_info = VIDEO_FORMATS[task.format_name] if is_video else AUDIO_FORMATS[task.format_name]
@@ -865,6 +966,7 @@ def download_tiktok_task(task: TikTokTask, ffmpeg_ok: bool) -> None:
         safe_title = _apply_template(tmpl, artist=_tt_artist.strip(),
                                      title=_tt_title.strip())
         final_path = out_dir / f"{safe_title}.{ext}"
+        task.work_stem = safe_title
 
         if final_path.exists():
             task.output_file = str(final_path)
@@ -876,6 +978,7 @@ def download_tiktok_task(task: TikTokTask, ffmpeg_ok: bool) -> None:
 
         def ydl_hook(d: dict):
             if d["status"] == "downloading":
+                _check_stop(task)
                 total      = d.get("total_bytes") or d.get("total_bytes_estimate") or 0
                 downloaded = d.get("downloaded_bytes", 0)
                 if total > 0:
@@ -918,8 +1021,8 @@ def download_tiktok_task(task: TikTokTask, ffmpeg_ok: bool) -> None:
         if rate and rate in _RATE_MAP:
             ydl_opts["ratelimit"] = _RATE_MAP[rate]
 
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            ydl.download([task.url])
+        _check_stop(task)
+        _run_ydl(task, ydl_opts, task.url)
 
         if not final_path.exists():
             candidates = list(out_dir.glob(f"{safe_title}.*"))
@@ -934,6 +1037,9 @@ def download_tiktok_task(task: TikTokTask, ffmpeg_ok: bool) -> None:
         if task.on_done:
             task.on_done(task)
 
+    except TaskInterrupted as stop:
+        _finish_interrupted(task, stop.reason, _status, _progress)
+
     except Exception as exc:
         _status(DownloadStatus.ERROR, _friendly_tiktok_error(str(exc)))
         _progress(0.0)
@@ -941,33 +1047,6 @@ def download_tiktok_task(task: TikTokTask, ffmpeg_ok: bool) -> None:
             task.on_done(task)
 
 
-class TikTokDownloadManager:
-    def __init__(self, max_workers: int = 2, ffmpeg_ok: bool = True):
-        self._max_workers = max_workers
-        self._ffmpeg_ok   = ffmpeg_ok
-        self._active      = 0
-        self._lock        = threading.Lock()
-        self._pending: queue.Queue[TikTokTask] = queue.Queue()
-        self._dispatcher  = threading.Thread(target=self._dispatch_loop, daemon=True)
-        self._dispatcher.start()
-
-    def submit(self, task: TikTokTask) -> None:
-        self._pending.put(task)
-
-    def _dispatch_loop(self) -> None:
-        while True:
-            task = self._pending.get()
-            while True:
-                with self._lock:
-                    if self._active < self._max_workers:
-                        self._active += 1
-                        break
-                time.sleep(0.2)
-            threading.Thread(target=self._run_task, args=(task,), daemon=True).start()
-
-    def _run_task(self, task: TikTokTask) -> None:
-        try:
-            download_tiktok_task(task, self._ffmpeg_ok)
-        finally:
-            with self._lock:
-                self._active -= 1
+class TikTokDownloadManager(_TaskManager):
+    def _run(self, task) -> None:
+        download_tiktok_task(task, self._ffmpeg_ok)

@@ -38,6 +38,18 @@ class FakeRuntime:
     def tasks(self):
         return []
 
+    def pause(self, task_id):
+        self.calls = getattr(self, "calls", []) + [("pause", task_id)]
+        return True
+
+    def resume(self, task_id):
+        self.calls = getattr(self, "calls", []) + [("resume", task_id)]
+        return True
+
+    def cancel(self, task_id):
+        self.calls = getattr(self, "calls", []) + [("cancel", task_id)]
+        return False
+
 
 class FakeWindow:
     def __init__(self):
@@ -287,3 +299,18 @@ def test_paste_returns_stripped_clipboard_text(env, monkeypatch):
 def test_bootstrap_includes_app_name(env):
     api, *_ = env
     assert api.bootstrap()["data"]["app_name"] == config.APP_NAME
+
+
+def test_pause_resume_cancel_delegate_to_the_service_runtime(env):
+    api, rts, *_ = env
+    assert api.pause_task("spotify", "t1") == {"ok": True, "data": True}
+    assert api.resume_task("spotify", "t1") == {"ok": True, "data": True}
+    assert api.cancel_task("spotify", "t1") == {"ok": True, "data": False}
+    assert rts["spotify"].calls == [("pause", "t1"), ("resume", "t1"), ("cancel", "t1")]
+
+
+def test_task_control_with_unknown_service_returns_error(env):
+    api, *_ = env
+    for call in (api.pause_task, api.resume_task, api.cancel_task):
+        res = call("vimeo", "t1")
+        assert res["ok"] is False and "vimeo" in res["error"]

@@ -140,7 +140,7 @@ STRINGS: dict[str, dict[str, str]] = {
         "btn_yes":             "Yes",
         "btn_no":              "No",
         # Frontend texts that used to be hard-coded English
-        "spotify_url_ph":      "Paste a Spotify or YouTube URL…",
+        "spotify_url_ph":      "Paste a Spotify track, playlist or album URL…",
         "youtube_url_ph":      "Paste a YouTube video or playlist URL…",
         "tiktok_url":          "TikTok URL",
         "tiktok_url_ph":       "Paste a TikTok video URL…",
@@ -160,6 +160,11 @@ STRINGS: dict[str, dict[str, str]] = {
         "status_done":         "Done",
         "status_error":        "Error",
         "err_no_match":        "No YouTube match found for: {}",
+        "status_paused":       "Paused",
+        "status_cancelled":    "Cancelled",
+        "tip_pause":           "Pause",
+        "tip_resume":          "Resume",
+        "tip_cancel":          "Cancel",
         # Panel titles
         "download_queue":      "Download Queue",
         "log_panel":           "Log",
@@ -322,7 +327,7 @@ STRINGS: dict[str, dict[str, str]] = {
         "btn_yes":             "Ja",
         "btn_no":              "Nein",
         # Frontend texts that used to be hard-coded English
-        "spotify_url_ph":      "Spotify- oder YouTube-URL einfügen…",
+        "spotify_url_ph":      "Spotify-Track-, Playlist- oder Album-URL einfügen…",
         "youtube_url_ph":      "YouTube-Video- oder Playlist-URL einfügen…",
         "tiktok_url":          "TikTok-URL",
         "tiktok_url_ph":       "TikTok-Video-URL einfügen…",
@@ -342,6 +347,11 @@ STRINGS: dict[str, dict[str, str]] = {
         "status_done":         "Fertig",
         "status_error":        "Fehler",
         "err_no_match":        "Kein YouTube-Treffer gefunden für: {}",
+        "status_paused":       "Pausiert",
+        "status_cancelled":    "Abgebrochen",
+        "tip_pause":           "Pausieren",
+        "tip_resume":          "Fortsetzen",
+        "tip_cancel":          "Abbrechen",
         # Panel titles
         "download_queue":      "Download-Warteschlange",
         "log_panel":           "Protokoll",

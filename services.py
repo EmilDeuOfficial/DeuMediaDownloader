@@ -24,11 +24,15 @@ from downloader import (
     extract_tiktok_entries,
     extract_youtube_entries,
     is_youtube_url,
+    remove_partial_files,
 )
 
 SERVICE_IDS = ("spotify", "youtube", "tiktok")
 _NAME_MAX = 60
-_FINISHED = (DownloadStatus.DONE, DownloadStatus.ERROR)
+_FINISHED = (DownloadStatus.DONE, DownloadStatus.ERROR, DownloadStatus.CANCELLED)
+# A task in one of these states can be paused or cancelled; CONVERTING and EMBEDDING are short
+# ffmpeg steps that are not interrupted.
+_INTERRUPTIBLE = (DownloadStatus.QUEUED, DownloadStatus.SEARCHING, DownloadStatus.DOWNLOADING)
 
 
 def _short(text: str, limit: int) -> str:
@@ -113,6 +117,7 @@ class ServiceRuntime:
         self._manager: Any = None
         self._workers: Optional[int] = None
         self._tasks: Dict[str, Any] = {}
+        self._notified: set = set()  # task ids whose on_done was already handled
         self._lock = threading.Lock()
 
     # ------------------------------------------------------------------ setup
@@ -183,12 +188,61 @@ class ServiceRuntime:
 
     def _on_done(self, task: Any) -> None:
         self._em.emit("task_status", serialize_task(self._spec, task, self._config))
-        if not self._config.get(self._spec.open_folder_key, False):
-            return
         with self._lock:
+            if task.task_id in self._notified:
+                return
+            self._notified.add(task.task_id)
             all_done = all(t.status in _FINISHED for t in self._tasks.values())
-        if all_done:
+        if all_done and self._config.get(self._spec.open_folder_key, False):
             self._opener(task.output_dir)
+
+    # ------------------------------------------------------- pause / cancel
+    def _task(self, task_id: str) -> Any:
+        with self._lock:
+            return self._tasks.get(task_id)
+
+    def _set_status(self, task: Any, status: DownloadStatus, progress: Optional[float] = None) -> None:
+        task.status = status
+        task.error_msg = ""
+        if progress is not None:
+            task.progress = progress
+        if task.on_status:
+            task.on_status(task)
+
+    def pause(self, task_id: str) -> bool:
+        """Pause a queued or running task. A running download stops and keeps its partial
+        file (the worker sets the status); a waiting task is paused right away."""
+        task = self._task(task_id)
+        if task is None or task.status not in _INTERRUPTIBLE:
+            return False
+        task.stop = "pause"
+        if task.status == DownloadStatus.QUEUED:
+            self._set_status(task, DownloadStatus.PAUSED)
+        return True
+
+    def resume(self, task_id: str) -> bool:
+        """Put a paused task back into the queue; yt-dlp continues from the partial file."""
+        task = self._task(task_id)
+        if task is None or task.status != DownloadStatus.PAUSED:
+            return False
+        task.stop = None
+        with self._lock:
+            self._notified.discard(task_id)
+        self._set_status(task, DownloadStatus.QUEUED)
+        self._manager.submit(task)
+        return True
+
+    def cancel(self, task_id: str) -> bool:
+        """Cancel a queued, paused or running task and remove its partial files."""
+        task = self._task(task_id)
+        if task is None or task.status not in _INTERRUPTIBLE + (DownloadStatus.PAUSED,):
+            return False
+        task.stop = "cancel"
+        if task.status in (DownloadStatus.QUEUED, DownloadStatus.PAUSED):
+            remove_partial_files(task)
+            self._set_status(task, DownloadStatus.CANCELLED, progress=0.0)
+            self._on_done(task)
+        return True
 
     def _log(self, msg: str) -> None:
         self._em.emit("log", {"service": self._spec.id, "msg": msg})

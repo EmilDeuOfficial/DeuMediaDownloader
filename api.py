@@ -199,6 +199,18 @@ class Api:
     def clear_done(self, service: str) -> list:
         return self._runtime(service).clear_done()
 
+    @_safe
+    def pause_task(self, service: str, task_id: str) -> bool:
+        return self._runtime(service).pause(task_id)
+
+    @_safe
+    def resume_task(self, service: str, task_id: str) -> bool:
+        return self._runtime(service).resume(task_id)
+
+    @_safe
+    def cancel_task(self, service: str, task_id: str) -> bool:
+        return self._runtime(service).cancel(task_id)
+
     # -------------------------------------------------------------- dialogs
     def _dialog(self, kind: str, directory: str = "", file_types: tuple = ()) -> Optional[str]:
         import webview

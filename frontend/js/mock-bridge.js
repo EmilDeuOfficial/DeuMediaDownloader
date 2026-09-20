@@ -26,41 +26,69 @@ const emit = (name, payload) => window.__bridge.emit(name, payload);
 const ok = (data = null) => ({ ok: true, data });
 const fail = (error, extra = {}) => ({ ok: false, error, ...extra });
 
+function statusText(status) {
+  const strings = bootstrapData && bootstrapData.strings;
+  return (strings && strings["status_" + status.toLowerCase()]) || LABELS[status] || status;
+}
+
 function view(task) {
   const label =
     task.status === "ERROR" && task.error
-      ? `Error: ${task.error.slice(0, 60)}${task.error.length > 60 ? "\u2026" : ""}`
-      : LABELS[task.status];
-  return { ...task, label };
+      ? `${statusText("ERROR")}: ${task.error.slice(0, 60)}${task.error.length > 60 ? "…" : ""}`
+      : statusText(task.status);
+  const { stop, resume, step, ...plain } = task;
+  return { ...plain, label };
 }
 
+// Fake download: SEARCHING/DOWNLOADING/CONVERTING/... with pause and cancel honoured
+// between steps and while the progress bar moves (like the real worker).
 function simulate(task, failing) {
   const steps = task.service === "spotify" ? ["SEARCHING", "DOWNLOADING", "CONVERTING", "EMBEDDING"] : ["DOWNLOADING", "CONVERTING"];
-  let i = 0;
+  task.step = 0;
+
   const setStatus = (status) => {
     task.status = status;
     emit("task_status", view(task));
-    emit("log", { service: task.service, msg: `${LABELS[status]}: ${task.name}` });
+    emit("log", { service: task.service, msg: `${statusText(status)}: ${task.name}` });
+  };
+  const halted = () => {
+    if (task.stop === "cancel") {
+      task.progress = 0;
+      setStatus("CANCELLED");
+      return true;
+    }
+    if (task.stop === "pause") {
+      setStatus("PAUSED");
+      return true;
+    }
+    return false;
   };
   const tick = () => {
-    if (i < steps.length) {
-      setStatus(steps[i]);
-      if (steps[i] === "DOWNLOADING") {
-        let p = 0;
-        const t = setInterval(() => {
-          p = Math.min(1, p + 0.08 + Math.random() * 0.08);
+    if (task.stop && halted()) return;
+    if (task.step < steps.length) {
+      const status = steps[task.step];
+      setStatus(status);
+      if (status === "DOWNLOADING") {
+        let p = task.progress || 0;
+        const timer = setInterval(() => {
+          if (task.stop) {
+            clearInterval(timer);
+            halted();
+            return;
+          }
+          p = Math.min(1, p + 0.03 + Math.random() * 0.03);
           task.progress = p;
           emit("task_progress", { service: task.service, id: task.id, progress: p });
           if (p >= 1) {
-            clearInterval(t);
-            i++;
+            clearInterval(timer);
+            task.step++;
             setTimeout(tick, 250);
           }
         }, 120);
         return;
       }
-      i++;
-      setTimeout(tick, 500);
+      task.step++;
+      setTimeout(tick, 900);
       return;
     }
     if (failing) {
@@ -68,16 +96,23 @@ function simulate(task, failing) {
       task.progress = 0;
       task.status = "ERROR";
       emit("task_status", view(task));
-      emit("log", { service: task.service, msg: `Error: ${task.name} - ${task.error}` });
+      emit("log", { service: task.service, msg: `${statusText("ERROR")}: ${task.name} - ${task.error}` });
     } else {
       task.progress = 1;
       task.status = "DONE";
       emit("task_status", view(task));
-      emit("log", { service: task.service, msg: `Done:  ${task.name}` });
+      emit("log", { service: task.service, msg: `${statusText("DONE")}: ${task.name}` });
     }
+  };
+  task.resume = () => {
+    task.stop = null;
+    setStatus("QUEUED");
+    setTimeout(tick, 300);
   };
   setTimeout(tick, 400);
 }
+
+const findTask = (service, id) => (tasks[service] || []).find((t) => t.id === id);
 
 export const mockApi = {
   async bootstrap() {
@@ -124,8 +159,35 @@ export const mockApi = {
     }, 600);
     return ok();
   },
+  async pause_task(service, id) {
+    const t = findTask(service, id);
+    if (!t || !["QUEUED", "SEARCHING", "DOWNLOADING"].includes(t.status)) return ok(false);
+    t.stop = "pause";
+    if (t.status === "QUEUED") {
+      t.status = "PAUSED";
+      emit("task_status", view(t));
+    }
+    return ok(true);
+  },
+  async resume_task(service, id) {
+    const t = findTask(service, id);
+    if (!t || t.status !== "PAUSED") return ok(false);
+    t.resume();
+    return ok(true);
+  },
+  async cancel_task(service, id) {
+    const t = findTask(service, id);
+    if (!t || !["QUEUED", "SEARCHING", "DOWNLOADING", "PAUSED"].includes(t.status)) return ok(false);
+    t.stop = "cancel";
+    if (t.status === "QUEUED" || t.status === "PAUSED") {
+      t.progress = 0;
+      t.status = "CANCELLED";
+      emit("task_status", view(t));
+    }
+    return ok(true);
+  },
   async clear_done(service) {
-    const removed = tasks[service].filter((t) => t.status === "DONE" || t.status === "ERROR").map((t) => t.id);
+    const removed = tasks[service].filter((t) => ["DONE", "ERROR", "CANCELLED"].includes(t.status)).map((t) => t.id);
     tasks[service] = tasks[service].filter((t) => !removed.includes(t.id));
     return ok(removed);
   },

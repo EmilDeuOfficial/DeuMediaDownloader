@@ -34,6 +34,9 @@ class FakeTask:
     status: DownloadStatus = DownloadStatus.QUEUED
     progress: float = 0.0
     error_msg: str = ""
+    stop: Optional[str] = None
+    run_id: int = 0
+    work_stem: str = ""
     on_progress: Optional[Callable] = field(default=None, repr=False)
     on_status: Optional[Callable] = field(default=None, repr=False)
     on_done: Optional[Callable] = field(default=None, repr=False)
@@ -237,3 +240,120 @@ def test_status_label_and_log_line_follow_active_language(monkeypatch):
     task.status = DownloadStatus.ERROR
     task.error_msg = "boom"
     assert serialize_task(spec, task, {})["label"] == T("status_error") + ": boom"
+
+
+# ------------------------------------------------------------ pause / resume / cancel
+def queued_runtime(n=2, **kw):
+    rt, em, opened = make_runtime(items=tuple("abcdef"[:n]), **kw)
+    rt.submit("http://x", "C:/out", "MP3")
+    return rt, em, opened, FakeManager.instances[-1].submitted
+
+
+def test_pause_waiting_task_pauses_immediately_and_sets_stop_flag():
+    rt, em, _, tasks = queued_runtime()
+    assert rt.pause("id-a") is True
+    assert tasks[0].stop == "pause"
+    assert tasks[0].status == DownloadStatus.PAUSED
+    assert em.payloads("task_status")[-1]["status"] == "PAUSED"
+
+
+def test_pause_running_task_only_sets_flag_the_worker_reports_the_state():
+    rt, em, _, tasks = queued_runtime()
+    tasks[0].status = DownloadStatus.DOWNLOADING
+    assert rt.pause("id-a") is True
+    assert tasks[0].stop == "pause"
+    assert tasks[0].status == DownloadStatus.DOWNLOADING
+
+
+@pytest.mark.parametrize("status", [DownloadStatus.CONVERTING, DownloadStatus.EMBEDDING,
+                                    DownloadStatus.DONE, DownloadStatus.ERROR])
+def test_pause_and_cancel_ignored_in_non_interruptible_states(status):
+    rt, em, _, tasks = queued_runtime()
+    tasks[0].status = status
+    assert rt.pause("id-a") is False
+    assert rt.cancel("id-a") is False
+    assert tasks[0].stop is None
+
+
+def test_unknown_task_id_returns_false():
+    rt, *_ = queued_runtime()
+    assert rt.pause("nope") is False and rt.resume("nope") is False and rt.cancel("nope") is False
+
+
+def test_resume_requeues_paused_task_and_clears_flag():
+    rt, em, _, tasks = queued_runtime()
+    rt.pause("id-a")
+    submitted_before = len(FakeManager.instances[-1].submitted)
+    assert rt.resume("id-a") is True
+    assert tasks[0].stop is None
+    assert tasks[0].status == DownloadStatus.QUEUED
+    assert len(FakeManager.instances[-1].submitted) == submitted_before + 1
+    assert FakeManager.instances[-1].submitted[-1] is tasks[0]
+
+
+def test_resume_only_works_for_paused_tasks():
+    rt, _, _, tasks = queued_runtime()
+    assert rt.resume("id-a") is False
+
+
+def test_cancel_waiting_task_finishes_it_as_cancelled():
+    rt, em, _, tasks = queued_runtime()
+    tasks[0].progress = 0.4
+    assert rt.cancel("id-a") is True
+    assert tasks[0].stop == "cancel"
+    assert tasks[0].status == DownloadStatus.CANCELLED
+    assert tasks[0].progress == 0.0
+    assert em.payloads("task_status")[-1]["status"] == "CANCELLED"
+
+
+def test_cancel_paused_task_removes_partial_files(tmp_path):
+    rt, em, _, tasks = queued_runtime()
+    tasks[0].output_dir = str(tmp_path)
+    tasks[0].work_stem = "song"
+    (tmp_path / "song.webm.part").write_bytes(b"x")
+    (tmp_path / "song.mp3").write_bytes(b"x")
+    rt.pause("id-a")
+    assert rt.cancel("id-a") is True
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["song.mp3"]
+
+
+def test_cancel_running_task_only_sets_flag():
+    rt, em, _, tasks = queued_runtime()
+    tasks[0].status = DownloadStatus.DOWNLOADING
+    assert rt.cancel("id-a") is True
+    assert tasks[0].stop == "cancel"
+    assert tasks[0].status == DownloadStatus.DOWNLOADING
+
+
+def test_cancelled_tasks_count_as_finished_for_clear_and_open_folder():
+    rt, em, opened, tasks = queued_runtime()
+    tasks[0].status = DownloadStatus.DONE
+    tasks[0].on_done(tasks[0])
+    assert opened == []
+    rt.cancel("id-b")                       # cancelling the last open task finishes the batch
+    assert opened == ["C:/out"]
+    assert sorted(rt.clear_done()) == ["id-a", "id-b"]
+
+
+def test_paused_task_blocks_open_folder_until_resolved():
+    rt, em, opened, tasks = queued_runtime()
+    tasks[0].status = DownloadStatus.DONE
+    tasks[0].on_done(tasks[0])
+    rt.pause("id-b")
+    assert opened == []
+    assert rt.clear_done() == ["id-a"]      # the paused task stays in the queue
+
+
+def test_on_done_is_handled_once_per_task_even_if_reported_twice():
+    rt, em, opened, tasks = queued_runtime(n=1)
+    rt.cancel("id-a")
+    tasks[0].on_done(tasks[0])              # worker reports the same cancel a second time
+    assert opened == ["C:/out"]
+
+
+def test_paused_label_follows_active_language(monkeypatch):
+    import config
+    monkeypatch.setattr(config, "_lang", "de")
+    rt, em, _, tasks = queued_runtime()
+    rt.pause("id-a")
+    assert em.payloads("task_status")[-1]["label"] == T("status_paused")

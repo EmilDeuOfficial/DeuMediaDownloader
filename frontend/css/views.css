@@ -29,7 +29,7 @@
 .url-entry { flex: 1; }
 
 .options-panel { display: grid; align-items: center; column-gap: 12px; }
-.options-panel.single { grid-template-columns: auto minmax(0, 270px) auto minmax(100px, 1fr) auto auto; padding: 14px 16px; }
+.options-panel.single { grid-template-columns: auto minmax(0, 220px) auto minmax(100px, 1fr) auto auto; padding: 14px 16px; }
 .options-panel.single .a-dd { min-width: 0; margin-right: 12px; }
 .options-panel.media {
   grid-template-columns: auto auto auto minmax(0, 1fr) auto;

@@ -170,7 +170,7 @@
 /* ---- Queue items ---- */
 .queue-item {
   display: grid;
-  grid-template-columns: 32px 1fr;
+  grid-template-columns: 32px 1fr auto;
   column-gap: 6px;
   padding: 8px 12px 10px;
   margin: 0 0 8px;
@@ -180,7 +180,7 @@
 .qi-glyph { grid-row: 1 / 3; display: flex; align-items: center; justify-content: center; color: var(--item-accent); font-size: 18px; padding-right: 6px; margin-left: 0; }
 .qi-name { font-size: 13px; font-weight: 700; padding: 0 0 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .qi-status { font-size: 11px; color: var(--text-secondary); padding-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.qi-bar { grid-column: 1 / 3; height: 6px; border-radius: 3px; background: var(--bg-secondary); overflow: hidden; margin-top: 4px; }
+.qi-bar { grid-column: 1 / 4; height: 6px; border-radius: 3px; background: var(--bg-secondary); overflow: hidden; margin-top: 4px; }
 .qi-fill { height: 100%; width: 0; border-radius: 3px; background: var(--item-accent); transition: width 0.1s linear; }
 .queue-item[data-status="SEARCHING"] .qi-status,
 .queue-item[data-status="CONVERTING"] .qi-status,
@@ -188,6 +188,29 @@
 .queue-item[data-status="DOWNLOADING"] .qi-status,
 .queue-item[data-status="DONE"] .qi-status { color: var(--item-accent); }
 .queue-item[data-status="ERROR"] .qi-status { color: var(--error); }
+.queue-item[data-status="PAUSED"] .qi-status { color: var(--warning); }
+.queue-item[data-status="PAUSED"] .qi-fill { background: var(--warning); }
+.queue-item[data-status="CANCELLED"] .qi-status { color: var(--text-muted); }
+.queue-item[data-status="CANCELLED"] .qi-name { color: var(--text-secondary); }
+
+.qi-actions { grid-column: 3; grid-row: 1 / 3; display: flex; align-items: center; gap: 8px; margin-left: 8px; }
+.qi-btn {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 6px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+.qi-btn:hover:not(:disabled) { background: var(--border); color: var(--text-primary); }
+.qi-btn.cancel:hover:not(:disabled) { background: var(--error); color: #fff; }
+.qi-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.qi-btn:disabled { opacity: 0.4; cursor: default; }
 
 /* ---- Log ---- */
 .log-box {

@@ -194,10 +194,22 @@ export function createToolView(service, { onBack, onSettings }) {
 
   function addTask(task) {
     if (items.has(task.id)) return;
-    const item = createQueueItem(task, service.queueGlyph);
+    const item = createQueueItem(task, service.queueGlyph, {
+      onPause: (id) => control(api.pause_task, id),
+      onResume: (id) => control(api.resume_task, id),
+      onCancel: (id) => control(api.cancel_task, id),
+    });
     items.set(task.id, item);
     queueList.append(item.el);
     updateCount();
+  }
+
+  async function control(method, taskId) {
+    try {
+      await method(service.id, taskId);
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   async function clearDone() {
