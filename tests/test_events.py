@@ -61,6 +61,6 @@ def test_progress_completion_always_sent():
 
 def test_payload_with_unicode_and_quotes_is_valid_json():
     e, calls, _ = make()
-    e.emit("log", {"msg": 'He said "hi" – naïve'})
+    e.emit("log", {"msg": 'He said "hi" \u2013 naïve'})
     body = calls[0][len('window.__bridge.emit("log", '):-1]
-    assert json.loads(body) == {"msg": 'He said "hi" – naïve'}
+    assert json.loads(body) == {"msg": 'He said "hi" \u2013 naïve'}

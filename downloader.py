@@ -49,7 +49,7 @@ def _apply_template(template: str, artist: str = "", title: str = "",
         )
         result = re.sub(r'\s*\(\s*\)\s*', ' ', result)  # empty () from template
         result = re.sub(r'\s*\[\s*\]\s*', ' ', result)  # empty [] from template
-        result = result.strip(" -—_").strip()
+        result = result.strip(" -\u2014_").strip()
     except (KeyError, ValueError):
         result = title or artist or "track"
     return _sanitize(result) or "track"

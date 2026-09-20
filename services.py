@@ -4,12 +4,14 @@ This is the logic that used to live inside the three Tk apps in ui.py. A
 ServiceRuntime knows nothing about the window; it only talks to an Emitter.
 """
 import os
+import sys
 import threading
 import uuid
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional
 
 from config import T, WIKI_PAGES
+from errors import short_error
 from downloader import (
     DownloadStatus,
     DownloadTask,
@@ -83,7 +85,8 @@ def serialize_task(spec: ServiceSpec, task: Any, config: dict) -> dict:
     status: DownloadStatus = task.status
     label = _status_text(status)
     if status == DownloadStatus.ERROR and task.error_msg:
-        label = f"{label}: {_short(task.error_msg, _NAME_MAX)}"
+        # Short version for the queue; the full text goes to the log, the tooltip and stderr.
+        label = f"{label}: {short_error(task.error_msg)}"
     return {
         "id": task.task_id,
         "service": spec.id,
@@ -93,6 +96,15 @@ def serialize_task(spec: ServiceSpec, task: Any, config: dict) -> dict:
         "progress": task.progress,
         "error": task.error_msg,
     }
+
+
+def _print_error(name: str, message: str) -> None:
+    """Full error on stderr as well (visible when the app is started from a terminal)."""
+    try:
+        if sys.stderr:
+            sys.stderr.write(f"[ERROR] {name}: {message}\n")
+    except Exception:
+        pass
 
 
 def _status_log_line(name: str, task: Any) -> str:
@@ -185,6 +197,8 @@ class ServiceRuntime:
     def _on_status(self, task: Any) -> None:
         self._em.emit("task_status", serialize_task(self._spec, task, self._config))
         self._log(_status_log_line(self._spec.log_name(task), task))
+        if task.status == DownloadStatus.ERROR:
+            _print_error(self._spec.log_name(task), task.error_msg)
 
     def _on_done(self, task: Any) -> None:
         self._em.emit("task_status", serialize_task(self._spec, task, self._config))

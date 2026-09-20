@@ -27,6 +27,14 @@ const emit = (name, payload) => window.__bridge.emit(name, payload);
 const ok = (data = null) => ({ ok: true, data });
 const fail = (error, extra = {}) => ({ ok: false, error, ...extra });
 
+// Same idea as errors.short_error() in Python: a few words for the queue, full text stays elsewhere.
+function mockShortError(error) {
+  const strings = (bootstrapData && bootstrapData.strings) || {};
+  const http = /HTTP Error (\d{3})/i.exec(error);
+  if (http) return (strings.err_short_http || "HTTP error {}").replace("{}", http[1]);
+  return error.length > 45 ? error.slice(0, 45) + "\u2026" : error;
+}
+
 function statusText(status) {
   const strings = bootstrapData && bootstrapData.strings;
   return (strings && strings["status_" + status.toLowerCase()]) || LABELS[status] || status;
@@ -35,7 +43,7 @@ function statusText(status) {
 function view(task) {
   const label =
     task.status === "ERROR" && task.error
-      ? `${statusText("ERROR")}: ${task.error.slice(0, 60)}${task.error.length > 60 ? "…" : ""}`
+      ? `${statusText("ERROR")}: ${mockShortError(task.error)}`
       : statusText(task.status);
   const { stop, resume, step, ...plain } = task;
   return { ...plain, label };

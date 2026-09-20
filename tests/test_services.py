@@ -92,7 +92,7 @@ def test_serialize_task_shape():
     assert d["name"] == "SONG"
     assert d["status"] == "ERROR"
     assert d["progress"] == 0.4
-    assert d["label"] == "Error: " + "x" * 60 + "\u2026"
+    assert d["label"] == "Error: " + "x" * 45 + "\u2026"      # short version; d["error"] keeps everything
     assert d["error"] == "x" * 80
 
 
@@ -357,3 +357,27 @@ def test_paused_label_follows_active_language(monkeypatch):
     rt, em, _, tasks = queued_runtime()
     rt.pause("id-a")
     assert em.payloads("task_status")[-1]["label"] == T("status_paused")
+
+
+def test_queue_label_is_short_but_log_and_task_keep_the_full_error(capsys):
+    rt, em, _ = make_runtime(items=("a",))
+    rt.submit("http://x", "out", "MP3 (320 kbps)")
+    task = FakeManager.instances[-1].submitted[0]
+    full = "ERROR: [youtube] abc: unable to download video data: HTTP Error 403: Forbidden (long details " + "y" * 200 + ")"
+    task.status = DownloadStatus.ERROR
+    task.error_msg = full
+    task.on_status(task)
+    status = em.payloads("task_status")[-1]
+    assert status["label"] == "Error: HTTP error 403"
+    assert status["error"] == full                               # full text for the tooltip
+    assert T("log_error").format("a", full) in [p["msg"] for p in em.payloads("log")]
+    assert full in capsys.readouterr().err                      # and on stderr
+
+
+def test_no_stderr_output_for_normal_status(capsys):
+    rt, em, _ = make_runtime(items=("a",))
+    rt.submit("http://x", "out", "MP3 (320 kbps)")
+    task = FakeManager.instances[-1].submitted[0]
+    task.status = DownloadStatus.DOWNLOADING
+    task.on_status(task)
+    assert capsys.readouterr().err == ""
