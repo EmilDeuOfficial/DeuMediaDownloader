@@ -127,6 +127,24 @@ def embed_metadata_wav(filepath: str, title: str, artist: str, album: str,
     audio.save()
 
 
+def embed_metadata_aiff(filepath: str, title: str, artist: str, album: str,
+                        year: Optional[str], cover_data: Optional[bytes]) -> None:
+    # AIFF stores ID3 tags in a chunk of the file
+    from mutagen.aiff import AIFF
+    from mutagen.id3 import TIT2, TPE1, TALB, TDRC, APIC
+    audio = AIFF(filepath)
+    if audio.tags is None:
+        audio.add_tags()
+    audio.tags.add(TIT2(encoding=3, text=title))
+    audio.tags.add(TPE1(encoding=3, text=artist))
+    audio.tags.add(TALB(encoding=3, text=album))
+    if year:
+        audio.tags.add(TDRC(encoding=3, text=year))
+    if cover_data:
+        audio.tags.add(APIC(encoding=3, mime="image/jpeg", type=3, desc="Cover", data=cover_data))
+    audio.save()
+
+
 def embed_metadata(filepath: str, ext: str, title: str, artist: str, album: str,
                    year: Optional[str], cover_data: Optional[bytes]) -> None:
     """Dispatch to the correct tagger based on file extension."""
@@ -136,6 +154,7 @@ def embed_metadata(filepath: str, ext: str, title: str, artist: str, album: str,
         "ogg":  embed_metadata_ogg,
         "m4a":  embed_metadata_m4a,
         "wav":  embed_metadata_wav,
+        "aiff": embed_metadata_aiff,
     }
     handler = handlers.get(ext.lower())
     if handler:

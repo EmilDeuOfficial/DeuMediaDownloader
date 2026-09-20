@@ -106,7 +106,7 @@ def test_bootstrap_contains_strings_config_and_options(env):
     assert d["strings"]["download"] == T("download")
     assert d["config"]["default_format"] == config.DEFAULT_CONFIG["default_format"]
     assert d["ffmpeg_ok"] is True
-    assert "MP3 (256 kbps)" in d["options"]["audio_formats"]
+    assert "MP3 (320 kbps)" in d["options"]["audio_formats"]
     assert "MP4 (1080p)" in d["options"]["video_formats"]
     assert d["options"]["yt_templates"][0] == ["{title}", "tmpl_title_only"]
     assert set(d["tasks"]) == {"spotify", "youtube", "tiktok"}
@@ -160,9 +160,9 @@ def test_submit_rejects_empty_url_and_outdir(env):
 
 def test_submit_forwards_trimmed_values(env):
     api, rts, *_ = env
-    res = api.submit("youtube", " http://x ", " C:/out ", "MP3 (256 kbps)")
+    res = api.submit("youtube", " http://x ", " C:/out ", "MP3 (320 kbps)")
     assert res["ok"] is True
-    assert rts["youtube"].submitted == [("http://x", "C:/out", "MP3 (256 kbps)")]
+    assert rts["youtube"].submitted == [("http://x", "C:/out", "MP3 (320 kbps)")]
 
 
 def test_clear_done_delegates(env):

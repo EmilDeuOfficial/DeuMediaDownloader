@@ -84,6 +84,19 @@ def _tiktok_cookie_opts(cfg: dict) -> dict:
     return {"cookiesfrombrowser": (browser,)} if browser else {}
 
 
+def _audio_postprocessor(fmt_info: Dict[str, Any]) -> Dict[str, Any]:
+    """yt-dlp post-processor that turns the downloaded audio into the chosen format."""
+    ext = fmt_info["ext"]
+    if fmt_info.get("convert"):
+        # yt-dlp's audio extractor cannot write this container (AIFF); the converter can
+        return {"key": "FFmpegVideoConvertor", "preferedformat": ext}
+    pp: Dict[str, Any] = {"key": "FFmpegExtractAudio", "preferredcodec": ext}
+    quality = fmt_info.get("ydl_quality", "0")
+    if quality and quality != "0":
+        pp["preferredquality"] = quality
+    return pp
+
+
 def _friendly_tiktok_error(msg: str) -> str:
     """Chrome's and Edge's "App-Bound Encryption" (rolled out since mid-2024)
     permanently broke yt-dlp's cookie decryption for those browsers on Windows - see
@@ -536,13 +549,11 @@ def download_spotify_track(task: DownloadTask, ffmpeg_ok: bool) -> None:
         }
 
         if ext != "opus" and find_ffmpeg():
-            pp: Dict[str, Any] = {"key": "FFmpegExtractAudio", "preferredcodec": ext}
-            if quality and quality != "0":
-                pp["preferredquality"] = quality
+            pp = _audio_postprocessor(fmt_info)
             ydl_opts["postprocessors"] = [pp]
             if cfg.get("sp_normalize", False):
                 ydl_opts.setdefault("postprocessor_args", {})
-                ydl_opts["postprocessor_args"]["FFmpegExtractAudio"] = ["-af", "loudnorm"]
+                ydl_opts["postprocessor_args"][pp["key"]] = ["-af", "loudnorm"]
 
         _status(DownloadStatus.DOWNLOADING)
 
@@ -786,11 +797,7 @@ def download_youtube_task(task: YouTubeTask, ffmpeg_ok: bool) -> None:
         }
 
         if not is_video and ffmpeg_ok:
-            quality = fmt_info.get("ydl_quality", "0")
-            pp: Dict[str, Any] = {"key": "FFmpegExtractAudio", "preferredcodec": ext}
-            if quality and quality != "0":
-                pp["preferredquality"] = quality
-            postprocessors.append(pp)
+            postprocessors.append(_audio_postprocessor(fmt_info))
 
         if cfg.get("yt_embed_thumbnail", True) and not is_video and ffmpeg_ok and ext in _THUMBNAIL_EMBED_EXTS:
             ydl_opts["writethumbnail"] = True
@@ -806,6 +813,9 @@ def download_youtube_task(task: YouTubeTask, ffmpeg_ok: bool) -> None:
             cats = ["sponsor", "selfpromo", "interaction", "intro", "outro"]
             postprocessors.append({"key": "SponsorBlock", "categories": cats})
             postprocessors.append({"key": "ModifyChapters", "remove_sponsor_segments": cats})
+
+        if is_video and fmt_info.get("convert") and ffmpeg_ok:
+            postprocessors.append({"key": "FFmpegVideoConvertor", "preferedformat": ext})
 
         if postprocessors:
             ydl_opts["postprocessors"] = postprocessors
@@ -1004,15 +1014,14 @@ def download_tiktok_task(task: TikTokTask, ffmpeg_ok: bool) -> None:
         }
 
         if not is_video and ffmpeg_ok:
-            quality = fmt_info.get("ydl_quality", "0")
-            pp: Dict[str, Any] = {"key": "FFmpegExtractAudio", "preferredcodec": ext}
-            if quality and quality != "0":
-                pp["preferredquality"] = quality
-            postprocessors.append(pp)
+            postprocessors.append(_audio_postprocessor(fmt_info))
 
         if cfg.get("tt_embed_thumbnail", True) and not is_video and ffmpeg_ok and ext in _THUMBNAIL_EMBED_EXTS:
             ydl_opts["writethumbnail"] = True
             postprocessors.append({"key": "EmbedThumbnail"})
+
+        if is_video and fmt_info.get("convert") and ffmpeg_ok:
+            postprocessors.append({"key": "FFmpegVideoConvertor", "preferedformat": ext})
 
         if postprocessors:
             ydl_opts["postprocessors"] = postprocessors

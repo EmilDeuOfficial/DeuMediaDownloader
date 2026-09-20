@@ -13,22 +13,27 @@ WIKI_PAGES = {
 CONFIG_FILE   = Path.home() / ".spotify_downloader" / "config.json"
 LANGUAGE_FILE = Path.home() / ".spotify_downloader" / "language"
 
-# Source is YouTube Music (max ~256 kbps AAC/Opus) - lossless formats are intentionally excluded
+# The source is YouTube (max ~256 kbps AAC/Opus). The lossless containers (FLAC, AIFF, WAV)
+# hold the decoded audio: playable everywhere, but not better than the source.
+# "convert": True means yt-dlp's audio extractor cannot write the container, so the
+# ffmpeg converter post-processor is used instead.
 AUDIO_FORMATS = {
-    "MP3 (128 kbps)":       {"ext": "mp3", "codec": "libmp3lame", "bitrate": "128k", "ydl_quality": "128"},
-    "MP3 (192 kbps)":       {"ext": "mp3", "codec": "libmp3lame", "bitrate": "192k", "ydl_quality": "192"},
-    "MP3 (256 kbps)":       {"ext": "mp3", "codec": "libmp3lame", "bitrate": "256k", "ydl_quality": "256"},
-    "MP3 (320 kbps)":       {"ext": "mp3", "codec": "libmp3lame", "bitrate": "320k", "ydl_quality": "320"},
-    "AAC (256 kbps)":       {"ext": "m4a", "codec": "aac",        "bitrate": "256k", "ydl_quality": "256"},
-    "OGG Vorbis (320 kbps)":{"ext": "ogg", "codec": "libvorbis",  "bitrate": "320k", "ydl_quality": "320"},
-    "WAV (Lossless)":       {"ext": "wav", "codec": "pcm_s16le",  "bitrate": None,   "ydl_quality": "0"},
+    "MP3 (320 kbps)":        {"ext": "mp3",  "codec": "libmp3lame", "bitrate": "320k", "ydl_quality": "320"},
+    "AAC (256 kbps)":        {"ext": "m4a",  "codec": "aac",        "bitrate": "256k", "ydl_quality": "256"},
+    "OGG Vorbis (320 kbps)": {"ext": "ogg",  "codec": "libvorbis",  "bitrate": "320k", "ydl_quality": "320"},
+    "FLAC (Lossless)":       {"ext": "flac", "codec": "flac",       "bitrate": None,   "ydl_quality": "0"},
+    "AIFF (Lossless)":       {"ext": "aiff", "codec": "pcm_s16be",  "bitrate": None,   "ydl_quality": "0", "convert": True},
+    "WAV (Lossless)":        {"ext": "wav",  "codec": "pcm_s16le",  "bitrate": None,   "ydl_quality": "0"},
 }
 
+_MP4_1080 = "bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[height<=1080][ext=mp4]/best"
+_MP4_720 = "bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/best[height<=720][ext=mp4]/best"
+
 VIDEO_FORMATS = {
-    "MP4 (1080p)": {"ext": "mp4",  "ydl_format": "bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[height<=1080][ext=mp4]/best"},
-    "MP4 (720p)":  {"ext": "mp4",  "ydl_format": "bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/best[height<=720][ext=mp4]/best"},
-    "MP4 (480p)":  {"ext": "mp4",  "ydl_format": "bestvideo[height<=480][ext=mp4]+bestaudio[ext=m4a]/best[height<=480][ext=mp4]/best"},
-    "MP4 (360p)":  {"ext": "mp4",  "ydl_format": "bestvideo[height<=360][ext=mp4]+bestaudio[ext=m4a]/best[height<=360][ext=mp4]/best"},
+    "MP4 (1080p)": {"ext": "mp4",  "ydl_format": _MP4_1080},
+    "MP4 (720p)":  {"ext": "mp4",  "ydl_format": _MP4_720},
+    "MOV (1080p)": {"ext": "mov",  "ydl_format": _MP4_1080, "convert": True},
+    "AVI (1080p)": {"ext": "avi",  "ydl_format": _MP4_1080, "convert": True},
     "MKV (Best)":  {"ext": "mkv",  "ydl_format": "bestvideo+bestaudio/best"},
     "WebM (Best)": {"ext": "webm", "ydl_format": "bestvideo[ext=webm]+bestaudio[ext=webm]/best[ext=webm]/best"},
 }
@@ -49,9 +54,9 @@ DEFAULT_CONFIG = {
     "output_dir":            str(Path.home() / "Music" / "Spotify Downloads"),
     "yt_output_dir":         str(Path.home() / "Music" / "YouTube Downloads"),
     "tt_output_dir":         str(Path.home() / "Music" / "TikTok Downloads"),
-    "default_format":        "MP3 (256 kbps)",
-    "yt_format":             "MP3 (256 kbps)",
-    "yt_format_audio":       "MP3 (256 kbps)",
+    "default_format":        "MP3 (320 kbps)",
+    "yt_format":             "MP3 (320 kbps)",
+    "yt_format_audio":       "MP3 (320 kbps)",
     "yt_format_video":       "MP4 (1080p)",
     "yt_media_type":         "Audio",
     "concurrent_downloads":  2,
@@ -70,7 +75,7 @@ DEFAULT_CONFIG = {
     "yt_open_folder":        True,
     # TikTok-specific settings
     "tt_format_video":       "MP4 (1080p)",
-    "tt_format_audio":       "MP3 (256 kbps)",
+    "tt_format_audio":       "MP3 (320 kbps)",
     "tt_media_type":         "Video",
     "tt_concurrent":         2,
     "tt_embed_thumbnail":    True,

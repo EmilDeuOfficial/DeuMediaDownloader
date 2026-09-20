@@ -113,13 +113,29 @@ a simulated backend answers the API calls.
 
 ## Supported Output Formats
 
-| Format | Bitrate | Notes |
+Audio:
+
+| Format | Quality | Notes |
 |---|---|---|
-| MP3 | 128 / 192 / 256 / 320 kbps | Widely compatible |
-| FLAC | Lossless | Highest quality |
-| WAV | Lossless | Uncompressed, large files |
-| AAC | 256 kbps | Great for Apple devices |
+| MP3 | 320 kbps | Widely compatible |
+| AAC (M4A) | 256 kbps | Great for Apple devices |
 | OGG Vorbis | ~320 kbps | Open format |
+| FLAC | Lossless | Compressed, tags and cover art |
+| AIFF | Lossless | Uncompressed, tags and cover art (Spotify downloads) |
+| WAV | Lossless | Uncompressed, large files |
+
+The audio source is YouTube (about 256 kbps at best), so the lossless formats are
+convenient containers, not better sound than the 320 kbps MP3.
+
+Video (YouTube and TikTok):
+
+| Format | Quality | Notes |
+|---|---|---|
+| MP4 | 1080p / 720p | Widely compatible |
+| MOV | 1080p | Converted with FFmpeg |
+| AVI | 1080p | Converted with FFmpeg (Xvid) |
+| MKV | best | Best available quality |
+| WebM | best | Open format |
 
 ---
 

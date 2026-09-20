@@ -9,7 +9,7 @@ export const SERVICES = {
     queueGlyph: "note",
     mediaToggle: false,
     dropdownWidth: 220,
-    cfg: { outDir: "output_dir", format: "default_format", formatDefault: "MP3 (256 kbps)" },
+    cfg: { outDir: "output_dir", format: "default_format", formatDefault: "MP3 (320 kbps)" },
   },
   youtube: {
     id: "youtube",
@@ -48,5 +48,5 @@ export const SERVICES = {
 };
 
 export const SERVICE_ORDER = ["spotify", "youtube", "tiktok"];
-export const AUDIO_DEFAULT = "MP3 (256 kbps)";
+export const AUDIO_DEFAULT = "MP3 (320 kbps)";
 export const VIDEO_DEFAULT = "MP4 (1080p)";

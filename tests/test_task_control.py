@@ -19,7 +19,7 @@ def wait_for(cond, timeout=3.0):
 
 def make_task(tmp_path, stem="song", **kw):
     return YouTubeTask(task_id="t1", url="http://x", title="Artist - Song", output_dir=str(tmp_path),
-                       format_name="MP3 (256 kbps)", work_stem=stem, **kw)
+                       format_name="MP3 (320 kbps)", work_stem=stem, **kw)
 
 
 # ---------------------------------------------------------------- partial files
@@ -125,7 +125,7 @@ def isolated(tmp_path, monkeypatch):
 def run_youtube(out, stop_when_hook=None):
     events = []
     task = YouTubeTask(task_id="t1", url="http://x", title="Artist - Song", output_dir=str(out),
-                       format_name="MP3 (256 kbps)")
+                       format_name="MP3 (320 kbps)")
     task.on_status = lambda t: events.append(("status", t.status.name))
     task.on_done = lambda t: events.append(("done", t.status.name))
     if stop_when_hook:
@@ -163,7 +163,7 @@ def test_cancel_removes_partial_file_and_finishes_as_cancelled(isolated):
 
 def test_stop_flag_set_before_start_never_calls_yt_dlp(isolated):
     task = YouTubeTask(task_id="t1", url="http://x", title="Song", output_dir=str(isolated),
-                       format_name="MP3 (256 kbps)", stop="pause")
+                       format_name="MP3 (320 kbps)", stop="pause")
     d.download_youtube_task(task, True)
     assert task.status == DownloadStatus.PAUSED
     assert FakeYDL.hook_calls == 0

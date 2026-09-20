@@ -104,10 +104,10 @@ def test_serialize_label_for_normal_status():
 
 def test_submit_emits_log_added_done():
     rt, em, _ = make_runtime()
-    rt.submit("http://x", "out", "MP3 (256 kbps)")
+    rt.submit("http://x", "out", "MP3 (320 kbps)")
     assert em.names() == ["log", "log", "task_added", "log", "task_added", "log", "resolve_done"]
     assert em.payloads("log")[0] == {"service": "youtube", "msg": "fetching"}
-    assert em.payloads("log")[1]["msg"] == T("queued_n_videos").format(2, "MP3 (256 kbps)")
+    assert em.payloads("log")[1]["msg"] == T("queued_n_videos").format(2, "MP3 (320 kbps)")
     added = em.payloads("task_added")
     assert [t["id"] for t in added] == ["id-a", "id-b"]
     assert added[0]["name"] == "A"
