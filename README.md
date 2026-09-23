@@ -3,7 +3,7 @@
 A modern Windows desktop app to download **music and videos** from Spotify, YouTube and TikTok.
 Save audio (MP3, AAC, OGG, FLAC, AIFF, WAV) or video (MP4, MOV, AVI, MKV, WebM) in the quality you choose.
 
-![Version](https://img.shields.io/badge/version-v1.7.0-brightgreen)
+![Version](https://img.shields.io/badge/version-v7.1-brightgreen)
 ![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-blue)
 ![Backend](https://img.shields.io/badge/backend-Python%203.10%2B-lightgrey)
 ![Frontend](https://img.shields.io/badge/frontend-HTML%20%2B%20CSS%20%2B%20JS-lightgrey)
@@ -17,6 +17,7 @@ Save audio (MP3, AAC, OGG, FLAC, AIFF, WAV) or video (MP4, MOV, AVI, MKV, WebM) 
 - **Three sources** - Spotify (tracks, playlists, albums), YouTube (videos, playlists), TikTok (videos, profiles, hashtags, sounds)
 - **Format and quality** - Pick the format and the quality separately; the quality list follows the format
 - **Queue** - Live progress, plus pause, resume and cancel for every download
+- **Spotify recording** - Instead of a YouTube match, record the real Spotify stream in a hidden player (Premium, real time, Windows 10 2004 or newer)
 - **Metadata** - Title, artist, album, year and cover art are embedded in the audio files
 - **YouTube extras** - Subtitles, SponsorBlock and a speed limit
 - **Two languages** - German and English interface
@@ -99,36 +100,74 @@ resumed or cancelled. Audio files get title, artist, album and cover art embedde
 
 ---
 
+## Spotify recording
+
+The Spotify view has a switch between **YouTube download** (default) and **Spotify recording**.
+Recording plays each track in a hidden Spotify player window and captures only that window's
+audio.
+
+1. Open the settings (gear icon) and click **Log in** under **Spotify Account**: the Spotify login
+   opens in your default browser (Spotify Premium account; the API credentials from the settings
+   are used, add `http://127.0.0.1:8888/callback` as Redirect URI). Clicking **Record** while
+   logged out offers the login as well.
+2. Switch to **Spotify recording**, paste a track, playlist or album URL, choose a format and
+   click **Record**
+
+Good to know:
+
+- It runs in **real time**, one track at a time (a Spotify account plays one stream). The quality
+  is the one of Spotify's web player, not better.
+- The player runs silently, so you do not hear the recording, and nothing else the PC plays ends
+  up in the file.
+- Every recording gets one second of silence at the start and the end.
+- Starting a recording takes over playback on your other Spotify devices.
+- Recording can be cancelled but not paused.
+- Recording streams may violate Spotify's Terms of Service and can get an account blocked. Use it
+  only for your own account and for personal copies.
+
+---
+
 ## Project Structure
 
 ```
 DeuMediaDownloader/
-├── main.py          Entry point - dependency checks, creates the pywebview window
-├── api.py           Object exposed to JavaScript (window.pywebview.api)
-├── events.py        Pushes events from Python threads to the page
-├── services.py      Per-service runtimes: resolve URL, queue tasks, forward updates
-├── downloader.py    Spotify / YouTube / TikTok download logic (yt-dlp)
-├── converter.py     FFmpeg helpers + mutagen metadata embedding
-├── clipboard.py     Windows clipboard access for the Paste button
-├── config.py        Constants, format definitions, translations, config I/O
-├── frontend/        HTML, CSS and JavaScript UI (vanilla ES modules)
-├── tests/           pytest tests for the backend
-├── tools/           Dev helpers (smoke test, mock data, icon generator)
-├── build.py         PyInstaller + Inno Setup build
+├── main.py                 Entry point - dependency checks, creates the pywebview window
+├── backend/                Python backend (package)
+│   ├── api.py              Object exposed to JavaScript (window.pywebview.api)
+│   ├── events.py           Pushes events from Python threads to the page
+│   ├── services.py         Per-service runtimes: resolve URL, queue tasks, forward updates
+│   ├── downloader.py       Spotify / YouTube / TikTok download logic (yt-dlp)
+│   ├── record.py           Spotify recording pipeline (play, record, encode, tag)
+│   ├── recorder.py         Per-process audio capture (WASAPI process loopback)
+│   ├── spotify_session.py  Hidden Spotify player window: login, playback, state
+│   ├── login_page.py       Page shown in the browser after the Spotify login
+│   ├── converter.py        FFmpeg helpers + mutagen metadata embedding
+│   ├── clipboard.py        Windows clipboard access for the Paste button
+│   ├── errors.py           Short, translated error texts for the queue
+│   └── config.py           Constants, format definitions, translations, config I/O
+├── frontend/               HTML, CSS and JavaScript UI (vanilla ES modules)
+│   ├── index.html          Main window
+│   ├── recorder.html       Hidden Spotify player page (Web Playback SDK)
+│   ├── css/                Styles (motion.css holds all animations)
+│   ├── js/                 Views, components, bridge to Python
+│   └── tests/              Node unit tests
+├── img/                    App icon
+├── tools/                  Dev helpers (smoke test, mock data, icon generator)
+├── build.py                PyInstaller + Inno Setup build
+├── installer.iss           Inno Setup script
 └── requirements.txt
 ```
 
 ### Development
 
 ```
-python -m pytest                          # backend tests
 node --test frontend/tests/*.test.mjs     # frontend unit tests
 python tools/smoke_test.py                # drive the real window (no downloads)
 ```
 
-Tutorials linked from the app are drafted in `docs/wiki/`. Copy those pages into the
-GitHub wiki (page names `TikTok-Cookies` and `Spotify-API-Setup`); the app links to
-`https://github.com/EmilDeuOfficial/DeuMediaDownloader/wiki/<page>` (see `WIKI_PAGES` in `config.py`).
+Tutorials linked from the app live in the GitHub wiki; the app links to
+`https://github.com/EmilDeuOfficial/DeuMediaDownloader/wiki/<page>` (see `WIKI_PAGES` in
+`backend/config.py`).
 
 To work on the UI without Python, serve `frontend/` (for example
 `python -m http.server --directory frontend`) and open `index.html?mock=1`;

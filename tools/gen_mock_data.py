@@ -11,8 +11,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from api import Api  # noqa: E402
-import config  # noqa: E402
+from backend.api import Api  # noqa: E402
+from backend import config  # noqa: E402
 
 
 class _Silent:

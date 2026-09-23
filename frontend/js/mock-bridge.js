@@ -5,6 +5,7 @@ const LABELS = {
   QUEUED: "Queued",
   SEARCHING: "Searching\u2026",
   DOWNLOADING: "Downloading\u2026",
+  RECORDING: "Recording\u2026",
   CONVERTING: "Converting\u2026",
   EMBEDDING: "Embedding\u2026",
   DONE: "Done",
@@ -13,13 +14,15 @@ const LABELS = {
 
 const SAMPLE_NAMES = {
   spotify: ["Daft Punk - Get Lucky", "Queen - Bohemian Rhapsody", "Radiohead - Karma Police (Remastered edition with a very long title)"],
+  spotify_record: ["Daft Punk - Get Lucky", "Queen - Bohemian Rhapsody"],
   youtube: ["Lo-fi beats to relax and study to", "Rick Astley - Never Gonna Give You Up", "A very long video title that needs to be cut off at some point because it is too long"],
   tiktok: ["cooluser - dance challenge #fyp", "chef - 60 second pasta", "cat - zoomies"],
 };
 
 let config = {};
 let bootstrapData = null;
-const tasks = { spotify: [], youtube: [], tiktok: [] };
+const tasks = { spotify: [], spotify_record: [], youtube: [], tiktok: [] };
+let recordLoggedIn = false;
 let counter = 0;
 let maximized = false;
 
@@ -52,13 +55,16 @@ function view(task) {
       ? `${statusText("ERROR")}: ${mockShortError(task.error)}`
       : statusText(task.status);
   const { stop, resume, step, ...plain } = task;
-  return { ...plain, label };
+  return { ...plain, label, can_pause: task.service !== "spotify_record" };
 }
 
 // Fake download: SEARCHING/DOWNLOADING/CONVERTING/... with pause and cancel honoured
 // between steps and while the progress bar moves (like the real worker).
 function simulate(task, failing) {
-  const steps = task.service === "spotify" ? ["SEARCHING", "DOWNLOADING", "CONVERTING", "EMBEDDING"] : ["DOWNLOADING", "CONVERTING"];
+  const steps = {
+    spotify: ["SEARCHING", "DOWNLOADING", "CONVERTING", "EMBEDDING"],
+    spotify_record: ["RECORDING", "CONVERTING", "EMBEDDING"],
+  }[task.service] || ["DOWNLOADING", "CONVERTING"];
   task.step = 0;
 
   const setStatus = (status) => {
@@ -83,7 +89,7 @@ function simulate(task, failing) {
     if (task.step < steps.length) {
       const status = steps[task.step];
       setStatus(status);
-      if (status === "DOWNLOADING") {
+      if (status === "DOWNLOADING" || status === "RECORDING") {
         let p = task.progress || 0;
         const timer = setInterval(() => {
           if (task.stop) {
@@ -91,7 +97,7 @@ function simulate(task, failing) {
             halted();
             return;
           }
-          p = Math.min(1, p + 0.03 + Math.random() * 0.03);
+          p = Math.min(1, p + (status === "RECORDING" ? 0.008 : 0.03) + Math.random() * 0.03);
           task.progress = p;
           emit("task_progress", { service: task.service, id: task.id, progress: p });
           if (p >= 1) {
@@ -152,6 +158,10 @@ export const mockApi = {
     const strings = bootstrapData.strings;
     if (!(url || "").trim()) return fail(strings[`mb_no_url_${service}`], { title: strings.mb_no_url_title });
     if (!(outDir || "").trim()) return fail(strings.mb_no_outdir, { title: strings.mb_no_outdir_title });
+    if (service === "spotify_record" && !recordLoggedIn) {
+      setTimeout(() => emit("resolve_error", { service, message: strings.err_rec_login, kind: "login" }), 200);
+      return ok();
+    }
     if (/fail/i.test(url)) {
       setTimeout(() => {
         emit("log", { service, msg: strings.err_resolving.replace("{}", "mock resolve failure") });
@@ -162,7 +172,7 @@ export const mockApi = {
     setTimeout(() => {
       emit("log", { service, msg: "(mock) fetching info" });
       const names = SAMPLE_NAMES[service];
-      emit("log", { service, msg: strings[service === "spotify" ? "queued_n_tracks" : "queued_n_videos"].replace("{}", names.length).replace("{}", fmt) });
+      emit("log", { service, msg: strings[service.startsWith("spotify") ? "queued_n_tracks" : "queued_n_videos"].replace("{}", names.length).replace("{}", fmt) });
       names.forEach((name, idx) => {
         const task = { id: `mock-${++counter}`, service, name: name.length > 60 ? name.slice(0, 57) + "\u2026" : name, format: fmt, ext: mockExt(fmt), status: "QUEUED", progress: 0, error: "" };
         tasks[service].push(task);
@@ -176,7 +186,7 @@ export const mockApi = {
   },
   async pause_task(service, id) {
     const t = findTask(service, id);
-    if (!t || !["QUEUED", "SEARCHING", "DOWNLOADING"].includes(t.status)) return ok(false);
+    if (!t || service === "spotify_record" || !["QUEUED", "SEARCHING", "DOWNLOADING"].includes(t.status)) return ok(false);
     t.stop = "pause";
     if (t.status === "QUEUED") {
       t.status = "PAUSED";
@@ -192,7 +202,7 @@ export const mockApi = {
   },
   async cancel_task(service, id) {
     const t = findTask(service, id);
-    if (!t || !["QUEUED", "SEARCHING", "DOWNLOADING", "PAUSED"].includes(t.status)) return ok(false);
+    if (!t || !["QUEUED", "SEARCHING", "DOWNLOADING", "RECORDING", "PAUSED"].includes(t.status)) return ok(false);
     t.stop = "cancel";
     if (t.status === "QUEUED" || t.status === "PAUSED") {
       t.progress = 0;
@@ -205,6 +215,21 @@ export const mockApi = {
     const removed = tasks[service].filter((t) => ["DONE", "ERROR", "CANCELLED"].includes(t.status)).map((t) => t.id);
     tasks[service] = tasks[service].filter((t) => !removed.includes(t.id));
     return ok(removed);
+  },
+  async record_status() {
+    return ok({ logged_in: recordLoggedIn, name: recordLoggedIn ? "Demo User" : "", premium: true });
+  },
+  async record_login() {
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    recordLoggedIn = true;
+    return ok({ logged_in: true, name: "Demo User", premium: true });
+  },
+  async record_cancel_login() {
+    return ok();
+  },
+  async record_logout() {
+    recordLoggedIn = false;
+    return ok({ logged_in: false, name: "", premium: false });
   },
   async pick_folder(initial) {
     return ok(initial ? initial + "/picked" : "C:/Users/Demo/Music/Picked");

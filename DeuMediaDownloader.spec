@@ -10,7 +10,7 @@ binaries = []
 hiddenimports = []
 
 # Packages that load code or data dynamically and need everything collected.
-for package in ("webview", "yt_dlp", "curl_cffi", "spotipy"):
+for package in ("webview", "yt_dlp", "curl_cffi", "spotipy", "proctap"):
     pkg_datas, pkg_binaries, pkg_hidden = collect_all(package)
     datas += pkg_datas
     binaries += pkg_binaries
@@ -26,7 +26,8 @@ a = Analysis(
     hiddenimports=hiddenimports,
     hookspath=[],
     runtime_hooks=[],
-    excludes=["tkinter", "customtkinter", "PIL", "aggdraw", "pytest"],
+    # scipy is only used by proc-tap for audio format conversion, which recorder.py does not need.
+    excludes=["tkinter", "customtkinter", "PIL", "aggdraw", "pytest", "scipy"],
     noarchive=False,
 )
 pyz = PYZ(a.pure)

@@ -7,6 +7,7 @@ import { SETTINGS_SCHEMA, UNINSTALL_ROWS, RATE_OPTIONS } from "../settings-schem
 import { createDropdown } from "./dropdown.js";
 import { alertModal, confirmModal } from "./modal.js";
 import { trapFocus } from "../focus-trap.js";
+import { animateOut } from "../motion.js";
 
 // Schema driven settings dialog (Settings tab + Uninstall tab) for one service.
 export function openSettings(serviceId) {
@@ -45,6 +46,85 @@ export function openSettings(serviceId) {
 
       case "note":
         return h("div", { class: "sm-note" }, T(field.textKey));
+
+      case "account": {
+        // Spotify login used by the recording mode: name, Premium/Free status, log in/out.
+        let recStatus = { logged_in: false, name: "", premium: false };
+        let loggingIn = false;
+        let loginCancelled = false;
+        const name = h("span", { class: "sm-account-name" });
+        const status = h("span", { class: "sm-account-status" });
+        const btn = h("button", { class: "btn neutral", type: "button", style: { minWidth: "110px" } });
+        btn.addEventListener("click", () => {
+          if (loggingIn) cancelLogin();
+          else if (recStatus.logged_in) doLogout();
+          else doLogin();
+        });
+
+        function paint() {
+          if (loggingIn) {
+            btn.textContent = T("cancel_btn");
+            name.textContent = "";
+            status.textContent = T("rec_status_waiting");
+            return;
+          }
+          btn.textContent = T(recStatus.logged_in ? "rec_logout" : "rec_login");
+          name.textContent = recStatus.logged_in ? recStatus.name : "";
+          status.textContent = !recStatus.logged_in
+            ? T("rec_status_out")
+            : recStatus.premium
+              ? T("rec_status_premium")
+              : T("rec_status_free");
+        }
+
+        async function refresh() {
+          try {
+            recStatus = await api.record_status();
+          } catch (err) {
+            console.error(err);
+          }
+          paint();
+        }
+
+        async function doLogin() {
+          loggingIn = true;
+          loginCancelled = false;
+          paint();
+          try {
+            recStatus = await api.record_login();
+          } catch (err) {
+            if (!loginCancelled) await alertModal(T("mb_login_title"), err.message, "error");
+          } finally {
+            loggingIn = false;
+            paint();
+          }
+        }
+
+        async function cancelLogin() {
+          loginCancelled = true;
+          try {
+            await api.record_cancel_login();
+          } catch (err) {
+            console.error(err);
+          }
+        }
+
+        async function doLogout() {
+          btn.disabled = true;
+          try {
+            recStatus = await api.record_logout();
+          } catch (err) {
+            console.error(err);
+          } finally {
+            btn.disabled = false;
+            paint();
+          }
+        }
+
+        paint();
+        refresh();
+        return h("div", { class: "sm-account" }, h("div", { class: "sm-account-info" }, name, status), btn);
+      }
 
       case "text": {
         const input = h("input", {
@@ -236,21 +316,21 @@ export function openSettings(serviceId) {
 
   function onKey(ev) {
     if (ev.key !== "Escape") return;
-    const overlays = document.querySelectorAll(".modal-overlay");
+    const overlays = document.querySelectorAll(".modal-overlay:not(.leaving)");
     if (overlays[overlays.length - 1] === overlay) close();
   }
 
   let releaseFocus = () => {};
   function close() {
     document.removeEventListener("keydown", onKey, true);
-    overlay.remove();
     releaseFocus();
+    animateOut(overlay);
   }
 
   document.addEventListener("keydown", onKey, true);
   document.body.append(overlay);
   releaseFocus = trapFocus(overlay, () => {
-    const all = document.querySelectorAll(".modal-overlay");
+    const all = document.querySelectorAll(".modal-overlay:not(.leaving)");
     return all[all.length - 1] === overlay;
   });
   dialog.tabIndex = -1;

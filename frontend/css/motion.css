@@ -1,0 +1,113 @@
+/* All animations of the app in one place. base.css turns them off for "reduce motion". */
+:root {
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-soft: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.2, 0.64, 1);   /* only a hint of overshoot */
+  --dur-fast: 0.2s;
+  --dur: 0.32s;
+  --dur-slow: 0.5s;
+}
+
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fade-out { from { opacity: 1; } to { opacity: 0; } }
+@keyframes rise-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes pop-in { from { opacity: 0; transform: translateY(4px) scale(0.985); } to { opacity: 1; transform: none; } }
+@keyframes pop-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(3px) scale(0.985); } }
+@keyframes slide-in { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; transform: none; } }
+@keyframes collapse-out {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: translateX(10px); }
+}
+@keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.7; transform: scale(0.94); } }
+@keyframes bounce-in { 0% { transform: scale(0.85); } 60% { transform: scale(1.05); } 100% { transform: scale(1); } }
+@keyframes settle { from { transform: scale(0.97); } to { transform: none; } }
+@keyframes shake { 0%, 100% { transform: none; } 30% { transform: translateX(-2px); } 70% { transform: translateX(2px); } }
+@keyframes stripes { from { background-position: 0 0; } to { background-position: 24px 0; } }
+
+/* ---- Views: fade and rise when shown, panels follow one after the other ---- */
+.view.view-enter { animation: fade-in var(--dur) var(--ease-soft); }
+.view-enter .tool-body > .panel,
+.view-enter .launcher-heading,
+.view-enter .launcher-card { animation: rise-in var(--dur-slow) var(--ease-out) both; }
+.view-enter .tool-body > .panel:nth-child(2), .view-enter .launcher-card:nth-child(1) { animation-delay: 0.05s; }
+.view-enter .tool-body > .panel:nth-child(3), .view-enter .launcher-card:nth-child(2) { animation-delay: 0.1s; }
+.view-enter .tool-body > .panel:nth-child(4), .view-enter .launcher-card:nth-child(3) { animation-delay: 0.15s; }
+.view-enter .tool-body > .panel:nth-child(5) { animation-delay: 0.2s; }
+.view-enter .tool-body > .panel:nth-child(6) { animation-delay: 0.25s; }
+
+/* ---- Launcher cards: lift, glow in the brand colour, icon grows ---- */
+.launcher-card { transition: border-color var(--dur) var(--ease-out), transform var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out); }
+.launcher-card:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35), 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent); border-color: color-mix(in srgb, var(--accent) 55%, var(--border)); }
+.launcher-card .brand-icon { transition: transform var(--dur-slow) var(--ease-spring); }
+.launcher-card:hover .brand-icon { transform: scale(1.06) rotate(-2deg); }
+
+/* ---- Buttons: smooth colours, press feedback ---- */
+.btn, .tb-btn, .qi-btn, .seg-btn, .lc-open, .dd-item, .sm-link, .ext-link {
+  /* the release back to normal size is slow and soft */
+  transition: background-color var(--dur) var(--ease-soft), color var(--dur) var(--ease-soft), transform 0.42s var(--ease-spring), box-shadow var(--dur) var(--ease-soft), opacity var(--dur) var(--ease-soft);
+}
+.btn:active:not(:disabled), .tb-btn:active, .qi-btn:active:not(:disabled), .seg-btn:active, .lc-open:active {
+  /* the press itself is short and shallow */
+  transform: scale(0.975);
+  transition-duration: var(--dur), var(--dur), 0.12s, var(--dur), var(--dur);
+  transition-timing-function: var(--ease-soft);
+}
+.btn.accent:hover:not(:disabled) { box-shadow: 0 4px 16px color-mix(in srgb, var(--accent) 28%, transparent); }
+.tb-btn .icon { transition: transform var(--dur-slow) var(--ease-soft); }
+.tb-btn[data-action="settings"]:hover .icon { transform: rotate(45deg); }
+.tb-btn[data-action="back"]:hover .icon { transform: translateX(-2px); }
+
+/* ---- Segmented toggles ---- */
+.seg-btn.active { animation: settle var(--dur-slow) var(--ease-out); }
+.mode-hint.swap { animation: slide-in var(--dur-slow) var(--ease-out); }
+
+/* ---- Dropdowns ---- */
+.dropdown, .dropdown .dd-inner { transition: background-color var(--dur) var(--ease-soft); }
+.dd-arrow { transition: transform var(--dur-slow) var(--ease-soft); }
+.dd-item { animation: slide-in var(--dur) var(--ease-out) both; }
+.dd-item:nth-child(2) { animation-delay: 0.02s; }
+.dd-item:nth-child(3) { animation-delay: 0.04s; }
+.dd-item:nth-child(4) { animation-delay: 0.06s; }
+.dd-item:nth-child(5) { animation-delay: 0.08s; }
+.dd-item:nth-child(n+6) { animation-delay: 0.1s; }
+
+/* ---- Inputs ---- */
+.entry { transition: border-color var(--dur) var(--ease-soft), box-shadow var(--dur) var(--ease-soft); }
+.entry:focus { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent); }
+
+/* ---- Queue ---- */
+.queue-item { animation: pop-in var(--dur-slow) var(--ease-out) both; transition: background-color var(--dur) ease; }
+.queue-item:hover { background: color-mix(in srgb, var(--bg-card) 85%, var(--text-primary)); }
+.qi-fill { transition: width 0.6s var(--ease-soft), background-color var(--dur) ease; }
+.qi-actions { transition: opacity var(--dur) ease; }
+.qi-status { transition: color var(--dur) ease; }
+/* running: moving stripes on the bar, breathing icon */
+.queue-item:is([data-status="DOWNLOADING"], [data-status="RECORDING"], [data-status="SEARCHING"]) .qi-fill {
+  background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.18) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.18) 50%, rgba(255, 255, 255, 0.18) 75%, transparent 75%);
+  background-size: 24px 24px;
+  animation: stripes 1.6s linear infinite;
+}
+.queue-item:is([data-status="RECORDING"], [data-status="SEARCHING"], [data-status="CONVERTING"], [data-status="EMBEDDING"]) .qi-glyph .icon { animation: pulse 2s ease-in-out infinite; }
+.queue-item[data-status="DONE"] .qi-glyph .icon { animation: bounce-in 0.6s var(--ease-out); }
+.queue-item[data-status="ERROR"] { animation: shake 0.45s var(--ease-soft); }
+.queue-empty { animation: fade-in var(--dur-slow) ease; }
+/* after the status rules, so a finished item with an error still slides out */
+.queue-list .queue-item.leaving { animation: collapse-out var(--dur) var(--ease-out) forwards; pointer-events: none; }
+
+/* ---- Log ---- */
+.log-line { animation: fade-in var(--dur) ease; }
+
+/* ---- Modals ---- */
+.modal-overlay { animation: fade-in var(--dur) ease; }
+.modal, .settings-modal { animation: pop-in var(--dur-slow) var(--ease-out); }
+.modal-overlay.leaving { animation: fade-out var(--dur) var(--ease-soft) forwards; pointer-events: none; }
+.modal-overlay.leaving .modal, .modal-overlay.leaving .settings-modal { animation: pop-out var(--dur) var(--ease-soft) forwards; }
+.sm-scroll:not([hidden]) { animation: fade-in var(--dur) ease; }
+.sm-scroll .sm-section { animation: rise-in var(--dur-slow) var(--ease-out) both; }
+.sm-scroll .sm-section:nth-child(2) { animation-delay: 0.04s; }
+.sm-scroll .sm-section:nth-child(3) { animation-delay: 0.08s; }
+.sm-scroll .sm-section:nth-child(4) { animation-delay: 0.12s; }
+.sm-scroll .sm-section:nth-child(n+5) { animation-delay: 0.16s; }
+.sm-uninstall { transition: background-color var(--dur-fast) ease, transform var(--dur-fast) var(--ease-out); }
+.sm-uninstall:hover { transform: translateX(1px); }
+.sm-account-name, .sm-account-status { animation: fade-in var(--dur) ease; }

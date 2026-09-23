@@ -6,6 +6,7 @@ import { createLauncher } from "./views/launcher.js";
 import { createToolView } from "./views/tool-view.js";
 import { installResizeHandles, setResizable } from "./components/resize-handles.js";
 import { openSettings } from "./components/settings-modal.js";
+import { replay } from "./motion.js";
 
 // No browser context menu (Reload, Inspect, ...) except where copy/paste is useful.
 document.addEventListener("contextmenu", (ev) => {
@@ -34,6 +35,7 @@ async function navigate(name) {
   }
   current = name;
   for (const [id, view] of Object.entries(views)) view.el.hidden = id !== name;
+  replay(views[name].el, "view-enter");
   setResizable(name !== "launcher");
   // Api.set_view restores a maximized window, so no view may keep showing "restore".
   for (const view of Object.values(views)) view.setMaximized?.(false);
@@ -64,7 +66,8 @@ async function boot() {
       onBack: () => navigate("launcher"),
       onSettings: openSettings,
     });
-    view.restoreTasks(data.tasks && data.tasks[id]);
+    const serviceIds = SERVICES[id].record ? [id, SERVICES[id].record.id] : [id];
+    view.restoreTasks(serviceIds.flatMap((sid) => (data.tasks && data.tasks[sid]) || []));
     views[id] = view;
   }
 

@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 APP_NAME = "DeuMediaDownloader"
-APP_VERSION = "1.7.0"
+APP_VERSION = "1.7.1"
 
 # Tutorials live in the GitHub wiki; the app links to these pages.
 WIKI_URL = "https://github.com/EmilDeuOfficial/DeuMediaDownloader/wiki"
@@ -12,6 +12,8 @@ WIKI_PAGES = {
 }
 CONFIG_FILE   = Path.home() / ".spotify_downloader" / "config.json"
 LANGUAGE_FILE = Path.home() / ".spotify_downloader" / "language"
+# OAuth token cache of the Spotify recorder (survives restarts on its own; see spotify_session.py).
+TOKEN_DIR = CONFIG_FILE.parent
 
 # ---------------------------------------------------------------------------
 # Formats and qualities
@@ -138,6 +140,9 @@ DEFAULT_CONFIG = {
     "sp_embed_cover":        True,
     "sp_normalize":          False,
     "sp_open_folder":        True,
+    # Spotify recording: "download" (YouTube match) or "record" (Spotify player)
+    "sp_mode":               "download",
+    "sp_rec_format":         "FLAC (Lossless)",
     # YouTube-specific settings
     "yt_concurrent":         2,
     "yt_embed_thumbnail":    True,
@@ -249,6 +254,38 @@ STRINGS: dict[str, dict[str, str]] = {
         "err_no_match":        "No YouTube match found for: {}",
         "status_paused":       "Paused",
         "status_cancelled":    "Cancelled",
+        "status_recording":    "Recording…",
+        "mode_download":       "YouTube download",
+        "mode_record":         "Spotify recording",
+        "mode_download_hint":  "Finds the song on YouTube. Fast, a few seconds per song.",
+        "mode_record_hint":    "Records the original Spotify stream. Premium, real time.",
+        "record":              "  Record",
+        "rec_login":           "Log in",
+        "rec_logout":          "Log out",
+        "sp_account_title":    "Spotify Account",
+        "rec_status_premium":  "Premium account",
+        "rec_status_out":      "Not logged in to Spotify",
+        "rec_status_free":     "Free account: not recommended, ads get recorded too",
+        "mb_login_title":      "Spotify Login",
+        "mb_login_msg":        "Recording needs a Spotify Premium login. Log in now?",
+        "rec_login_done_title": "Login complete",
+        "rec_login_done":      "You can close this tab and return to the app.",
+        "rec_login_failed_title": "Login cancelled",
+        "rec_login_failed":    "Spotify did not grant access. Close this tab and try again in the app.",
+        "rec_status_waiting":  "Waiting for the login in your browser…",
+        "err_rec_login":       "Not logged in to Spotify.",
+        "err_rec_login_cancelled": "Spotify login was cancelled.",
+        "err_rec_premium":     "Spotify Premium is required.",
+        "err_rec_drm":         "Spotify playback is not supported here.",
+        "err_rec_timeout":     "The Spotify player did not start.",
+        "err_rec_playback":    "Spotify playback failed:",
+        "err_rec_no_capture":  "Audio capture is not available.",
+        "err_rec_silent":      "Nothing was recorded (silence).",
+        "err_rec_incomplete":  "The recording ended too early.",
+        "err_rec_stalled":     "Spotify playback stalled.",
+        "err_rec_port":        "Port 8888 is in use.",
+        "err_rec_ffmpeg":      "FFmpeg is required for recording.",
+        "err_rec_youtube":     "Recording needs a Spotify link.",
         "tip_pause":           "Pause",
         "tip_resume":          "Resume",
         "tip_cancel":          "Cancel",
@@ -455,6 +492,38 @@ STRINGS: dict[str, dict[str, str]] = {
         "err_no_match":        "Kein YouTube-Treffer gefunden für: {}",
         "status_paused":       "Pausiert",
         "status_cancelled":    "Abgebrochen",
+        "status_recording":    "Nimmt auf…",
+        "mode_download":       "YouTube-Download",
+        "mode_record":         "Spotify-Aufnahme",
+        "mode_download_hint":  "Sucht den Song auf YouTube. Schnell, wenige Sekunden pro Song.",
+        "mode_record_hint":    "Nimmt den Original-Spotify-Stream auf. Premium, Echtzeit.",
+        "record":              "  Aufnehmen",
+        "rec_login":           "Anmelden",
+        "rec_logout":          "Abmelden",
+        "sp_account_title":    "Spotify-Account",
+        "rec_status_premium":  "Premium-Account",
+        "rec_status_out":      "Nicht bei Spotify angemeldet",
+        "rec_status_free":     "Free-Account: nicht empfohlen, Werbung wird mit aufgenommen",
+        "mb_login_title":      "Spotify-Anmeldung",
+        "mb_login_msg":        "Für die Aufnahme ist eine Spotify-Premium-Anmeldung nötig. Jetzt anmelden?",
+        "rec_login_done_title": "Anmeldung abgeschlossen",
+        "rec_login_done":      "Du kannst diesen Tab schließen und zur App zurückkehren.",
+        "rec_login_failed_title": "Anmeldung abgebrochen",
+        "rec_login_failed":    "Spotify hat den Zugriff nicht erlaubt. Schließe diesen Tab und versuche es in der App erneut.",
+        "rec_status_waiting":  "Warte auf die Anmeldung im Browser…",
+        "err_rec_login":       "Nicht bei Spotify angemeldet.",
+        "err_rec_login_cancelled": "Spotify-Anmeldung abgebrochen.",
+        "err_rec_premium":     "Spotify Premium wird benötigt.",
+        "err_rec_drm":         "Spotify-Wiedergabe wird hier nicht unterstützt.",
+        "err_rec_timeout":     "Der Spotify-Player wurde nicht gestartet.",
+        "err_rec_playback":    "Spotify-Wiedergabe fehlgeschlagen:",
+        "err_rec_no_capture":  "Audioaufnahme ist nicht verfügbar.",
+        "err_rec_silent":      "Nichts aufgenommen (Stille).",
+        "err_rec_incomplete":  "Die Aufnahme endete zu früh.",
+        "err_rec_stalled":     "Die Spotify-Wiedergabe ist hängengeblieben.",
+        "err_rec_port":        "Port 8888 ist belegt.",
+        "err_rec_ffmpeg":      "Für die Aufnahme wird FFmpeg benötigt.",
+        "err_rec_youtube":     "Die Aufnahme braucht einen Spotify-Link.",
         "tip_pause":           "Pausieren",
         "tip_resume":          "Fortsetzen",
         "tip_cancel":          "Abbrechen",

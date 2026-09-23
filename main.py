@@ -1,5 +1,6 @@
 import ctypes
 import importlib.util
+import os
 import sys
 from pathlib import Path
 
@@ -18,7 +19,7 @@ def _check_module(name: str) -> bool:
 
 
 def _check_ffmpeg() -> bool:
-    from converter import find_ffmpeg
+    from backend.converter import find_ffmpeg
     return find_ffmpeg() is not None
 
 
@@ -61,7 +62,7 @@ def main():
             )
             sys.exit(1)
 
-    from config import load_language
+    from backend.config import load_language
     load_language()
 
     ffmpeg_ok = _check_ffmpeg()
@@ -71,22 +72,34 @@ def main():
         print("          and add it to your system PATH.")
 
     import webview
+
+    # The hidden Spotify player has no user gesture that could allow audio to start.
+    args = os.environ.get("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS", "")
+    if "--autoplay-policy" not in args:
+        os.environ["WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS"] = (args + " --autoplay-policy=no-user-gesture-required").strip()
+
     window = create_app(ffmpeg_ok)
     base = _resource_dir()
     icon = base / "img" / "app.ico"
+    # Deliberately not private_mode=False/storage_path: the Spotify login is persisted by
+    # spotify_session.py itself (a token cache file, independent of the browser), and a
+    # persistent WebView2 profile would keep an ever-growing HTTP cache across runs - including
+    # of the app's own frontend files, so an update would need a cache clear to show up.
     webview.start(http_server=True, icon=str(icon) if icon.exists() else None)
 
 
 def create_app(ffmpeg_ok: bool):
     """Wire backend and window together. Returns the (not yet started) pywebview window."""
     import webview
-    from api import Api, LAUNCHER_SIZE
-    from config import APP_NAME
-    from events import Emitter
-    from services import build_runtimes
+    from backend.api import Api, LAUNCHER_SIZE
+    from backend.config import APP_NAME
+    from backend.events import Emitter
+    from backend.services import build_runtimes
+    from backend.spotify_session import SpotifySession
 
     emitter = Emitter()
-    api = Api(emitter, build_runtimes(emitter, ffmpeg_ok), ffmpeg_ok)
+    session = SpotifySession(_resource_dir() / "frontend" / "recorder.html")
+    api = Api(emitter, build_runtimes(emitter, ffmpeg_ok, session), ffmpeg_ok, session=session)
 
     webview.settings["DRAG_REGION_DIRECT_TARGET_ONLY"] = True
     window = webview.create_window(

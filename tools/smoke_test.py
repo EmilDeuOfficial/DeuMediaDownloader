@@ -13,7 +13,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-import config  # noqa: E402
+from backend import config  # noqa: E402
 
 _tmp = Path(tempfile.mkdtemp(prefix="deumedia-smoke-"))
 config.CONFIG_FILE = _tmp / "config.json"

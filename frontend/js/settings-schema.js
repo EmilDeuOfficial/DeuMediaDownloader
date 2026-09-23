@@ -11,6 +11,7 @@
 //                                                          options ("yt_templates", ...) or "rate"
 //   note      { textKey }
 //   file      { key, labelKey, descKey, placeholderKey }
+//   account   {}   Spotify login used by the recording mode (name, Premium/Free status, log in/out)
 
 export const RATE_OPTIONS = [
   ["", "yt_rate_no_limit"],
@@ -32,8 +33,13 @@ const filenameSection = (options, key, def) => ({
 export const SETTINGS_SCHEMA = {
   spotify: {
     titleKey: "settings_title",
-    height: 580,
+    height: 640,
     sections: [
+      {
+        titleKey: "sp_account_title",
+        inside: true,
+        fields: [{ type: "account" }],
+      },
       {
         titleKey: "spotify_api_creds",
         inside: true,

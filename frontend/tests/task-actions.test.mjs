@@ -18,6 +18,12 @@ test("buttons are disabled while ffmpeg converts or embeds", () => {
   }
 });
 
+test("a recording can be cancelled but not paused", () => {
+  assert.deepEqual(actionsFor("RECORDING", false), { toggle: null, cancel: true, disabled: false });
+  assert.deepEqual(actionsFor("RECORDING"), { toggle: "pause", cancel: true, disabled: false });
+  assert.equal(actionsFor("CONVERTING", false).toggle, null);
+});
+
 test("finished tasks show no buttons", () => {
   for (const status of ["DONE", "ERROR", "CANCELLED", "SOMETHING_NEW"]) {
     assert.equal(actionsFor(status), null, status);

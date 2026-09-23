@@ -15,9 +15,9 @@ import webbrowser
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional, Tuple
 
-import clipboard
-import config
-from config import (
+from . import clipboard
+from . import config
+from .config import (
     APP_NAME,
     APP_VERSION,
     AUDIO_FORMATS,
@@ -98,11 +98,13 @@ def _default_spawn(fn: Callable[[], None]) -> None:
 
 class Api:
     def __init__(self, emitter: Any, runtimes: Dict[str, Any], ffmpeg_ok: bool,
-                 spawn: Optional[Callable[[Callable[[], None]], None]] = None):
+                 spawn: Optional[Callable[[Callable[[], None]], None]] = None,
+                 session: Any = None):
         self._em = emitter
         self._rt = runtimes
         self._ffmpeg_ok = ffmpeg_ok
         self._spawn = spawn or _default_spawn
+        self._session = session
         self._window: Any = None
         self._view: Optional[str] = None
         self._maximized = False
@@ -119,6 +121,12 @@ class Api:
 
     def _on_closing(self) -> None:
         self._save_geometry(self._view)
+        self._close_session()
+
+    def _close_session(self) -> None:
+        """The hidden Spotify player window would keep the app running after the main window closes."""
+        if self._session is not None:
+            self._session.close()
 
     def _load(self) -> dict:
         if self._data_cleared:
@@ -187,6 +195,8 @@ class Api:
         cfg.update(partial)
         self._store(cfg)
         self._spawn(lambda: rt.configure(cfg))
+        if service == "spotify" and "spotify_record" in self._rt:
+            self._spawn(lambda: self._rt["spotify_record"].configure(cfg))   # same credentials
         return cfg
 
     # ------------------------------------------------------------ downloads
@@ -216,6 +226,28 @@ class Api:
     @_safe
     def cancel_task(self, service: str, task_id: str) -> bool:
         return self._runtime(service).cancel(task_id)
+
+    # ------------------------------------------------------ Spotify recording
+    def _recorder(self) -> Any:
+        if self._session is None:
+            raise ApiError("Recording is not available.")
+        return self._session
+
+    @_safe
+    def record_status(self) -> dict:
+        return self._recorder().status()
+
+    @_safe
+    def record_login(self) -> dict:
+        return self._recorder().login()
+
+    @_safe
+    def record_cancel_login(self) -> None:
+        self._recorder().cancel_login()
+
+    @_safe
+    def record_logout(self) -> dict:
+        return self._recorder().logout()
 
     # -------------------------------------------------------------- dialogs
     def _dialog(self, kind: str, directory: str = "", file_types: tuple = ()) -> Optional[str]:
@@ -291,6 +323,7 @@ class Api:
     @_safe
     def close(self) -> None:
         self._save_geometry(self._view)
+        self._close_session()
         self._window.destroy()
 
     @_safe

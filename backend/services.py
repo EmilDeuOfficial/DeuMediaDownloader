@@ -10,9 +10,9 @@ import uuid
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional
 
-from config import AUDIO_FORMATS, T, VIDEO_FORMATS, WIKI_PAGES
-from errors import short_error
-from downloader import (
+from .config import AUDIO_FORMATS, T, VIDEO_FORMATS, WIKI_PAGES
+from .errors import short_error
+from .downloader import (
     DownloadStatus,
     DownloadTask,
     SpotifyClient,
@@ -28,13 +28,15 @@ from downloader import (
     is_youtube_url,
     remove_partial_files,
 )
+from .record import SpotifyRecordManager
 
 SERVICE_IDS = ("spotify", "youtube", "tiktok")
 _NAME_MAX = 60
 _FINISHED = (DownloadStatus.DONE, DownloadStatus.ERROR, DownloadStatus.CANCELLED)
 # A task in one of these states can be paused or cancelled; CONVERTING and EMBEDDING are short
 # ffmpeg steps that are not interrupted.
-_INTERRUPTIBLE = (DownloadStatus.QUEUED, DownloadStatus.SEARCHING, DownloadStatus.DOWNLOADING)
+_INTERRUPTIBLE = (DownloadStatus.QUEUED, DownloadStatus.SEARCHING, DownloadStatus.DOWNLOADING,
+                  DownloadStatus.RECORDING)
 
 
 def _short(text: str, limit: int) -> str:
@@ -72,6 +74,9 @@ class ServiceSpec:
     queued_key: str
     init_client: Optional[Callable[[dict, Callable[[str], None]], Any]] = None
     needs_client: bool = False
+    can_pause: bool = True
+    # Returns {"message", "kind"} when a submit cannot start (for example "not logged in").
+    precheck: Optional[Callable[[], Optional[dict]]] = None
 
 
 def _status_text(status: DownloadStatus) -> str:
@@ -99,6 +104,7 @@ def serialize_task(spec: ServiceSpec, task: Any, config: dict) -> dict:
         "label": label,
         "progress": task.progress,
         "error": task.error_msg,
+        "can_pause": spec.can_pause,
     }
 
 
@@ -164,6 +170,10 @@ class ServiceRuntime:
             self._em.emit("resolve_error", {
                 "service": self._spec.id, "message": T("mb_api_msg").format(WIKI_PAGES["spotify_api"]), "kind": "api",
             })
+            return
+        problem = self._spec.precheck() if self._spec.precheck else None
+        if problem:
+            self._em.emit("resolve_error", {"service": self._spec.id, **problem})
             return
         self._spawn(lambda: self._resolve_and_queue(url, out_dir, fmt))
 
@@ -231,7 +241,7 @@ class ServiceRuntime:
         """Pause a queued or running task. A running download stops and keeps its partial
         file (the worker sets the status); a waiting task is paused right away."""
         task = self._task(task_id)
-        if task is None or task.status not in _INTERRUPTIBLE:
+        if task is None or not self._spec.can_pause or task.status not in _INTERRUPTIBLE:
             return False
         task.stop = "pause"
         if task.status == DownloadStatus.QUEUED:
@@ -310,6 +320,23 @@ def _spotify_resolve(url: str, ctx: ResolveContext) -> list:
     raise ValueError(f"Unknown type: {kind}")
 
 
+def _record_resolve(url: str, ctx: ResolveContext) -> list:
+    if is_youtube_url(url):
+        raise ValueError(T("err_rec_youtube"))
+    return _spotify_resolve(url, ctx)
+
+
+def _record_precheck(session: Any) -> Callable[[], Optional[dict]]:
+    def check() -> Optional[dict]:
+        status = session.status()
+        if not status["logged_in"]:
+            return {"message": T("err_rec_login"), "kind": "login"}
+        if not status["premium"]:
+            return {"message": T("err_rec_premium"), "kind": "error"}
+        return None
+    return check
+
+
 def _spotify_task_name(task: DownloadTask, cfg: dict) -> str:
     tmpl = cfg.get("sp_filename_template", "{artist} - {title}")
     t = task.track
@@ -355,6 +382,26 @@ def _spotify_spec() -> ServiceSpec:
     )
 
 
+def _spotify_record_spec(session: Any) -> ServiceSpec:
+    return ServiceSpec(
+        id="spotify_record",
+        concurrency_key="sp_rec_concurrent",
+        open_folder_key="sp_open_folder",
+        make_manager=lambda workers, ffmpeg_ok: SpotifyRecordManager(ffmpeg_ok, session),
+        resolve=_record_resolve,
+        make_task=lambda track, out_dir, fmt: DownloadTask(
+            task_id=str(uuid.uuid4()), track=track, output_dir=out_dir, format_name=fmt),
+        task_name=_spotify_task_name,
+        log_name=lambda task: task.track.display_name(),
+        queued_key="queued_n_tracks",
+        # Same client as the download mode; its log lines are already written by that runtime.
+        init_client=lambda config, log: _spotify_init_client(config, lambda message: None),
+        needs_client=True,
+        can_pause=False,
+        precheck=_record_precheck(session),
+    )
+
+
 def _youtube_spec() -> ServiceSpec:
     return ServiceSpec(
         id="youtube",
@@ -387,6 +434,8 @@ def _tiktok_spec() -> ServiceSpec:
     )
 
 
-def build_runtimes(emitter: Any, ffmpeg_ok: bool) -> Dict[str, ServiceRuntime]:
-    specs = (_spotify_spec(), _youtube_spec(), _tiktok_spec())
+def build_runtimes(emitter: Any, ffmpeg_ok: bool, session: Any = None) -> Dict[str, ServiceRuntime]:
+    specs = [_spotify_spec(), _youtube_spec(), _tiktok_spec()]
+    if session is not None:
+        specs.append(_spotify_record_spec(session))
     return {s.id: ServiceRuntime(s, emitter, ffmpeg_ok) for s in specs}

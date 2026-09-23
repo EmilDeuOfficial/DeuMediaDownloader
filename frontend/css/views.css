@@ -32,8 +32,11 @@
 .url-entry { flex: 1; }
 
 /* Two rows, label column on the left. Row 1 keeps type, format and quality next to each
-   other; row 2 holds the folder with browse and download. */
-.options-panel { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 12px; row-gap: 10px; padding: 14px 16px; }
+   other; row 2 holds the folder with browse. The download/record button sits right of both
+   rows, vertically centred in the card. */
+.options-panel { display: flex; align-items: center; gap: 16px; padding: 14px 16px; }
+.opt-grid { flex: 1 1 0; min-width: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 12px; row-gap: 10px; }
+.opt-cta { flex: none; display: flex; align-items: center; }
 .opt-selectors, .opt-path { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .a-dd { flex: 1 1 0; min-width: 0; max-width: 200px; }
 .a-out { flex: 1 1 0; min-width: 0; }
@@ -42,6 +45,9 @@
 .field-label { font-size: 12px; color: var(--text-secondary); white-space: nowrap; }
 .download { min-width: 130px; height: 38px; }
 .browse { min-width: 80px; height: 34px; }
+
+.mode-panel { display: flex; align-items: center; gap: 14px; padding: 8px 12px; }
+.mode-hint { min-width: 0; font-size: 12px; color: var(--text-secondary); }
 
 .queue-panel, .log-panel { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; }
 .queue-count { font-size: 11px; color: var(--text-secondary); }

@@ -5,9 +5,13 @@ went wrong in a few words.
 """
 import re
 
-from config import T, WIKI_PAGES
+from .config import T, WIKI_PAGES
 
 _FALLBACK_MAX = 45
+
+
+class RecordError(Exception):
+    """A Spotify recording failed. The message is short and already in the active language."""
 
 _HTTP = re.compile(r"HTTP Error (\d{3})", re.I)
 

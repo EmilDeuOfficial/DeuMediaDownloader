@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>DeuMediaDownloader Recorder</title>
+</head>
+<body>
+<!-- Hidden player page for the Spotify recording. It hosts Spotify's Web Playback SDK and
+     reports the player state to Python (spotify_session.py); nothing is shown here. -->
+<script>
+(() => {
+  let player = null;
+
+  const send = (name, data) => {
+    window.pywebview.api.event(name, data || {}).catch(() => {});
+  };
+  const diag = (what, detail) => send("diag", { what, detail: String(detail == null ? "" : detail).slice(0, 300) });
+
+  window.addEventListener("error", (ev) => diag("error", ev.message));
+  window.addEventListener("unhandledrejection", (ev) => diag("rejection", ev.reason && (ev.reason.message || ev.reason)));
+
+  // null = the player is no longer active (for example after the last track of its queue ended).
+  function report(state) {
+    if (!state) {
+      send("state", { inactive: true });
+      return;
+    }
+    const track = state.track_window.current_track;
+    send("state", {
+      paused: state.paused,
+      position: state.position,
+      duration: state.duration,
+      uri: track.uri,
+      linked_uri: track.linked_from ? track.linked_from.uri : "",   // Spotify may swap in another version of the track
+      loading: state.loading,
+    });
+  }
+
+  async function poll() {
+    if (player) report(await player.getCurrentState());
+  }
+
+  function start() {
+    window.onSpotifyWebPlaybackSDKReady = () => {
+      player = new Spotify.Player({
+        name: "DeuMediaDownloader",
+        getOAuthToken: (cb) => {
+          window.pywebview.api.token().then(cb, () => send("error", { kind: "authentication", message: "token" }));
+        },
+        volume: 1.0,
+      });
+      player.addListener("ready", ({ device_id }) => send("ready", { device_id }));
+      player.addListener("not_ready", () => send("not_ready"));
+      player.addListener("player_state_changed", report);
+      player.addListener("autoplay_failed", () => diag("autoplay_failed", "the browser blocked autoplay"));
+      for (const kind of ["initialization", "authentication", "account", "playback"]) {
+        player.addListener(`${kind}_error`, ({ message }) => send("error", { kind, message }));
+      }
+      player.connect();
+      setInterval(poll, 250);
+    };
+    const sdk = document.createElement("script");
+    sdk.src = "https://sdk.scdn.co/spotify-player.js";
+    document.head.append(sdk);
+  }
+
+  window.recorder = {
+    pause: () => player && player.pause(),
+    setVolume: (value) => player && player.setVolume(value),
+    // Snapshot for troubleshooting: what the page knows about itself and the player.
+    info: async () => ({
+      visibility: document.visibilityState,
+      activation: navigator.userActivation ? navigator.userActivation.hasBeenActive : null,
+      volume: player ? await player.getVolume() : null,
+      frames: [...document.querySelectorAll("iframe")].map((f) => f.src),
+    }),
+  };
+
+  if (window.pywebview && window.pywebview.api) start();
+  else window.addEventListener("pywebviewready", start);
+})();
+</script>
+</body>
+</html>

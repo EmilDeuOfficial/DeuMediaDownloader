@@ -9,7 +9,9 @@ export const SERVICES = {
     queueGlyph: "note",
     mediaToggle: false,
     dropdownWidth: 220,
-    cfg: { outDir: "output_dir", format: "default_format", formatDefault: "MP3 (320 kbps)" },
+    cfg: { outDir: "output_dir", format: "default_format", formatDefault: "MP3 (320 kbps)", mode: "sp_mode" },
+    // Second mode of the Spotify view: record the Spotify stream instead of downloading a YouTube match.
+    record: { id: "spotify_record", cfg: { format: "sp_rec_format" } },
   },
   youtube: {
     id: "youtube",
@@ -50,3 +52,4 @@ export const SERVICES = {
 export const SERVICE_ORDER = ["spotify", "youtube", "tiktok"];
 export const AUDIO_DEFAULT = "MP3 (320 kbps)";
 export const VIDEO_DEFAULT = "MP4 (1080p)";
+export const RECORD_DEFAULT = "FLAC (Lossless)";

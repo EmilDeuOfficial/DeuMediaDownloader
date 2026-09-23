@@ -14,8 +14,8 @@ from typing import Optional, Callable, List, Dict, Any
 import requests
 import yt_dlp
 
-from config import AUDIO_FORMATS, VIDEO_FORMATS, WIKI_PAGES, load_config, T
-from converter import embed_metadata, fetch_cover, find_ffmpeg
+from .config import AUDIO_FORMATS, VIDEO_FORMATS, WIKI_PAGES, load_config, T
+from .converter import embed_metadata, fetch_cover, find_ffmpeg
 
 
 # ---------------------------------------------------------------------------
@@ -26,6 +26,7 @@ class DownloadStatus(Enum):
     QUEUED      = "Queued"
     SEARCHING   = "Searching…"
     DOWNLOADING = "Downloading…"
+    RECORDING   = "Recording…"
     CONVERTING  = "Converting…"
     EMBEDDING   = "Embedding…"
     DONE        = "Done"

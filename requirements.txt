@@ -8,3 +8,5 @@ requests>=2.31.0
 # Without it every TikTok request fails with "Unexpected response from
 # webpage request", regardless of cookies.
 curl_cffi>=0.10
+# Per-process audio capture (WASAPI process loopback) for the Spotify recording mode.
+proc-tap>=1.1

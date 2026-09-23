@@ -37,6 +37,11 @@
 .sm-link { display: inline-flex; align-items: center; gap: 6px; width: fit-content; font-size: 11px; color: var(--accent); text-decoration: none; cursor: pointer; }
 .sm-link:hover { color: var(--accent-hover); }
 
+.sm-account { display: flex; align-items: center; gap: 12px; }
+.sm-account-info { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.sm-account-name { font-size: 13px; font-weight: 700; overflow-wrap: anywhere; }
+.sm-account-status { font-size: 11px; color: var(--text-secondary); overflow-wrap: anywhere; }
+
 .sm-row { display: flex; align-items: center; gap: 12px; }
 .slider-wrap { flex: 1; max-width: 260px; display: flex; flex-direction: column; gap: 2px; }
 .sm-slider {

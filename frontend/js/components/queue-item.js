@@ -7,6 +7,7 @@ import { actionsFor } from "../task-actions.js";
 // {id, service, name, format, ext, status, label, progress, error}. All text goes in as text nodes.
 // `handlers` = {onPause(id), onResume(id), onCancel(id)}.
 export function createQueueItem(task, glyph, handlers = {}) {
+  let canPause = task.can_pause !== false;
   const title = h("span", { class: "qi-title" });
   const ext = h("span", { class: "qi-ext" });
   const name = h("div", { class: "qi-name" }, title, ext);
@@ -37,9 +38,10 @@ export function createQueueItem(task, glyph, handlers = {}) {
   }
 
   function renderActions(statusName) {
-    const a = actionsFor(statusName);
+    const a = actionsFor(statusName, canPause);
     actions.hidden = !a;
     if (!a) return;
+    toggleBtn.hidden = !a.toggle;
     const resume = a.toggle === "resume";
     const tip = T(resume ? "tip_resume" : "tip_pause");
     toggleBtn.replaceChildren(icon(resume ? "play" : "pause"));
@@ -50,6 +52,7 @@ export function createQueueItem(task, glyph, handlers = {}) {
   }
 
   function update(next) {
+    if (next.can_pause != null) canPause = next.can_pause;
     if (next.name != null) {
       title.textContent = next.name;
       name.title = next.name;

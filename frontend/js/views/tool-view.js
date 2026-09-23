@@ -2,7 +2,7 @@ import { h, debounce } from "../dom.js";
 import { api, on } from "../bridge.js";
 import { T } from "../i18n.js";
 import { app, saveConfig } from "../state.js";
-import { AUDIO_DEFAULT, VIDEO_DEFAULT } from "../services.js";
+import { AUDIO_DEFAULT, VIDEO_DEFAULT, RECORD_DEFAULT } from "../services.js";
 import { createToolBar } from "../components/titlebar.js";
 import { createDropdown } from "../components/dropdown.js";
 import { createQueueItem } from "../components/queue-item.js";
@@ -11,6 +11,7 @@ import { alertModal, showModal } from "../components/modal.js";
 import { setResizable } from "../components/resize-handles.js";
 import { icon } from "../icons.js";
 import { initialSelection, resolveQuality, qualityText } from "../formats.js";
+import { animateOut, replay } from "../motion.js";
 
 const label = (text, cls = "") => h("span", { class: `field-label ${cls}`.trim() }, text);
 
@@ -20,12 +21,21 @@ export function createToolView(service, { onBack, onSettings }) {
   const cfg = () => app.get().config;
   const options = () => app.get().options;
 
+  // Spotify has two modes with one backend service each: a YouTube download and a recording.
+  const ids = service.record ? [service.id, service.record.id] : [service.id];
+  let mode = service.record && cfg()[cfgKeys.mode] === "record" ? "record" : "download";
+  const activeId = () => (mode === "record" ? service.record.id : service.id);
+  const actionKey = () => (mode === "record" ? "record" : "download");
+
   // ---- state helpers ------------------------------------------------------
   // The user picks a format and a quality; the downloaders and the config use the flat name
   // of that pair (for example "MP3 (320 kbps)"), which is what selection.quality.name is.
   const groupsFor = (kind) => (kind === "Audio" ? options().audio_groups : options().video_groups);
-  const configKey = (kind) => (service.mediaToggle ? (kind === "Audio" ? cfgKeys.formatAudio : cfgKeys.formatVideo) : cfgKeys.format);
-  const defaultName = (kind) => (kind === "Audio" ? AUDIO_DEFAULT : VIDEO_DEFAULT);
+  const configKey = (kind) => {
+    if (service.mediaToggle) return kind === "Audio" ? cfgKeys.formatAudio : cfgKeys.formatVideo;
+    return mode === "record" ? service.record.cfg.format : cfgKeys.format;
+  };
+  const defaultName = (kind) => (mode === "record" ? RECORD_DEFAULT : kind === "Audio" ? AUDIO_DEFAULT : VIDEO_DEFAULT);
 
   let mediaType = service.mediaToggle ? cfg()[cfgKeys.mediaType] || cfgKeys.mediaDefault : "Audio";
   if (mediaType !== "Audio" && mediaType !== "Video") mediaType = cfgKeys.mediaDefault || "Audio";
@@ -142,9 +152,12 @@ export function createToolView(service, { onBack, onSettings }) {
   syncQuality();
 
   const browseBtn = h("button", { class: "btn neutral browse", type: "button", onClick: browse }, T("browse"));
-  const dlBtn = h("button", { class: "btn accent download", type: "button", onClick: start }, T("download").trim());
-  const actions = h("div", { class: "a-actions" }, browseBtn, dlBtn);
+  const dlBtn = h("button", { class: "btn accent download", type: "button", onClick: start }, T(actionKey()).trim());
+  const actions = h("div", { class: "a-actions" }, browseBtn);
   const outWrap = h("div", { class: "a-out" }, outInput);
+  // The main button sits right of both rows, vertically centred in the card.
+  const optionsPanelOf = (...rows) =>
+    h("section", { class: "panel options-panel" }, h("div", { class: "opt-grid" }, rows), h("div", { class: "opt-cta" }, dlBtn));
 
   async function browse() {
     try {
@@ -167,9 +180,7 @@ export function createToolView(service, { onBack, onSettings }) {
   if (service.mediaToggle) {
     audioBtn = h("button", { class: "seg-btn", type: "button", onClick: () => setMediaType("Audio") }, icon("note"), T("audio_btn"));
     videoBtn = h("button", { class: "seg-btn", type: "button", onClick: () => setMediaType("Video") }, icon("play"), T("video_btn"));
-    optionsPanel = h(
-      "section",
-      { class: "panel options-panel" },
+    optionsPanel = optionsPanelOf(
       label(T("type")),
       h(
         "div",
@@ -185,9 +196,7 @@ export function createToolView(service, { onBack, onSettings }) {
     );
     paintMediaType();
   } else {
-    optionsPanel = h(
-      "section",
-      { class: "panel options-panel" },
+    optionsPanel = optionsPanelOf(
       label(T("format")),
       h("div", { class: "opt-selectors" }, formatCell, label(T("quality")), qualityCell),
       label(T("save_to")),
@@ -209,8 +218,52 @@ export function createToolView(service, { onBack, onSettings }) {
     saveConfig({ [cfgKeys.mediaType]: kind });
   }
 
+  // ---- mode switch (Spotify only) ------------------------------------------
+  // Account status and login/logout live in Settings now; this only covers the quick login
+  // prompt offered when a recording is started while logged out (see the resolve_error handler
+  // below). The login page opens in the default browser; this call returns when done there.
+  async function recordLogin() {
+    try {
+      await api.record_login();
+    } catch (err) {
+      await alertModal(T("mb_login_title"), err.message, "error");
+    }
+  }
+
+  let downloadModeBtn = null;
+  let recordModeBtn = null;
+  let modePanel = null;
+  let modeHint = null;
+  if (service.record) {
+    downloadModeBtn = h("button", { class: "seg-btn", type: "button", onClick: () => setMode("download") }, T("mode_download"));
+    recordModeBtn = h("button", { class: "seg-btn", type: "button", onClick: () => setMode("record") }, T("mode_record"));
+    modeHint = h("span", { class: "mode-hint" });
+    modePanel = h("section", { class: "panel mode-panel" }, h("div", { class: "segmented" }, downloadModeBtn, recordModeBtn), modeHint);
+  }
+
+  function paintMode() {
+    downloadModeBtn.classList.toggle("active", mode === "download");
+    recordModeBtn.classList.toggle("active", mode === "record");
+    modeHint.textContent = T(mode === "record" ? "mode_record_hint" : "mode_download_hint");
+    replay(modeHint, "swap");
+  }
+
+  function setMode(next) {
+    if (next === mode) return;
+    mode = next;
+    paintMode();
+    loadSelection(mediaType);
+    formatDropdown.setValues(groupsFor(mediaType).map((g) => g.format), selection.group.format);
+    syncQuality();
+    if (!dlBtn.disabled) dlBtn.textContent = T(actionKey()).trim();
+    saveConfig({ [cfgKeys.mode]: mode });
+  }
+
+  if (service.record) paintMode();
+
   // ---- queue panel --------------------------------------------------------
   const items = new Map();
+  const taskService = new Map();   // task id -> backend service of that task
   const queueEmpty = h("div", { class: "queue-empty" }, T("queue_empty"));
   const queueList = h("div", { class: "queue-list" }, queueEmpty);
   const countLabel = h("span", { class: "queue-count" });
@@ -242,13 +295,14 @@ export function createToolView(service, { onBack, onSettings }) {
       onCancel: (id) => control(api.cancel_task, id),
     });
     items.set(task.id, item);
+    taskService.set(task.id, task.service || service.id);
     queueList.append(item.el);
     updateCount();
   }
 
   async function control(method, taskId) {
     try {
-      await method(service.id, taskId);
+      await method(taskService.get(taskId) || service.id, taskId);
     } catch (err) {
       console.error(err);
     }
@@ -256,10 +310,12 @@ export function createToolView(service, { onBack, onSettings }) {
 
   async function clearDone() {
     try {
-      const removed = await api.clear_done(service.id);
+      const removed = (await Promise.all(ids.map((sid) => api.clear_done(sid)))).flat();
       for (const id of removed) {
-        items.get(id)?.el.remove();
+        const item = items.get(id);
+        if (item) animateOut(item.el);
         items.delete(id);
+        taskService.delete(id);
       }
       updateCount();
     } catch (err) {
@@ -273,14 +329,14 @@ export function createToolView(service, { onBack, onSettings }) {
   // ---- download flow ------------------------------------------------------
   function setBusy(busy) {
     dlBtn.disabled = busy;
-    dlBtn.textContent = (busy ? T("loading") : T("download")).trim();
+    dlBtn.textContent = (busy ? T("loading") : T(actionKey())).trim();
   }
 
   async function start() {
     if (dlBtn.disabled) return;
     setBusy(true);
     try {
-      await api.submit(service.id, urlInput.value, outInput.value, currentName());
+      await api.submit(activeId(), urlInput.value, outInput.value, currentName());
       urlInput.value = "";
     } catch (err) {
       setBusy(false);
@@ -290,7 +346,7 @@ export function createToolView(service, { onBack, onSettings }) {
 
   // ---- events (filtered to this service) ----------------------------------
   const mine = (fn) => (payload) => {
-    if (payload && payload.service === service.id) fn(payload);
+    if (payload && ids.includes(payload.service)) fn(payload);
   };
   on("log", mine((p) => log.append(p.msg)));
   on("task_added", mine(addTask));
@@ -312,6 +368,18 @@ export function createToolView(service, { onBack, onSettings }) {
           { label: T("tip_settings"), value: true, kind: "accent" },
         ],
       }).then((openSettings) => openSettings && onSettings(service.id));
+    } else if (p.kind === "login") {
+      // Recording without a Spotify login: offer to log in right away.
+      showModal({
+        title: T("mb_login_title"),
+        message: T("mb_login_msg"),
+        kind: "warning",
+        cancelValue: false,
+        buttons: [
+          { label: T("btn_no"), value: false, kind: "neutral" },
+          { label: T("rec_login"), value: true, kind: "accent" },
+        ],
+      }).then((doLogin) => doLogin && recordLogin());
     } else {
       alertModal(T("mb_error_title"), p.message, "error");
     }
@@ -322,7 +390,7 @@ export function createToolView(service, { onBack, onSettings }) {
     "div",
     { class: "view tool-view", dataset: { service: service.id } },
     bar.el,
-    h("div", { class: "tool-body" }, inputPanel, optionsPanel, queuePanel, log.el),
+    h("div", { class: "tool-body" }, modePanel, inputPanel, optionsPanel, queuePanel, log.el),
   );
 
   return {
