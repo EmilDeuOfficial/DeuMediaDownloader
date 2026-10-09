@@ -27,15 +27,21 @@ TOKEN_DIR = CONFIG_FILE.parent
 # hold the decoded audio, they are not better than the source.
 # "convert": True means yt-dlp's audio extractor cannot write the container (AIFF) or the
 # video needs re-encoding (MOV, AVI), so the ffmpeg converter post-processor is used.
+# "Original" keeps the audio stream exactly as the site delivers it (no re-encoding); the
+# file extension follows the source (usually .opus or .m4a), so its "ext" is empty.
 # ---------------------------------------------------------------------------
 
 _LOSSLESS = "Lossless"
+ORIGINAL_FORMAT = "Original (Best)"
+# Containers an "Original" download can end up in.
+ORIGINAL_EXTS = ("opus", "m4a", "mp3", "ogg", "flac")
 
 # (format, settings, quality steps in kbps, None = lossless)
 _AUDIO_SPEC = [
     ("MP3",        {"ext": "mp3",  "codec": "libmp3lame"},                   (320, 256, 192)),
     ("AAC",        {"ext": "m4a",  "codec": "aac"},                          (256, 192)),
     ("OGG Vorbis", {"ext": "ogg",  "codec": "libvorbis"},                    (320, 256, 192)),
+    ("Opus",       {"ext": "opus", "codec": "libopus"},                      (256, 192, 160)),
     ("FLAC",       {"ext": "flac", "codec": "flac"},                         None),
     ("AIFF",       {"ext": "aiff", "codec": "pcm_s16be", "convert": True},   None),
     ("WAV",        {"ext": "wav",  "codec": "pcm_s16le"},                    None),
@@ -87,6 +93,10 @@ def _build_audio():
             formats[name] = entry
             qualities.append({"label": label, "name": name})
         groups.append({"format": container, "qualities": qualities})
+    formats[ORIGINAL_FORMAT] = {"ext": "", "codec": "copy", "bitrate": None, "ydl_quality": "0", "original": True}
+    # download_only: a recording has no source stream that could be kept, so it is not offered there
+    groups.append({"format": "Original", "download_only": True,
+                   "qualities": [{"label": "Best", "name": ORIGINAL_FORMAT, "label_key": "quality_best"}]})
     return formats, groups
 
 
@@ -149,6 +159,7 @@ DEFAULT_CONFIG = {
     "yt_write_subtitles":    False,
     "yt_subtitle_langs":     "en",
     "yt_sponsorblock":       False,
+    "yt_normalize":          False,
     "yt_rate_limit":         "",
     "yt_open_folder":        True,
     # TikTok-specific settings
@@ -157,6 +168,7 @@ DEFAULT_CONFIG = {
     "tt_media_type":         "Video",
     "tt_concurrent":         2,
     "tt_embed_thumbnail":    True,
+    "tt_normalize":          False,
     "tt_rate_limit":         "",
     "tt_open_folder":        True,
     "tt_win_geo":            "820x720",

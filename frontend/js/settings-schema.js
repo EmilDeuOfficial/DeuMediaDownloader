@@ -85,6 +85,7 @@ export const SETTINGS_SCHEMA = {
         fields: [
           { type: "toggle", key: "yt_embed_thumbnail", labelKey: "yt_embed_thumb_lbl", descKey: "yt_embed_thumb_desc", default: true },
           { type: "toggle", key: "yt_sponsorblock", labelKey: "yt_sponsorblock_lbl", descKey: "yt_sponsorblock_desc", default: false },
+          { type: "toggle", key: "yt_normalize", labelKey: "sp_normalize_lbl", descKey: "sp_normalize_desc", default: false },
           { type: "toggle", key: "yt_open_folder", labelKey: "sp_open_folder_lbl", descKey: "sp_open_folder_desc", default: true },
         ],
       },
@@ -119,6 +120,7 @@ export const SETTINGS_SCHEMA = {
         inside: true,
         fields: [
           { type: "toggle", key: "tt_embed_thumbnail", labelKey: "tt_embed_thumb_lbl", descKey: "tt_embed_thumb_desc", default: true },
+          { type: "toggle", key: "tt_normalize", labelKey: "sp_normalize_lbl", descKey: "sp_normalize_desc", default: false },
           { type: "toggle", key: "tt_open_folder", labelKey: "sp_open_folder_lbl", descKey: "sp_open_folder_desc", default: true },
         ],
       },

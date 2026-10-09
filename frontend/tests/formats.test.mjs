@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { findSelection, initialSelection, resolveQuality, qualityText } from "../js/formats.js";
+import { findSelection, initialSelection, resolveQuality, qualityText, groupsForMode } from "../js/formats.js";
 
 const groups = [
   { format: "MP3", qualities: [
@@ -51,4 +51,11 @@ test("qualityText translates Best and leaves other labels alone", () => {
   const T = (key) => ({ quality_best: "Beste" })[key] || key;
   assert.equal(qualityText(groups[2].qualities[0], T), "Beste");
   assert.equal(qualityText(groups[2].qualities[1], T), "720p");
+});
+
+test("groupsForMode hides download-only formats while recording", () => {
+  const original = { format: "Original", download_only: true, qualities: [{ label: "Best", name: "Original (Best)", label_key: "quality_best" }] };
+  const all = [...groups, original];
+  assert.deepEqual(groupsForMode(all, false), all);
+  assert.deepEqual(groupsForMode(all, true), groups);
 });

@@ -22,6 +22,11 @@ export function resolveQuality(group, wantedLabel) {
   return group.qualities.find((q) => q.label === wantedLabel) || group.qualities[0];
 }
 
+/** Formats offered in a mode: a recording has no source stream, so "Original" is download only. */
+export function groupsForMode(groups, recording) {
+  return recording ? groups.filter((group) => !group.download_only) : groups;
+}
+
 /** Text shown for a quality; "Best" is translated. */
 export function qualityText(quality, T) {
   return quality.label_key ? T(quality.label_key) : quality.label;

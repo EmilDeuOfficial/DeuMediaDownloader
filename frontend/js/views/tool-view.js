@@ -10,7 +10,7 @@ import { createLogPanel } from "../components/log-panel.js";
 import { alertModal, showModal } from "../components/modal.js";
 import { setResizable } from "../components/resize-handles.js";
 import { icon } from "../icons.js";
-import { initialSelection, resolveQuality, qualityText } from "../formats.js";
+import { initialSelection, resolveQuality, qualityText, groupsForMode } from "../formats.js";
 import { animateOut, replay } from "../motion.js";
 
 const label = (text, cls = "") => h("span", { class: `field-label ${cls}`.trim() }, text);
@@ -30,7 +30,8 @@ export function createToolView(service, { onBack, onSettings }) {
   // ---- state helpers ------------------------------------------------------
   // The user picks a format and a quality; the downloaders and the config use the flat name
   // of that pair (for example "MP3 (320 kbps)"), which is what selection.quality.name is.
-  const groupsFor = (kind) => (kind === "Audio" ? options().audio_groups : options().video_groups);
+  const groupsFor = (kind) =>
+    kind === "Audio" ? groupsForMode(options().audio_groups, mode === "record") : options().video_groups;
   const configKey = (kind) => {
     if (service.mediaToggle) return kind === "Audio" ? cfgKeys.formatAudio : cfgKeys.formatVideo;
     return mode === "record" ? service.record.cfg.format : cfgKeys.format;

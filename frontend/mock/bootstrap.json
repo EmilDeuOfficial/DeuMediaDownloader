@@ -247,6 +247,7 @@
     "yt_write_subtitles": false,
     "yt_subtitle_langs": "en",
     "yt_sponsorblock": false,
+    "yt_normalize": false,
     "yt_rate_limit": "",
     "yt_open_folder": true,
     "tt_format_video": "MP4 (1080p)",
@@ -254,6 +255,7 @@
     "tt_media_type": "Video",
     "tt_concurrent": 2,
     "tt_embed_thumbnail": true,
+    "tt_normalize": false,
     "tt_rate_limit": "",
     "tt_open_folder": true,
     "tt_win_geo": "820x720",
@@ -274,9 +276,13 @@
       "OGG Vorbis (320 kbps)",
       "OGG Vorbis (256 kbps)",
       "OGG Vorbis (192 kbps)",
+      "Opus (256 kbps)",
+      "Opus (192 kbps)",
+      "Opus (160 kbps)",
       "FLAC (Lossless)",
       "AIFF (Lossless)",
-      "WAV (Lossless)"
+      "WAV (Lossless)",
+      "Original (Best)"
     ],
     "video_formats": [
       "MP4 (2160p)",
@@ -361,6 +367,23 @@
         ]
       },
       {
+        "format": "Opus",
+        "qualities": [
+          {
+            "label": "256 kbps",
+            "name": "Opus (256 kbps)"
+          },
+          {
+            "label": "192 kbps",
+            "name": "Opus (192 kbps)"
+          },
+          {
+            "label": "160 kbps",
+            "name": "Opus (160 kbps)"
+          }
+        ]
+      },
+      {
         "format": "FLAC",
         "qualities": [
           {
@@ -384,6 +407,17 @@
           {
             "label": "Lossless",
             "name": "WAV (Lossless)"
+          }
+        ]
+      },
+      {
+        "format": "Original",
+        "download_only": true,
+        "qualities": [
+          {
+            "label": "Best",
+            "name": "Original (Best)",
+            "label_key": "quality_best"
           }
         ]
       }

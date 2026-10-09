@@ -14,7 +14,7 @@ from typing import Optional, Callable, List, Dict, Any
 import requests
 import yt_dlp
 
-from .config import AUDIO_FORMATS, VIDEO_FORMATS, WIKI_PAGES, load_config, T
+from .config import AUDIO_FORMATS, ORIGINAL_EXTS, VIDEO_FORMATS, WIKI_PAGES, load_config, T
 from .converter import embed_metadata, fetch_cover, find_ffmpeg
 
 
@@ -91,6 +91,9 @@ def _tiktok_cookie_opts(cfg: dict) -> dict:
 def _audio_postprocessor(fmt_info: Dict[str, Any]) -> Dict[str, Any]:
     """yt-dlp post-processor that turns the downloaded audio into the chosen format."""
     ext = fmt_info["ext"]
+    if fmt_info.get("original"):
+        # "best" copies the stream into its own audio container (opus -> .opus, aac -> .m4a)
+        return {"key": "FFmpegExtractAudio", "preferredcodec": "best"}
     if fmt_info.get("convert"):
         # yt-dlp's audio extractor cannot write this container (AIFF); the converter can
         return {"key": "FFmpegVideoConvertor", "preferedformat": ext}
@@ -100,6 +103,40 @@ def _audio_postprocessor(fmt_info: Dict[str, Any]) -> Dict[str, Any]:
     if quality and quality != "0":
         pp["preferredquality"] = quality
     return pp
+
+
+# loudnorm works at 192 kHz internally; -ar brings the result back to a normal sample rate.
+_LOUDNORM_ARGS = ["-af", "loudnorm", "-ar", "48000"]
+
+
+def _audio_chain(fmt_info: Dict[str, Any], normalize: bool) -> tuple[List[Dict[str, Any]], Dict[str, List[str]]]:
+    """Post-processors and post-processor arguments for an audio download.
+
+    The audio extractor copies the stream when the source already has the wanted codec
+    (Opus to Opus, AAC to M4A), and ffmpeg cannot filter a copied stream. So the volume is
+    evened out in a step of its own that writes a lossless FLAC, and the extractor encodes
+    that file once. AIFF is written by the converter anyway and needs no extra step.
+    "Original" is never normalized: that would re-encode it.
+    yt-dlp looks the arguments up by the lower-case post-processor name.
+    """
+    target = _audio_postprocessor(fmt_info)
+    if not normalize or fmt_info.get("original"):
+        return [target], {}
+    args = {"videoconvertor": list(_LOUDNORM_ARGS)}
+    if target["key"] == "FFmpegVideoConvertor":
+        return [target], args
+    return [{"key": "FFmpegVideoConvertor", "preferedformat": "flac"}, target], args
+
+
+def _existing_output(out_dir: Path, stem: str, fmt_info: Dict[str, Any]) -> Optional[Path]:
+    """The finished file of an earlier download, if there is one. An "Original" download
+    has no fixed extension, so every container it can end up in is checked."""
+    exts = ORIGINAL_EXTS if fmt_info.get("original") else (fmt_info["ext"],)
+    for ext in exts:
+        path = out_dir / f"{stem}.{ext}"
+        if path.exists():
+            return path
+    return None
 
 
 def _merge_opts(is_video: bool, fmt_info: Dict[str, Any], ext: str) -> Dict[str, Any]:
@@ -187,7 +224,7 @@ def _publish_result(task, stem: str, ext: str) -> Path:
     """
     work = _work_dir(task)
     produced = work / f"{stem}.{ext}"
-    if not produced.exists():
+    if not ext or not produced.exists():
         found = work.glob(glob.escape(stem) + ".*") if work.is_dir() else []
         candidates = [p for p in found if not _is_partial(p)]
         if not candidates:
@@ -550,9 +587,9 @@ def download_spotify_track(task: DownloadTask, ffmpeg_ok: bool) -> None:
         tmpl          = cfg.get("sp_filename_template", "{artist} - {title}")
         safe_filename = _apply_template(tmpl, artist=track.artist, title=track.title,
                                         album=track.album, year=track.year or "")
-        final_path    = out_dir / f"{safe_filename}.{ext}"
+        final_path    = _existing_output(out_dir, safe_filename, fmt_info)
 
-        if final_path.exists() and cfg.get("sp_skip_existing", True):
+        if final_path and cfg.get("sp_skip_existing", True):
             task.output_file = str(final_path)
             _status(DownloadStatus.DONE)
             _progress(1.0)
@@ -590,12 +627,11 @@ def download_spotify_track(task: DownloadTask, ffmpeg_ok: bool) -> None:
             **_ffmpeg_opts(),
         }
 
-        if ext != "opus" and find_ffmpeg():
-            pp = _audio_postprocessor(fmt_info)
-            ydl_opts["postprocessors"] = [pp]
-            if cfg.get("sp_normalize", False):
-                ydl_opts.setdefault("postprocessor_args", {})
-                ydl_opts["postprocessor_args"][pp["key"]] = ["-af", "loudnorm"]
+        if find_ffmpeg():
+            chain, pp_args = _audio_chain(fmt_info, bool(cfg.get("sp_normalize", False)))
+            ydl_opts["postprocessors"] = chain
+            if pp_args:
+                ydl_opts["postprocessor_args"] = pp_args
 
         _status(DownloadStatus.DOWNLOADING)
 
@@ -612,7 +648,7 @@ def download_spotify_track(task: DownloadTask, ffmpeg_ok: bool) -> None:
         try:
             embed_metadata(
                 filepath   = str(final_path),
-                ext        = ext,
+                ext        = final_path.suffix.lstrip("."),
                 title      = track.title,
                 artist     = track.artist,
                 album      = track.album,
@@ -795,9 +831,9 @@ def download_youtube_task(task: YouTubeTask, ffmpeg_ok: bool) -> None:
         tmpl       = cfg.get("yt_filename_template", "{title}")
         safe_title = _apply_template(tmpl, artist=_yt_artist.strip(),
                                      title=_yt_title.strip())
-        final_path = out_dir / f"{safe_title}.{ext}"
+        final_path = _existing_output(out_dir, safe_title, fmt_info)
 
-        if final_path.exists():
+        if final_path:
             task.output_file = str(final_path)
             _status(DownloadStatus.DONE)
             _progress(1.0)
@@ -834,9 +870,13 @@ def download_youtube_task(task: YouTubeTask, ffmpeg_ok: bool) -> None:
         }
 
         if not is_video and ffmpeg_ok:
-            postprocessors.append(_audio_postprocessor(fmt_info))
+            chain, pp_args = _audio_chain(fmt_info, bool(cfg.get("yt_normalize", False)))
+            postprocessors += chain
+            if pp_args:
+                ydl_opts["postprocessor_args"] = pp_args
 
-        if cfg.get("yt_embed_thumbnail", True) and not is_video and ffmpeg_ok and ext in _THUMBNAIL_EMBED_EXTS:
+        can_embed = fmt_info.get("original") or ext in _THUMBNAIL_EMBED_EXTS
+        if cfg.get("yt_embed_thumbnail", True) and not is_video and ffmpeg_ok and can_embed:
             ydl_opts["writethumbnail"] = True
             postprocessors.append({"key": "EmbedThumbnail"})
 
@@ -1006,9 +1046,9 @@ def download_tiktok_task(task: TikTokTask, ffmpeg_ok: bool) -> None:
         tmpl       = cfg.get("tt_filename_template", "{title}")
         safe_title = _apply_template(tmpl, artist=_tt_artist.strip(),
                                      title=_tt_title.strip())
-        final_path = out_dir / f"{safe_title}.{ext}"
+        final_path = _existing_output(out_dir, safe_title, fmt_info)
 
-        if final_path.exists():
+        if final_path:
             task.output_file = str(final_path)
             _status(DownloadStatus.DONE)
             _progress(1.0)
@@ -1046,9 +1086,13 @@ def download_tiktok_task(task: TikTokTask, ffmpeg_ok: bool) -> None:
         }
 
         if not is_video and ffmpeg_ok:
-            postprocessors.append(_audio_postprocessor(fmt_info))
+            chain, pp_args = _audio_chain(fmt_info, bool(cfg.get("tt_normalize", False)))
+            postprocessors += chain
+            if pp_args:
+                ydl_opts["postprocessor_args"] = pp_args
 
-        if cfg.get("tt_embed_thumbnail", True) and not is_video and ffmpeg_ok and ext in _THUMBNAIL_EMBED_EXTS:
+        can_embed = fmt_info.get("original") or ext in _THUMBNAIL_EMBED_EXTS
+        if cfg.get("tt_embed_thumbnail", True) and not is_video and ffmpeg_ok and can_embed:
             ydl_opts["writethumbnail"] = True
             postprocessors.append({"key": "EmbedThumbnail"})
 

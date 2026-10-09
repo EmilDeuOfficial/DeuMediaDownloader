@@ -1,7 +1,7 @@
 # DeuMediaDownloader
 
 A modern Windows desktop app to download **music and videos** from Spotify, YouTube and TikTok.
-Save audio (MP3, AAC, OGG, FLAC, AIFF, WAV) or video (MP4, MOV, AVI, MKV, WebM) in the quality you choose.
+Save audio (MP3, AAC, OGG, Opus, FLAC, AIFF, WAV) or video (MP4, MOV, AVI, MKV, WebM) in the quality you choose.
 
 ![Version](https://img.shields.io/badge/version-v7.1-brightgreen)
 ![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-blue)
@@ -13,7 +13,7 @@ Save audio (MP3, AAC, OGG, FLAC, AIFF, WAV) or video (MP4, MOV, AVI, MKV, WebM) 
 
 ## Features
 
-- **Audio and video** - Music as MP3, AAC, OGG Vorbis, FLAC, AIFF or WAV; videos as MP4, MOV, AVI, MKV or WebM up to 4K
+- **Audio and video** - Music as MP3, AAC, OGG Vorbis, Opus, FLAC, AIFF, WAV or the untouched original; videos as MP4, MOV, AVI, MKV or WebM up to 4K
 - **Three sources** - Spotify (tracks, playlists, albums), YouTube (videos, playlists), TikTok (videos, profiles, hashtags, sounds)
 - **Format and quality** - Pick the format and the quality separately; the quality list follows the format
 - **Queue** - Live progress, plus pause, resume and cancel for every download
@@ -186,9 +186,15 @@ Audio:
 | MP3 | 320 / 256 / 192 kbps | Widely compatible |
 | AAC (M4A) | 256 / 192 kbps | Great for Apple devices |
 | OGG Vorbis | 320 / 256 / 192 kbps | Open format |
+| Opus | 256 / 192 / 160 kbps | Modern open format, small files |
 | FLAC | Lossless | Compressed, tags and cover art |
 | AIFF | Lossless | Uncompressed, tags and cover art (Spotify downloads) |
 | WAV | Lossless | Uncompressed, large files |
+| Original | Best | The audio exactly as the site delivers it, no re-encoding (usually `.opus` or `.m4a`) |
+
+**Original** is the fastest choice and loses nothing; it is not offered for Spotify recording
+and is never normalized. **Normalize Audio** in the settings of each downloader evens out
+the volume (FFmpeg `loudnorm`).
 
 The audio source is YouTube (about 256 kbps at best), so the lossless formats are
 convenient containers, not better sound than a 320 kbps MP3.

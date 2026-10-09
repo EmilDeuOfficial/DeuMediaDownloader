@@ -75,11 +75,13 @@ def embed_metadata_flac(filepath: str, title: str, artist: str, album: str,
 
 def embed_metadata_ogg(filepath: str, title: str, artist: str, album: str,
                        year: Optional[str], cover_data: Optional[bytes]) -> None:
+    from mutagen.oggopus import OggOpus
     from mutagen.oggvorbis import OggVorbis
     import base64
     from mutagen.flac import Picture
 
-    audio = OggVorbis(filepath)
+    # Opus files are Ogg files with the same comment fields
+    audio = OggOpus(filepath) if filepath.lower().endswith(".opus") else OggVorbis(filepath)
     audio["title"]  = [title]
     audio["artist"] = [artist]
     audio["album"]  = [album]
@@ -152,6 +154,7 @@ def embed_metadata(filepath: str, ext: str, title: str, artist: str, album: str,
         "mp3":  embed_metadata_mp3,
         "flac": embed_metadata_flac,
         "ogg":  embed_metadata_ogg,
+        "opus": embed_metadata_ogg,
         "m4a":  embed_metadata_m4a,
         "wav":  embed_metadata_wav,
         "aiff": embed_metadata_aiff,
