@@ -1,5 +1,11 @@
 import json
+import logging
+import os
+import threading
+import time
 from pathlib import Path
+
+log = logging.getLogger(__name__)
 
 APP_NAME = "DeuMediaDownloader"
 # The one place for the version number: build.py and DeuMediaDownloader.spec write it into
@@ -397,6 +403,9 @@ STRINGS: dict[str, dict[str, str]] = {
         "uninstall_ffmpeg_btn":   "Uninstall FFmpeg",
         "uninstall_ffmpeg_desc":  "Removes the FFmpeg that the setup installed via winget.",
         "ffmpeg_not_by_setup":    "FFmpeg was not installed by the DeuMediaDownloader setup,\nso it stays on your system.",
+        "config_title":           "Settings",
+        "config_restored":        "The settings file was damaged and has been restored from the last backup.\nThe damaged file was kept as {}.",
+        "config_reset":           "The settings file was damaged and no backup was available, so the defaults are used.\nThe damaged file was kept as {}.",
         "uninstall_app_btn":      "Uninstall DeuMediaDownloader",
         "uninstall_app_desc":     "Runs the uninstaller and closes the app.",
         "confirm_clear_data":     "Delete all settings and credentials?\nThis cannot be undone.",
@@ -637,6 +646,9 @@ STRINGS: dict[str, dict[str, str]] = {
         "uninstall_ffmpeg_btn":   "FFmpeg deinstallieren",
         "uninstall_ffmpeg_desc":  "Entfernt das FFmpeg, das das Setup \u00fcber winget installiert hat.",
         "ffmpeg_not_by_setup":    "FFmpeg wurde nicht vom DeuMediaDownloader-Setup installiert\nund bleibt deshalb auf dem System.",
+        "config_title":           "Einstellungen",
+        "config_restored":        "Die Einstellungsdatei war beschädigt und wurde aus der letzten Sicherung wiederhergestellt.\nDie beschädigte Datei liegt als {} im Datenordner.",
+        "config_reset":           "Die Einstellungsdatei war beschädigt und es gab keine Sicherung, deshalb gelten die Standardwerte.\nDie beschädigte Datei liegt als {} im Datenordner.",
         "uninstall_app_btn":      "DeuMediaDownloader deinstallieren",
         "uninstall_app_desc":     "Startet den Deinstaller und schlie\u00dft die App.",
         "confirm_clear_data":     "Alle Einstellungen und Zugangsdaten l\u00f6schen?\nDies kann nicht r\u00fcckg\u00e4ngig gemacht werden.",
@@ -730,19 +742,91 @@ def T(key: str) -> str:
     return STRINGS.get(_lang, STRINGS["en"]).get(key, STRINGS["en"].get(key, key))
 
 
-def load_config() -> dict:
-    CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
-    if CONFIG_FILE.exists():
+# Downloads read the config from worker threads while the UI saves it. On Windows a file
+# that is open for reading cannot be replaced, so reads and writes take turns.
+_config_lock = threading.RLock()
+_load_problem = ""
+
+
+def _backup_file() -> Path:
+    return CONFIG_FILE.with_name(CONFIG_FILE.name + ".bak")
+
+
+def write_atomic(path: Path, data: bytes) -> None:
+    """Write to a temporary file next to `path`, then swap it in. A crash or full disk
+    leaves either the old or the new file, never a half-written one."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(path.name + ".tmp")
+    with open(tmp, "wb") as f:
+        f.write(data)
+        f.flush()
+        os.fsync(f.fileno())
+    for attempt in range(5):
         try:
-            with open(CONFIG_FILE, "r", encoding="utf-8") as f:
-                saved = json.load(f)
-            return {**DEFAULT_CONFIG, **saved}
-        except Exception:
+            os.replace(tmp, path)
+            return
+        except PermissionError:
+            # Virus scanners and backup tools briefly hold files open.
+            if attempt == 4:
+                raise
+            time.sleep(0.05 * (attempt + 1))
+
+
+def _read_json(path: Path) -> dict:
+    with open(path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    if not isinstance(data, dict):
+        raise ValueError("not a JSON object")
+    return data
+
+
+def load_config() -> dict:
+    """Saved settings over the defaults. A damaged config.json is kept as
+    config.broken-<time>.json and the last good copy (config.json.bak) is used instead."""
+    global _load_problem
+    with _config_lock:
+        CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            return {**DEFAULT_CONFIG, **_read_json(CONFIG_FILE)}
+        except FileNotFoundError:
+            return DEFAULT_CONFIG.copy()
+        except (OSError, ValueError) as exc:
+            broken = CONFIG_FILE.with_name(f"config.broken-{time.strftime('%Y%m%d-%H%M%S')}.json")
+            log.error("Settings file %s is damaged (%s), keeping it as %s", CONFIG_FILE, exc, broken.name)
+            try:
+                os.replace(CONFIG_FILE, broken)
+            except OSError as move_exc:
+                log.error("Could not keep the damaged settings file: %s", move_exc)
+        restored = DEFAULT_CONFIG.copy()
+        _load_problem = T("config_reset").format(broken.name)
+        try:
+            restored = {**DEFAULT_CONFIG, **_read_json(_backup_file())}
+            _load_problem = T("config_restored").format(broken.name)
+            log.warning("Restored settings from %s", _backup_file().name)
+        except FileNotFoundError:
             pass
-    return DEFAULT_CONFIG.copy()
+        except (OSError, ValueError) as exc:
+            log.error("Settings backup is damaged too: %s", exc)
+        save_config(restored)
+        return restored
+
+
+def take_load_problem() -> str:
+    """Message for the user if the settings had to be restored, once."""
+    global _load_problem
+    with _config_lock:
+        message, _load_problem = _load_problem, ""
+        return message
 
 
 def save_config(config: dict) -> None:
-    CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
-    with open(CONFIG_FILE, "w", encoding="utf-8") as f:
-        json.dump(config, f, indent=2)
+    data = json.dumps(config, indent=2).encode("utf-8")
+    with _config_lock:
+        if CONFIG_FILE.exists():
+            try:
+                current = CONFIG_FILE.read_bytes()
+                json.loads(current)  # never replace a good backup with a damaged file
+                write_atomic(_backup_file(), current)
+            except (OSError, ValueError) as exc:
+                log.warning("Could not update the settings backup: %s", exc)
+        write_atomic(CONFIG_FILE, data)

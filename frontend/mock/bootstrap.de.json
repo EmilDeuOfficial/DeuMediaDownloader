@@ -165,6 +165,9 @@
     "uninstall_ffmpeg_btn": "FFmpeg deinstallieren",
     "uninstall_ffmpeg_desc": "Entfernt das FFmpeg, das das Setup über winget installiert hat.",
     "ffmpeg_not_by_setup": "FFmpeg wurde nicht vom DeuMediaDownloader-Setup installiert\nund bleibt deshalb auf dem System.",
+    "config_title": "Einstellungen",
+    "config_restored": "Die Einstellungsdatei war beschädigt und wurde aus der letzten Sicherung wiederhergestellt.\nDie beschädigte Datei liegt als {} im Datenordner.",
+    "config_reset": "Die Einstellungsdatei war beschädigt und es gab keine Sicherung, deshalb gelten die Standardwerte.\nDie beschädigte Datei liegt als {} im Datenordner.",
     "uninstall_app_btn": "DeuMediaDownloader deinstallieren",
     "uninstall_app_desc": "Startet den Deinstaller und schließt die App.",
     "confirm_clear_data": "Alle Einstellungen und Zugangsdaten löschen?\nDies kann nicht rückgängig gemacht werden.",
@@ -267,6 +270,7 @@
     "yt_filename_template": "{title}",
     "tt_filename_template": "{title}"
   },
+  "config_warning": "",
   "ffmpeg_ok": true,
   "ffmpeg_by_setup": false,
   "ytdlp_version": "2026.8.19",

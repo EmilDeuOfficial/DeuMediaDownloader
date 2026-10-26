@@ -179,6 +179,7 @@ class Api:
             "lang": current_language(),
             "strings": active_strings(),
             "config": cfg,
+            "config_warning": config.take_load_problem(),
             "ffmpeg_ok": self._ffmpeg_ok,
             "ffmpeg_by_setup": installed_by_setup("FFmpegInstalledBySetup"),
             "ytdlp_version": updater.active_versions().get("yt-dlp", ""),

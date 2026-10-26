@@ -7,6 +7,7 @@ import { createToolView } from "./views/tool-view.js";
 import { installResizeHandles, setResizable } from "./components/resize-handles.js";
 import { openSettings } from "./components/settings-modal.js";
 import { replay } from "./motion.js";
+import { alertModal } from "./components/modal.js";
 
 // No browser context menu (Reload, Inspect, ...) except where copy/paste is useful.
 document.addEventListener("contextmenu", (ev) => {
@@ -79,6 +80,7 @@ async function boot() {
   installResizeHandles();
   startEvents();
   await navigate("launcher");
+  if (data.config_warning) await alertModal(data.strings.config_title, data.config_warning, "error");
 }
 
 boot().catch((err) => {
