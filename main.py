@@ -1,9 +1,11 @@
 import ctypes
 import importlib.util
+import logging
 import os
 import sys
 from pathlib import Path
 
+log = logging.getLogger(__name__)
 
 REQUIRED_PACKAGES = {
     "webview": "pywebview",
@@ -33,8 +35,8 @@ def _resource_dir() -> Path:
 def _message_box(title: str, text: str) -> None:
     try:
         ctypes.windll.user32.MessageBoxW(None, text, title, 0x10)  # MB_ICONERROR
-    except Exception:
-        pass
+    except Exception as exc:
+        log.debug("Message box failed: %s", exc)
 
 
 def _round_corners(window) -> None:
@@ -43,8 +45,8 @@ def _round_corners(window) -> None:
         hwnd = window.native.Handle.ToInt32()
         preference = ctypes.c_int(2)  # DWMWCP_ROUND
         ctypes.windll.dwmapi.DwmSetWindowAttribute(hwnd, 33, ctypes.byref(preference), 4)
-    except Exception:
-        pass
+    except Exception as exc:
+        log.debug("Rounded corners not available: %s", exc)
 
 
 def main():
@@ -62,15 +64,20 @@ def main():
             )
             sys.exit(1)
 
+    from backend.logs import setup_logging
+    setup_logging()
+
     # Before anything imports yt_dlp: a newer downloaded yt-dlp wins over the bundled one.
     from backend import updater
-    updater.activate()
+    versions = updater.activate()
 
-    from backend.config import load_language
+    from backend.config import APP_VERSION, load_language
     load_language()
+    log.info("Starting %s, yt-dlp %s", APP_VERSION, versions.get("yt-dlp"))
 
     ffmpeg_ok = _check_ffmpeg()
     if not ffmpeg_ok:
+        log.warning("FFmpeg not found, audio conversion will be limited")
         print("[WARNING] FFmpeg not found. Audio conversion will be limited.")
         print("          Download FFmpeg from https://ffmpeg.org/download.html")
         print("          and add it to your system PATH.")

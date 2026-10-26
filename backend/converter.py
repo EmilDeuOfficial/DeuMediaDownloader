@@ -1,9 +1,12 @@
+import logging
 import subprocess
 import shutil
 import os
 import requests
 from pathlib import Path
 from typing import Optional
+
+log = logging.getLogger(__name__)
 
 
 def find_ffmpeg() -> Optional[str]:
@@ -194,5 +197,6 @@ def fetch_cover(url: str) -> Optional[bytes]:
         resp = requests.get(url, timeout=10)
         resp.raise_for_status()
         return resp.content
-    except Exception:
+    except Exception as exc:
+        log.warning("Cover download failed for %s: %s", url, exc)
         return None

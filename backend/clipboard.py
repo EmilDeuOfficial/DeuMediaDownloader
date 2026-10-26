@@ -3,6 +3,9 @@
 WebView2 shows a permission prompt for navigator.clipboard.readText(), so the Paste
 button asks Python instead.
 """
+import logging
+
+log = logging.getLogger(__name__)
 
 
 def read_text() -> str:
@@ -36,5 +39,6 @@ def read_text() -> str:
                 kernel32.GlobalUnlock(handle)
         finally:
             user32.CloseClipboard()
-    except Exception:
+    except Exception as exc:
+        log.debug("Clipboard not readable: %s", exc)
         return ""

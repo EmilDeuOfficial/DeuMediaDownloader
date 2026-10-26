@@ -5,6 +5,7 @@ worker differs. A recording runs in real time, so the manager runs one at a time
 account plays one stream) and hands encoding and tagging to a background thread, which lets the
 next track start right away.
 """
+import logging
 import subprocess
 import threading
 import time
@@ -28,6 +29,8 @@ from .downloader import (
 )
 from .errors import RecordError
 from .recorder import ProcessRecorder, RecordingInfo
+
+log = logging.getLogger(__name__)
 
 _TAIL_SECONDS = 0.6         # audio still in the output buffer when Spotify reports the end
 _START_TIMEOUT = 20.0       # the track must start playing within this time
@@ -162,8 +165,8 @@ def _finalize(task: DownloadTask, info: RecordingInfo, cfg: dict, ffmpeg: str, s
         try:
             embed_metadata(filepath=task.output_file, ext=ext, title=track.title, artist=track.artist,
                            album=track.album, year=track.year, cover_data=cover)
-        except Exception:
-            pass
+        except Exception as exc:
+            log.warning("Could not write tags to %s: %s", task.output_file, exc)
 
         status(DownloadStatus.DONE)
         progress(1.0)

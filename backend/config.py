@@ -729,8 +729,8 @@ def load_language() -> None:
             code = LANGUAGE_FILE.read_text(encoding="utf-8").strip()
             if code in STRINGS:
                 _lang = code
-    except Exception:
-        pass
+    except Exception as exc:
+        log.warning("Could not read the language file: %s", exc)
 
 
 def current_language() -> str:

@@ -5,6 +5,7 @@ SDK. The SDK registers a player ("DeuMediaDownloader") on the user's Premium acc
 class logs the user in (OAuth in the default browser), starts a track on that player and
 reports its state. The audio itself is captured by recorder.py.
 """
+import logging
 import threading
 import time
 import webbrowser
@@ -20,6 +21,8 @@ from .config import T, TOKEN_DIR
 from .errors import RecordError
 from .login_page import render_login_page
 from .recorder import find_browser_pid, pid_alive
+
+log = logging.getLogger(__name__)
 
 REDIRECT_URI = "http://127.0.0.1:8888/callback"
 REC_SCOPES = ("streaming user-read-email user-read-private "
@@ -226,7 +229,8 @@ class SpotifySession:
                 me = self._api_factory(token["access_token"]).me()
                 self._identity = {"name": me.get("display_name") or me.get("id", ""),
                                   "premium": me.get("product") == "premium"}
-            except Exception:
+            except Exception as exc:
+                log.warning("Could not read the Spotify profile: %s", exc)
                 return {"logged_in": True, "name": "", "premium": True}
         return {"logged_in": True, **self._identity}
 
@@ -338,8 +342,8 @@ class SpotifySession:
         if window is not None:
             try:
                 window.destroy()
-            except Exception:
-                pass
+            except Exception as exc:
+                log.debug("Closing the Spotify player window failed: %s", exc)
 
     def browser_pid(self) -> int:
         """PID of the WebView2 browser process that plays the audio."""
@@ -384,16 +388,16 @@ class SpotifySession:
         if window is not None:
             try:
                 window.evaluate_js(f"window.recorder && window.recorder.setVolume({value})")
-            except Exception:
-                pass
+            except Exception as exc:
+                log.debug("Setting the player volume failed: %s", exc)
 
     def pause(self) -> None:
         window = self._window
         if window is not None:
             try:
                 window.evaluate_js("window.recorder && window.recorder.pause()")
-            except Exception:
-                pass
+            except Exception as exc:
+                log.debug("Pausing the player failed: %s", exc)
 
     def snapshot(self) -> Dict[str, Any]:
         """Playback progress of the current track: position and duration in ms, played, ended."""

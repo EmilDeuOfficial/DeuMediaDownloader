@@ -5,6 +5,7 @@ Every public method returns {"ok": True, "data": ...} or {"ok": False, "error": 
 private because pywebview walks the public attributes of the exposed object.
 """
 import functools
+import logging
 import os
 import re
 import shutil
@@ -35,6 +36,8 @@ from .config import (
     active_strings,
     current_language,
 )
+
+log = logging.getLogger(__name__)
 
 LAUNCHER_SIZE = (720, 330)
 TOOL_DEFAULT_SIZE = (820, 720)
@@ -162,7 +165,8 @@ class Api:
             import webview
             s = webview.screens[0]
             return int(s.width), int(s.height)
-        except Exception:
+        except Exception as exc:
+            log.debug("Screen size unknown, assuming 1920x1080: %s", exc)
             return 1920, 1080
 
     # ------------------------------------------------------------ bootstrap
@@ -428,7 +432,8 @@ class Api:
                         path = raw.strip().strip('"')
                         if Path(path).exists():
                             return path
-                except Exception:
+                except Exception as exc:
+                    log.debug("No uninstaller entry under %s: %s", sub, exc)
                     continue
 
         exe_dir = Path(sys.executable).parent

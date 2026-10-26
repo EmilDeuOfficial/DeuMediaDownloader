@@ -1,7 +1,10 @@
 import json
+import logging
 import threading
 import time
 from typing import Any, Callable, Dict, Optional, Tuple
+
+log = logging.getLogger(__name__)
 
 
 class Emitter:
@@ -32,9 +35,9 @@ class Emitter:
         with self._lock:
             try:
                 fn(script)
-            except Exception:
+            except Exception as exc:
                 # Window closed or page not ready; events are best effort.
-                pass
+                log.debug("Event %s not delivered: %s", name, exc)
 
     def emit_progress(self, service: str, task_id: str, progress: float) -> None:
         key = (service, task_id)

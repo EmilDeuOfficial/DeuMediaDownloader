@@ -3,6 +3,7 @@
 This is the logic that used to live inside the three Tk apps in ui.py. A
 ServiceRuntime knows nothing about the window; it only talks to an Emitter.
 """
+import logging
 import os
 import sys
 import threading
@@ -30,6 +31,8 @@ from .downloader import (
 )
 from .record import SpotifyRecordManager
 
+log = logging.getLogger(__name__)
+
 SERVICE_IDS = ("spotify", "youtube", "tiktok")
 _NAME_MAX = 60
 _FINISHED = (DownloadStatus.DONE, DownloadStatus.ERROR, DownloadStatus.CANCELLED)
@@ -46,8 +49,8 @@ def _short(text: str, limit: int) -> str:
 def _default_open(path: str) -> None:
     try:
         os.startfile(path)  # type: ignore[attr-defined]  # Windows only
-    except Exception:
-        pass
+    except Exception as exc:
+        log.warning("Could not open %s: %s", path, exc)
 
 
 def _default_spawn(fn: Callable[[], None]) -> None:
@@ -109,12 +112,13 @@ def serialize_task(spec: ServiceSpec, task: Any, config: dict) -> dict:
 
 
 def _print_error(name: str, message: str) -> None:
-    """Full error on stderr as well (visible when the app is started from a terminal)."""
+    """Full error in the log file and on stderr (visible when the app is started from a terminal)."""
+    log.error("%s: %s", name, message)
     try:
         if sys.stderr:
             sys.stderr.write(f"[ERROR] {name}: {message}\n")
-    except Exception:
-        pass
+    except (OSError, ValueError):
+        pass  # no console (windowed .exe) or stderr already closed
 
 
 def _status_log_line(name: str, task: Any) -> str:

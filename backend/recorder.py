@@ -7,6 +7,7 @@ the recording and the volume slider does not change it.
 WebView2 does not start its processes as children of the app, so the app's own PID is no use;
 the browser process is found by the user data folder it was started with.
 """
+import logging
 import subprocess
 import threading
 import time
@@ -16,6 +17,8 @@ from pathlib import Path
 from typing import Any, Callable, Optional, Union
 
 from .errors import RecordError
+
+log = logging.getLogger(__name__)
 
 _CREATE_NO_WINDOW = 0x08000000
 _LIST_PROCESSES = (
@@ -37,7 +40,8 @@ def _pywebview_cache_dir() -> Optional[str]:
     try:
         from webview.platforms import winforms
         return winforms.cache_dir
-    except Exception:
+    except Exception as exc:
+        log.debug("WebView2 cache folder unknown: %s", exc)
         return None
 
 
@@ -167,8 +171,8 @@ class ProcessRecorder:
             self._thread.join(timeout=5)
         try:
             self._cap.stop()
-        except Exception:
-            pass
+        except Exception as exc:
+            log.warning("Stopping the audio capture failed: %s", exc)
         with self._lock:
             return RecordingInfo(
                 path=self._path,

@@ -1,5 +1,6 @@
 import ctypes
 import glob
+import logging
 import os
 import re
 import shutil
@@ -17,6 +18,8 @@ import yt_dlp
 from . import secure_store
 from .config import AUDIO_FORMATS, ORIGINAL_EXTS, VIDEO_FORMATS, WIKI_PAGES, load_config, T
 from .converter import embed_metadata, fetch_cover, find_deno, find_ffmpeg
+
+log = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -219,8 +222,8 @@ def _make_work_dir(task) -> Path:
     if os.name == "nt":
         try:
             ctypes.windll.kernel32.SetFileAttributesW(str(work), 0x02)   # hidden
-        except Exception:
-            pass
+        except Exception as exc:
+            log.debug("Could not hide the work folder %s: %s", work, exc)
     return work
 
 
@@ -464,8 +467,8 @@ class SpotifyClient:
                     continue
                 try:
                     tracks.append(self._track_from_data(t))
-                except Exception:
-                    pass
+                except Exception as exc:
+                    log.warning("Skipping playlist track %s: %s", t.get("id"), exc)
             results = self._api("next", results) if results.get("next") else None
         return tracks
 
@@ -499,8 +502,8 @@ class SpotifyClient:
         for track_id in track_ids:
             try:
                 tracks.append(self.get_track_info(track_id))
-            except Exception:
-                pass
+            except Exception as exc:
+                log.warning("Skipping track %s: %s", track_id, exc)
         return tracks
 
     def get_album_tracks(self, album_id: str) -> List[TrackInfo]:
@@ -554,7 +557,8 @@ def _search_entries(query: str) -> List[Dict[str, Any]]:
         with yt_dlp.YoutubeDL(opts) as ydl:
             info = ydl.extract_info(f"ytsearch5:{query}", download=False)
         return [e for e in ((info or {}).get("entries") or []) if e]
-    except Exception:
+    except Exception as exc:
+        log.warning("YouTube search failed for %r: %s", query, exc)
         return []
 
 
@@ -695,8 +699,8 @@ def download_spotify_track(task: DownloadTask, ffmpeg_ok: bool) -> None:
                 year       = track.year,
                 cover_data = cover_data,
             )
-        except Exception:
-            pass
+        except Exception as exc:
+            log.warning("Could not write tags to %s: %s", final_path.name, exc)
 
         _status(DownloadStatus.DONE)
         _progress(1.0)
@@ -750,8 +754,8 @@ class YouTubeClient:
                 continue
             try:
                 tracks.append(self._info_to_track(e))
-            except Exception:
-                pass
+            except Exception as exc:
+                log.warning("Skipping playlist entry %s: %s", e.get("id"), exc)
         return tracks
 
     @staticmethod
