@@ -60,6 +60,8 @@ Name: "{commondesktop}\{#MyAppName}";   Filename: "{app}\{#MyAppExeName}"; Tasks
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+; The in-app updater runs the setup silently with /RESTARTAPP=1 and expects the app to start again.
+Filename: "{app}\{#MyAppExeName}"; Flags: nowait runasoriginaluser; Check: RestartAfterUpdate
 
 [Code]
 const
@@ -210,6 +212,11 @@ begin
     );
 end;
 
+function RestartAfterUpdate(): Boolean;
+begin
+  Result := WizardSilent() and (ExpandConstant('{param:RESTARTAPP|0}') = '1');
+end;
+
 procedure WriteLanguageFile();
 var
   LangDir: String;
@@ -217,6 +224,9 @@ var
 begin
   LangDir := ExpandConstant('{%USERPROFILE}') + '\.spotify_downloader';
   ForceDirectories(LangDir);
+  // A silent update must not replace the language the user chose with the system language.
+  if RestartAfterUpdate() and FileExists(LangDir + '\language') then
+    Exit;
   if ActiveLanguage() = 'german' then
     LangCode := 'de'
   else
