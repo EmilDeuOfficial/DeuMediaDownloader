@@ -115,7 +115,6 @@ export function openUpdate() {
       actions.append(
         button(T("upd_btn_release"), "neutral", () => api.open_url(info.page).catch(() => {})),
         h("span", { class: "tb-spacer" }),
-        button(T("upd_btn_later"), "neutral", () => close()),
         button(T("upd_btn_install"), "accent", install),
       );
       return;
