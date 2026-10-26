@@ -1,7 +1,17 @@
 """
 Build script: Python app -> EXE (PyInstaller) -> Installer (Inno Setup)
 Run with: python build.py
+
+Code signing (optional): set one of these environment variables and the build signs the
+.exe, the setup and the uninstaller with signtool (Windows SDK):
+  DMD_SIGN_THUMBPRINT   SHA-1 thumbprint of a certificate in the Windows certificate store
+                        (also works for certificates on a USB token or HSM)
+  DMD_SIGN_PFX          path to a .pfx file, password in DMD_SIGN_PFX_PASSWORD
+  DMD_SIGN_TIMESTAMP    timestamp server (default: http://timestamp.digicert.com)
+  DMD_SIGNTOOL          path to signtool.exe if it is not found automatically
+Without these the build runs unsigned, as before.
 """
+import glob
 import subprocess
 import sys
 import os
@@ -36,8 +46,11 @@ def check_version(version: str):
         sys.exit(1)
 
 
-def run(cmd: list, **kwargs):
-    print(f"\n>>> {' '.join(str(c) for c in cmd)}\n")
+def run(cmd: list, secret: str = "", **kwargs):
+    shown = " ".join(str(c) for c in cmd)
+    if secret:
+        shown = shown.replace(secret, "***")
+    print(f"\n>>> {shown}\n")
     result = subprocess.run(cmd, **kwargs)
     if result.returncode != 0:
         print(f"[ERROR] Command failed with exit code {result.returncode}")
@@ -71,6 +84,58 @@ def install_inno():
     sys.exit(1)
 
 
+def find_signtool() -> str | None:
+    if os.environ.get("DMD_SIGNTOOL"):
+        return os.environ["DMD_SIGNTOOL"]
+    found = shutil.which("signtool")
+    if found:
+        return found
+    kits = os.path.expandvars(r"%ProgramFiles(x86)%\Windows Kits\10\bin\*\x64\signtool.exe")
+    candidates = sorted(glob.glob(kits))
+    return candidates[-1] if candidates else None
+
+
+def sign_args() -> tuple[list, str] | None:
+    """signtool arguments (without the file) and the secret to hide in output, or None
+    when no certificate is configured."""
+    thumbprint = os.environ.get("DMD_SIGN_THUMBPRINT", "").replace(" ", "")
+    pfx = os.environ.get("DMD_SIGN_PFX", "")
+    if not (thumbprint or pfx):
+        return None
+    signtool = find_signtool()
+    if not signtool:
+        print("[ERROR] Code signing is configured but signtool.exe was not found.")
+        print("        Install the Windows SDK (winget install Microsoft.WindowsSDK.10.0.26100)")
+        print("        or set DMD_SIGNTOOL to the full path of signtool.exe.")
+        sys.exit(1)
+    timestamp = os.environ.get("DMD_SIGN_TIMESTAMP", "http://timestamp.digicert.com")
+    args = [signtool, "sign", "/fd", "sha256", "/tr", timestamp, "/td", "sha256",
+            "/d", "DeuMediaDownloader"]
+    secret = ""
+    if thumbprint:
+        args += ["/sha1", thumbprint]
+    else:
+        args += ["/f", pfx]
+        secret = os.environ.get("DMD_SIGN_PFX_PASSWORD", "")
+        if secret:
+            args += ["/p", secret]
+    return args, secret
+
+
+def sign(path: Path, signing: tuple[list, str]):
+    args, secret = signing
+    print(f"[*] Signing {path.name}...")
+    run(args + [str(path)], secret=secret)
+
+
+def inno_sign_option(signing: tuple[list, str]) -> list:
+    """ISCC options that let Inno Setup sign the setup and the uninstaller itself
+    ($q is a quote and $f the file name in Inno's sign tool syntax)."""
+    args, _ = signing
+    quoted = " ".join(f"$q{a}$q" if " " in a else a for a in args)
+    return [f"/Sdmdsign={quoted} $f", "/DSIGN"]
+
+
 def clean():
     print("[*] Cleaning previous build artifacts...")
     for d in [BUILD, ROOT / "__pycache__"]:
@@ -96,9 +161,10 @@ def build_exe():
     print(f"[OK] DeuMediaDownloader.exe built ({size_mb:.1f} MB)")
 
 
-def build_installer(iscc: str):
+def build_installer(iscc: str, signing=None):
     print("[*] Building installer with Inno Setup...")
-    run([iscc, str(ROOT / "installer.iss")], cwd=ROOT)
+    options = inno_sign_option(signing) if signing else []
+    run([iscc, *options, str(ROOT / "installer.iss")], secret=signing[1] if signing else "", cwd=ROOT)
     installer = DIST / "DeuMediaDownloader_Setup.exe"
     if not installer.exists():
         print("[ERROR] Installer not found after Inno Setup.")
@@ -119,14 +185,19 @@ def main():
     check_version(version)
     print(f"[*] Version {version} (release tag v{version})")
 
+    signing = sign_args()
+    print("[*] Code signing: " + ("on" if signing else "off (no certificate configured)"))
+
     clean()
     build_exe()
+    if signing:
+        sign(DIST / "DeuMediaDownloader.exe", signing)
 
     iscc = find_inno()
     if not iscc:
         iscc = install_inno()
 
-    build_installer(iscc)
+    build_installer(iscc, signing)
     print("[DONE] Build complete.")
 
 

@@ -29,6 +29,11 @@ ArchitecturesInstallIn64BitMode=x64compatible
 UninstallDisplayIcon={app}\{#MyAppExeName}
 SetupIconFile=img\app.ico
 MinVersion=10.0
+#ifdef SIGN
+; build.py defines SIGN and the "dmdsign" tool when a code signing certificate is configured.
+SignTool=dmdsign
+SignedUninstaller=yes
+#endif
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
