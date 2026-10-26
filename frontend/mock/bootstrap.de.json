@@ -1,6 +1,6 @@
 {
   "app_name": "DeuMediaDownloader",
-  "version": "1.7.1",
+  "version": "7.1",
   "lang": "de",
   "strings": {
     "spotify_url": "Spotify URL",
@@ -127,12 +127,13 @@
     "open_youtube": "YouTube öffnen",
     "open_tiktok": "TikTok öffnen",
     "tiktok_desc": "Videos und\nAudio",
-    "spotify_win_title": "DeuMediaDownloader  v1.7.1",
+    "spotify_win_title": "DeuMediaDownloader  v7.1",
     "youtube_win_title": "YouTube Downloader",
     "tiktok_win_title": "TikTok Downloader",
     "no_credentials": "Keine Spotify-API-Zugangsdaten. Einstellungen öffnen.",
     "spotify_init": "Spotify-Client initialisiert.",
     "spotify_auth_err": "Spotify-Authentifizierungsfehler: {}",
+    "err_spotify_relogin": "Die Spotify-Anmeldung ist abgelaufen. Bitte erneut versuchen und im Browser bei Spotify anmelden.",
     "settings_saved": "Einstellungen gespeichert.",
     "fetching_spotify": "{}-Info von Spotify wird geladen…",
     "fetching_youtube": "YouTube-Info wird geladen…",
@@ -162,7 +163,8 @@
     "clear_data_btn": "Konfigurationsdaten löschen",
     "clear_data_desc": "Entfernt Einstellungen, API-Zugangsdaten und Cache.",
     "uninstall_ffmpeg_btn": "FFmpeg deinstallieren",
-    "uninstall_ffmpeg_desc": "Entfernt FFmpeg über winget vom System.",
+    "uninstall_ffmpeg_desc": "Entfernt das FFmpeg, das das Setup über winget installiert hat.",
+    "ffmpeg_not_by_setup": "FFmpeg wurde nicht vom DeuMediaDownloader-Setup installiert\nund bleibt deshalb auf dem System.",
     "uninstall_app_btn": "DeuMediaDownloader deinstallieren",
     "uninstall_app_desc": "Startet den Deinstaller und schließt die App.",
     "confirm_clear_data": "Alle Einstellungen und Zugangsdaten löschen?\nDies kann nicht rückgängig gemacht werden.",
@@ -266,6 +268,8 @@
     "tt_filename_template": "{title}"
   },
   "ffmpeg_ok": true,
+  "ffmpeg_by_setup": false,
+  "ytdlp_version": "2026.8.19",
   "options": {
     "audio_formats": [
       "MP3 (320 kbps)",

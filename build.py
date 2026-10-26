@@ -5,6 +5,7 @@ Run with: python build.py
 import subprocess
 import sys
 import os
+import re
 import shutil
 from pathlib import Path
 
@@ -19,6 +20,20 @@ INNO_PATHS = [
     os.path.expandvars(r"%LOCALAPPDATA%\Programs\Inno Setup 6\ISCC.exe"),
     os.path.expandvars(r"%LOCALAPPDATA%\Programs\Inno Setup 5\ISCC.exe"),
 ]
+
+
+def app_version() -> str:
+    text = (ROOT / "backend" / "config.py").read_text(encoding="utf-8")
+    return re.search(r'^APP_VERSION = "([^"]+)"', text, re.M).group(1)
+
+
+def check_version(version: str):
+    """The README badge must show the version that is being built (release tag v<version>)."""
+    badge = re.search(r"badge/version-v([\w.]+)-", (ROOT / "README.md").read_text(encoding="utf-8"))
+    if not badge or badge.group(1) != version:
+        found = badge.group(1) if badge else "none"
+        print(f"[ERROR] README badge shows v{found}, backend/config.py says {version}.")
+        sys.exit(1)
 
 
 def run(cmd: list, **kwargs):
@@ -99,6 +114,10 @@ def main():
     print("=" * 60)
     print("  DeuMediaDownloader - Build Pipeline")
     print("=" * 60)
+
+    version = app_version()
+    check_version(version)
+    print(f"[*] Version {version} (release tag v{version})")
 
     clean()
     build_exe()

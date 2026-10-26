@@ -1,5 +1,9 @@
 #define MyAppName "DeuMediaDownloader"
-#define MyAppVersion "1.7.1"
+; Taken from the version resource of the .exe (APP_VERSION in backend/config.py).
+#define MyAppVersion GetStringFileInfo(AddBackslash(SourcePath) + "dist\DeuMediaDownloader.exe", "ProductVersion")
+#if MyAppVersion == ""
+  #error dist\DeuMediaDownloader.exe has no version resource, build it with build.py
+#endif
 #define MyAppPublisher "DeuMediaDownloader"
 #define MyAppExeName "DeuMediaDownloader.exe"
 ; Remembers which tools this setup installed, so the uninstaller (and the app's
@@ -10,6 +14,7 @@
 AppId={{8F3A2B1C-4D5E-6F7A-8B9C-0D1E2F3A4B5C}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
+VersionInfoVersion={#GetVersionNumbersString(AddBackslash(SourcePath) + "dist\DeuMediaDownloader.exe")}
 AppPublisher={#MyAppPublisher}
 DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppName}

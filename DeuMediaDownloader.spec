@@ -1,6 +1,31 @@
 # -*- mode: python ; coding: utf-8 -*-
 # PyInstaller spec for DeuMediaDownloader (built by build.py).
+import re
+from pathlib import Path
+
 from PyInstaller.utils.hooks import collect_all, collect_submodules, copy_metadata
+from PyInstaller.utils.win32.versioninfo import (
+    FixedFileInfo, StringFileInfo, StringStruct, StringTable, VarFileInfo, VarStruct, VSVersionInfo,
+)
+
+APP_VERSION = re.search(r'^APP_VERSION = "([^"]+)"', Path("backend/config.py").read_text(encoding="utf-8"), re.M).group(1)
+_numbers = tuple((list(map(int, APP_VERSION.split("."))) + [0, 0, 0, 0])[:4])
+# Version resource of the .exe: shown in Explorer, read by installer.iss and by code signing.
+version_info = VSVersionInfo(
+    ffi=FixedFileInfo(filevers=_numbers, prodvers=_numbers),
+    kids=[
+        StringFileInfo([StringTable("040904B0", [
+            StringStruct("CompanyName", "DeuMediaDownloader"),
+            StringStruct("FileDescription", "DeuMediaDownloader"),
+            StringStruct("FileVersion", APP_VERSION),
+            StringStruct("InternalName", "DeuMediaDownloader"),
+            StringStruct("OriginalFilename", "DeuMediaDownloader.exe"),
+            StringStruct("ProductName", "DeuMediaDownloader"),
+            StringStruct("ProductVersion", APP_VERSION),
+        ])]),
+        VarFileInfo([VarStruct("Translation", [0x0409, 1200])]),
+    ],
+)
 
 datas = [
     ("frontend", "frontend"),
@@ -49,4 +74,5 @@ exe = EXE(
     upx=False,
     console=False,
     icon="img/app.ico",
+    version=version_info,
 )

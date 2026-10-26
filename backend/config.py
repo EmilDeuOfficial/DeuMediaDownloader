@@ -2,7 +2,9 @@ import json
 from pathlib import Path
 
 APP_NAME = "DeuMediaDownloader"
-APP_VERSION = "1.7.1"
+# The one place for the version number: build.py and DeuMediaDownloader.spec write it into
+# the .exe, installer.iss reads it from there, and the release tag is "v" + APP_VERSION.
+APP_VERSION = "7.1"
 
 # Tutorials live in the GitHub wiki; the app links to these pages.
 WIKI_URL = "https://github.com/EmilDeuOfficial/DeuMediaDownloader/wiki"
