@@ -368,6 +368,7 @@ class SpotifyClient:
         # "invalid_client", since a refresh token is only valid for the client it was issued to.
         cache_path = Path.home() / ".spotify_downloader" / f".spotify_token_cache_{client_id}"
         cache_path.parent.mkdir(parents=True, exist_ok=True)
+        self._cache_path = cache_path
 
         self._sp = spotipy.Spotify(
             auth_manager=SpotifyOAuth(
@@ -379,6 +380,22 @@ class SpotifyClient:
                 open_browser=True,
             )
         )
+
+    def _api(self, method: str, *args, **kwargs) -> Any:
+        """Call `self._sp.<method>`; logs in again once if Spotify revoked the cached token."""
+        from spotipy.oauth2 import SpotifyOauthError
+        try:
+            return getattr(self._sp, method)(*args, **kwargs)
+        except SpotifyOauthError as exc:
+            if getattr(exc, "error", None) != "invalid_grant":
+                raise
+            # "Refresh token revoked": the user changed the password or removed the app's
+            # access. Without the cache file spotipy opens the login page on the next call.
+            self._cache_path.unlink(missing_ok=True)
+        try:
+            return getattr(self._sp, method)(*args, **kwargs)
+        except SpotifyOauthError as exc:
+            raise ValueError(T("err_spotify_relogin")) from exc
 
     def parse_url(self, url: str) -> tuple[str, str]:
         patterns = [
@@ -396,7 +413,7 @@ class SpotifyClient:
         raise ValueError(f"Could not parse Spotify URL: {url}")
 
     def get_track_info(self, track_id: str) -> TrackInfo:
-        return self._track_from_data(self._sp.track(track_id))
+        return self._track_from_data(self._api("track", track_id))
 
     def get_playlist_tracks(self, playlist_id: str) -> List[TrackInfo]:
         import spotipy
@@ -414,7 +431,7 @@ class SpotifyClient:
 
     def _get_playlist_tracks_via_api(self, playlist_id: str) -> List[TrackInfo]:
         tracks: List[TrackInfo] = []
-        results = self._sp.playlist_items(playlist_id, additional_types=("track",))
+        results = self._api("playlist_items", playlist_id, additional_types=("track",))
         while results:
             for item in results.get("items", []):
                 if not item:
@@ -426,7 +443,7 @@ class SpotifyClient:
                     tracks.append(self._track_from_data(t))
                 except Exception:
                     pass
-            results = self._sp.next(results) if results.get("next") else None
+            results = self._api("next", results) if results.get("next") else None
         return tracks
 
     def _get_playlist_tracks_via_embed(self, playlist_id: str) -> List[TrackInfo]:
@@ -464,13 +481,13 @@ class SpotifyClient:
         return tracks
 
     def get_album_tracks(self, album_id: str) -> List[TrackInfo]:
-        album_data = self._sp.album(album_id)
+        album_data = self._api("album", album_id)
         album_name = album_data["name"]
         cover_url  = album_data["images"][0]["url"] if album_data["images"] else None
         year       = album_data.get("release_date", "")[:4] or None
 
         tracks: List[TrackInfo] = []
-        results = self._sp.album_tracks(album_id)
+        results = self._api("album_tracks", album_id)
         while results:
             for t in results["items"]:
                 tracks.append(TrackInfo(
@@ -482,7 +499,7 @@ class SpotifyClient:
                     duration_ms = t["duration_ms"],
                     year        = year,
                 ))
-            results = self._sp.next(results) if results.get("next") else None
+            results = self._api("next", results) if results.get("next") else None
         return tracks
 
     @staticmethod

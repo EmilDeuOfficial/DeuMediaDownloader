@@ -196,7 +196,13 @@ class SpotifySession:
     def _cached_token(auth: Any) -> Optional[dict]:
         try:
             return auth.validate_token(auth.cache_handler.get_cached_token())
-        except Exception:
+        except Exception as exc:
+            if getattr(exc, "error", None) == "invalid_grant":
+                # Spotify revoked the refresh token: drop it, so the app asks for a new login.
+                try:
+                    Path(auth.cache_handler.cache_path).unlink(missing_ok=True)
+                except (OSError, AttributeError):
+                    pass
             return None
 
     def _access_token(self) -> str:

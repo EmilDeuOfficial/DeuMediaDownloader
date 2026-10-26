@@ -20,7 +20,7 @@ _HTTP = re.compile(r"HTTP Error (\d{3})", re.I)
 _RULES = [
     (re.compile(r"private video", re.I), "err_short_private"),
     (re.compile(r"video (is )?unavailable|has been removed|no longer available|account associated with this video has been terminated", re.I), "err_short_unavailable"),
-    (re.compile(r"sign in to confirm|confirm you.re not a bot|login required|log in to view|requires (a )?login", re.I), "err_short_signin"),
+    (re.compile(r"invalid_grant|refresh token revoked|sign in to confirm|confirm you.re not a bot|login required|log in to view|requires (a )?login", re.I), "err_short_signin"),
     (re.compile(r"not made this video available in your country|not available in your (country|region)|geo.?restrict", re.I), "err_short_geo"),
     (re.compile(r"downloaded file not found", re.I), "err_short_no_file"),
     (re.compile(r"ffmpeg[^\n]*not (found|installed)|ffprobe and ffmpeg not found", re.I), "err_short_ffmpeg"),
