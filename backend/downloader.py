@@ -69,9 +69,27 @@ _RATE_MAP = {"1M": 1_048_576, "5M": 5_242_880, "10M": 10_485_760, "50M": 52_428_
 _THUMBNAIL_EMBED_EXTS = {"mp3", "mkv", "mka", "ogg", "opus", "flac", "m4a", "mp4", "m4v", "mov"}
 
 
-def _tool_opts() -> dict:
-    """Locations of the external programs yt-dlp uses (ffmpeg, the deno JavaScript runtime)."""
-    opts: dict = {}
+def _backoff(attempt: int) -> float:
+    """Seconds to wait before retry number `attempt` (0-based): 1, 2, 4, ... at most 30."""
+    return min(2 ** attempt, 30)
+
+
+# Network behaviour for every yt-dlp call. Without a socket timeout a stalled connection
+# hangs a download forever; without backoff the retries hammer a rate-limited server.
+_NETWORK_OPTS = {
+    "socket_timeout":      30,
+    "retries":             10,
+    "fragment_retries":    10,
+    "extractor_retries":   3,
+    "file_access_retries": 5,
+    "retry_sleep_functions": {"http": _backoff, "fragment": _backoff, "extractor": _backoff},
+}
+
+
+def _base_opts() -> dict:
+    """Network settings plus the locations of the external programs yt-dlp uses
+    (ffmpeg, the deno JavaScript runtime)."""
+    opts: dict = {**_NETWORK_OPTS}
     path = find_ffmpeg()
     if path:
         opts["ffmpeg_location"] = str(Path(path).parent)
@@ -530,7 +548,7 @@ def _search_entries(query: str) -> List[Dict[str, Any]]:
         "no_warnings":   True,
         "extract_flat":  True,
         "skip_download": True,
-        **_tool_opts(),
+        **_base_opts(),
     }
     try:
         with yt_dlp.YoutubeDL(opts) as ydl:
@@ -646,7 +664,7 @@ def download_spotify_track(task: DownloadTask, ffmpeg_ok: bool) -> None:
             "no_warnings":    True,
             "progress_hooks": [ydl_hook],
             "noplaylist":     True,
-            **_tool_opts(),
+            **_base_opts(),
         }
 
         if find_ffmpeg():
@@ -713,7 +731,7 @@ class YouTubeClient:
     """Used by the Spotify downloader to resolve YouTube URLs pasted into its URL field."""
     @staticmethod
     def _ydl_opts() -> dict:
-        return {"quiet": True, "no_warnings": True, **_tool_opts()}
+        return {"quiet": True, "no_warnings": True, **_base_opts()}
 
     def get_track_info(self, url: str) -> TrackInfo:
         url = re.sub(r"[&?]list=[^&]+", "", url)
@@ -797,7 +815,7 @@ def extract_youtube_entries(url: str) -> List[Dict[str, Any]]:
         "extract_flat":  "in_playlist" if is_playlist else False,
         "noplaylist":    not is_playlist,
         "skip_download": True,
-        **_tool_opts(),
+        **_base_opts(),
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=False)
@@ -888,7 +906,7 @@ def download_youtube_task(task: YouTubeTask, ffmpeg_ok: bool) -> None:
             "no_warnings":    True,
             "progress_hooks": [ydl_hook],
             "noplaylist":     True,
-            **_tool_opts(),
+            **_base_opts(),
         }
 
         if not is_video and ffmpeg_ok:
@@ -1008,7 +1026,7 @@ def extract_tiktok_entries(url: str) -> List[Dict[str, Any]]:
         "no_warnings":   True,
         "extract_flat":  is_playlist,
         "skip_download": True,
-        **_tool_opts(),
+        **_base_opts(),
         **_tiktok_cookie_opts(load_config()),
     }
     try:
@@ -1103,7 +1121,7 @@ def download_tiktok_task(task: TikTokTask, ffmpeg_ok: bool) -> None:
             "no_warnings":    True,
             "progress_hooks": [ydl_hook],
             "noplaylist":     True,
-            **_tool_opts(),
+            **_base_opts(),
             **_tiktok_cookie_opts(cfg),
         }
 
