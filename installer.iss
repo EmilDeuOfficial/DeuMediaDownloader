@@ -9,6 +9,8 @@
 ; Remembers which tools this setup installed, so the uninstaller (and the app's
 ; "Uninstall FFmpeg" button) only removes what was not there before.
 #define StateKey "Software\DeuMediaDownloader"
+; Official Windows build of Deno, always the latest release.
+#define DenoZipUrl "https://github.com/denoland/deno/releases/latest/download/deno-x86_64-pc-windows-msvc.zip"
 
 [Setup]
 AppId={{8F3A2B1C-4D5E-6F7A-8B9C-0D1E2F3A4B5C}
@@ -29,6 +31,8 @@ ArchitecturesInstallIn64BitMode=x64compatible
 UninstallDisplayIcon={app}\{#MyAppExeName}
 SetupIconFile=img\app.ico
 MinVersion=10.0
+; Writes Setup Log <date>.txt to %TEMP%, useful when a tool could not be installed.
+SetupLogging=yes
 #ifdef SIGN
 ; build.py defines SIGN and the "dmdsign" tool when a code signing certificate is configured.
 SignTool=dmdsign
@@ -44,6 +48,10 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 
 [Files]
 Source: "dist\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+
+[UninstallDelete]
+; Deno downloaded by the setup (see DownloadDeno)
+Type: filesandordirs; Name: "{app}\deno"
 
 [Icons]
 Name: "{group}\{#MyAppName}";          Filename: "{app}\{#MyAppExeName}"
@@ -114,27 +122,60 @@ var
 begin
   Result := Exec(ExpandConstant('{cmd}'), '/c where deno >nul 2>&1', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
   Result := (Result and (ResultCode = 0)) or
+    FileExists(ExpandConstant('{app}\deno\deno.exe')) or
     FileExists(ExpandConstant('{%USERPROFILE}') + '\.deno\bin\deno.exe') or
     FileExists(ExpandConstant('{localappdata}') + '\Microsoft\WinGet\Links\deno.exe');
 end;
 
-procedure InstallDeno();
+// Deno is a single deno.exe. The setup downloads the official release zip into {app}\deno,
+// so it works without winget (winget's portable install fails in the elevated setup on some
+// systems) and the uninstaller removes it together with the app.
+function DownloadDeno(): Boolean;
 var
   ResultCode: Integer;
+  ZipFile, DestDir: String;
 begin
-  WizardForm.StatusLabel.Caption := 'Installing Deno (JavaScript runtime for YouTube)...';
+  ZipFile := ExpandConstant('{tmp}\deno.zip');
+  DestDir := ExpandConstant('{app}\deno');
   Exec(
-    ExpandConstant('{cmd}'),
-    '/c winget install DenoLand.Deno --accept-source-agreements --accept-package-agreements',
+    'powershell.exe',
+    '-NoProfile -ExecutionPolicy Bypass -Command "$ProgressPreference = ''SilentlyContinue''; ' +
+    '[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; ' +
+    'Invoke-WebRequest -UseBasicParsing -Uri ''{#DenoZipUrl}'' -OutFile ''' + ZipFile + '''; ' +
+    'Expand-Archive -Force -Path ''' + ZipFile + ''' -DestinationPath ''' + DestDir + '''"',
     '',
     SW_HIDE,
     ewWaitUntilTerminated,
     ResultCode
   );
-  if ResultCode = 0 then begin
-    DenoInstalled := True;
-    RegWriteDWordValue(HKLM, '{#StateKey}', 'DenoInstalledBySetup', 1);
-  end else
+  Result := FileExists(DestDir + '\deno.exe');
+  if not Result then
+    Log(Format('Deno download failed (exit code %d)', [ResultCode]));
+end;
+
+function WingetInstallDeno(): Boolean;
+var
+  ResultCode: Integer;
+begin
+  Result := Exec(
+    ExpandConstant('{cmd}'),
+    '/c winget install --exact --id DenoLand.Deno --scope user --accept-source-agreements --accept-package-agreements',
+    '',
+    SW_HIDE,
+    ewWaitUntilTerminated,
+    ResultCode
+  ) and (ResultCode = 0);
+  if Result then
+    RegWriteDWordValue(HKLM, '{#StateKey}', 'DenoInstalledBySetup', 1)
+  else
+    Log(Format('winget install DenoLand.Deno failed (exit code %d)', [ResultCode]));
+end;
+
+procedure InstallDeno();
+begin
+  WizardForm.StatusLabel.Caption := 'Installing Deno (JavaScript runtime for YouTube)...';
+  DenoInstalled := DownloadDeno() or WingetInstallDeno();
+  if not DenoInstalled then
     MsgBox(
       'Deno could not be installed automatically.' + #13#10 +
       'Without it some YouTube formats may be missing. Install it later with:' + #13#10 +

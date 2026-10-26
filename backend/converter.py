@@ -2,6 +2,7 @@ import logging
 import subprocess
 import shutil
 import os
+import sys
 import requests
 from pathlib import Path
 from typing import Optional
@@ -45,6 +46,7 @@ def find_deno() -> Optional[str]:
     home = Path(os.environ.get("USERPROFILE", str(Path.home())))
     local = Path(os.environ.get("LOCALAPPDATA", ""))
     candidates = [
+        Path(sys.executable).parent / "deno" / "deno.exe",  # downloaded by the setup
         home / ".deno" / "bin" / "deno.exe",            # official install script
         local / "Microsoft" / "WinGet" / "Links" / "deno.exe",
     ]
