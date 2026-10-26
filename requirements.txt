@@ -1,15 +1,21 @@
-pywebview>=5.0
-spotipy>=2.23.0
-yt-dlp>=2026.8.19
+# Exact versions, so every build bundles the same tested code. Update deliberately:
+# change a version here, run the tests, then build. The .exe keeps yt-dlp current on its
+# own (backend/updater.py), so its pin only sets the version bundled into a new release.
+pywebview==6.2.1
+spotipy==2.26.0
+yt-dlp==2026.10.21
 # YouTube signature solver for yt-dlp; runs in the deno JavaScript runtime
-# (installed by the setup, see installer.iss).
-yt-dlp-ejs>=0.8.0
-mutagen>=1.47.0
-requests>=2.31.0
+# (installed by the setup, see installer.iss). yt-dlp only accepts the exact version
+# it was released with, see "yt-dlp-ejs==" in yt-dlp's own requirements.
+yt-dlp-ejs==0.8.0
+mutagen==1.48.1
+requests==2.34.2
 # Not imported directly - yt-dlp's TikTok extractor needs this for browser
 # impersonation (TLS fingerprinting) to get past TikTok's bot detection.
 # Without it every TikTok request fails with "Unexpected response from
 # webpage request", regardless of cookies.
-curl_cffi>=0.10
+curl_cffi==0.16.3
 # Per-process audio capture (WASAPI process loopback) for the Spotify recording mode.
-proc-tap>=1.1
+proc-tap==1.1.1
+# Build only (python build.py)
+pyinstaller==6.22.2
