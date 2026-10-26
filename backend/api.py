@@ -16,6 +16,7 @@ import webbrowser
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional, Tuple
 
+from . import app_update
 from . import clipboard
 from . import updater
 from . import config
@@ -116,12 +117,13 @@ def _default_spawn(fn: Callable[[], None]) -> None:
 class Api:
     def __init__(self, emitter: Any, runtimes: Dict[str, Any], ffmpeg_ok: bool,
                  spawn: Optional[Callable[[Callable[[], None]], None]] = None,
-                 session: Any = None):
+                 session: Any = None, app_updater: Optional[app_update.AppUpdater] = None):
         self._em = emitter
         self._rt = runtimes
         self._ffmpeg_ok = ffmpeg_ok
         self._spawn = spawn or _default_spawn
         self._session = session
+        self._app_updater = app_updater or app_update.AppUpdater()
         self._window: Any = None
         self._view: Optional[str] = None
         self._maximized = False
@@ -391,6 +393,54 @@ class Api:
             return
         cfg[GEOMETRY_KEYS[view]] = value
         self._store(cfg)
+
+    # ---------------------------------------------------------- app update
+    @_safe
+    def check_app_update(self) -> dict:
+        try:
+            return self._app_updater.check()
+        except app_update.UpdateError as exc:
+            raise ApiError(T(exc.key), T("upd_title"))
+
+    @_safe
+    def install_app_update(self) -> None:
+        """Download the setup of the release found by check_app_update and run it silently.
+        The setup closes this app, replaces it and starts the new version."""
+        if not getattr(sys, "frozen", False):
+            raise ApiError(T("upd_err_not_installed"), T("upd_title"))
+        last = [-1]
+
+        def progress(value: float) -> None:
+            percent = int(value * 100)
+            if percent != last[0]:
+                last[0] = percent
+                self._em.emit("update_progress", {"progress": value})
+
+        try:
+            setup = self._app_updater.download(progress)
+        except app_update.UpdateError as exc:
+            raise ApiError(T(exc.key), T("upd_title"))
+        if not self._start_setup(setup):
+            raise ApiError(T("upd_err_start"), T("upd_title"))
+        self._save_geometry(self._view)
+        self._close_session()
+        self._window.destroy()
+
+    @_safe
+    def cancel_app_update(self) -> None:
+        self._app_updater.cancel()
+
+    @staticmethod
+    def _start_setup(setup: Path) -> bool:
+        """Run the setup with admin rights (UAC prompt). False if it was not started,
+        for example because the prompt was declined."""
+        import ctypes
+        cmd = app_update.setup_command(setup)
+        # ShellExecuteW returns a value above 32 on success.
+        result = ctypes.windll.shell32.ShellExecuteW(None, "runas", cmd["file"], cmd["params"], None, 1)
+        if result <= 32:
+            log.warning("Starting the update setup failed (ShellExecute code %s)", result)
+        return result > 32
 
     # ---------------------------------------------------------- maintenance
     @_safe
