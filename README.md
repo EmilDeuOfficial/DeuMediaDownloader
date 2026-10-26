@@ -22,6 +22,7 @@ Save audio (MP3, AAC, OGG, Opus, FLAC, AIFF, WAV) or video (MP4, MOV, AVI, MKV, 
 - **YouTube extras** - Subtitles, SponsorBlock and a speed limit
 - **Two languages** - German and English interface
 - **Installer** - Sets up FFmpeg and the WebView2 runtime when they are missing
+- **App updates** - The title bar shows a dot when a newer release is on GitHub; one click shows the release notes, downloads the setup, installs it and restarts the app
 
 Full documentation is in the [wiki](https://github.com/EmilDeuOfficial/DeuMediaDownloader/wiki).
 
@@ -144,6 +145,7 @@ DeuMediaDownloader/
 │   ├── login_page.py       Page shown in the browser after the Spotify login
 │   ├── converter.py        FFmpeg helpers + mutagen metadata embedding
 │   ├── clipboard.py        Windows clipboard access for the Paste button
+│   ├── app_update.py       Finds, downloads and verifies a newer app release (GitHub)
 │   ├── updater.py          Keeps yt-dlp current inside the .exe (downloads from PyPI)
 │   ├── secure_store.py     Encrypts the Spotify secret and login tokens (Windows DPAPI)
 │   ├── logs.py             Rotating log file in the data folder
