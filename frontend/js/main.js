@@ -62,7 +62,6 @@ async function boot() {
   views.launcher = createLauncher({
     appTitle: data.strings.launcher_title || data.app_name,
     onChoose: (id) => navigate(id),
-    onUpdate: openUpdate,
     onMinimize: () => api.minimize().catch(() => {}),
     onClose: () => api.close().catch(() => {}),
   });

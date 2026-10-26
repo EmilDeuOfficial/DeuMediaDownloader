@@ -7,7 +7,7 @@ function barButton(iconName, title, onClick, extraClass = "", action = "") {
   return h("button", { class: `tb-btn ${extraClass}`.trim(), type: "button", title, "aria-label": title, dataset: { action }, onClick }, icon(iconName));
 }
 
-// Update button: always there, a dot marks a newer release. The click opens the update dialog.
+// Update button (downloader views only): a dot marks a newer release. The click opens the update dialog.
 function updateButton(onUpdate) {
   const btn = barButton("download", T("tip_update"), onUpdate, "tb-update", "update");
   btn.append(h("span", { class: "tb-badge", "aria-hidden": "true" }));
@@ -23,12 +23,12 @@ function updateButton(onUpdate) {
 }
 
 // Launcher variant: 40 px bar with title and close button.
-export function createLauncherBar({ title, onUpdate, onMinimize, onClose }) {
+export function createLauncherBar({ title, onMinimize, onClose }) {
   return h(
     "div",
     { class: "titlebar launcher-bar pywebview-drag-region" },
     h("span", { class: "tb-title" }, title),
-    h("span", { class: "tb-group" }, updateButton(onUpdate), barButton("minimize", T("tip_minimize"), onMinimize, "", "minimize"), barButton("close", T("tip_close"), onClose, "danger", "close")),
+    h("span", { class: "tb-group" }, barButton("minimize", T("tip_minimize"), onMinimize, "", "minimize"), barButton("close", T("tip_close"), onClose, "danger", "close")),
   );
 }
 

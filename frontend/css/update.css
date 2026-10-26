@@ -30,7 +30,7 @@
 .upd-percent { font-variant-numeric: tabular-nums; color: var(--text-secondary); }
 
 .upd-notes {
-  max-height: min(260px, calc(100vh - 300px));
+  max-height: min(340px, calc(100vh - 270px));
   min-height: 60px;
   overflow-y: auto;
   padding: 10px 12px;
