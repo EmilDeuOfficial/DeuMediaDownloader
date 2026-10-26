@@ -5,6 +5,8 @@ import threading
 import time
 from pathlib import Path
 
+from . import secure_store
+
 log = logging.getLogger(__name__)
 
 APP_NAME = "DeuMediaDownloader"
@@ -406,6 +408,7 @@ STRINGS: dict[str, dict[str, str]] = {
         "config_title":           "Settings",
         "config_restored":        "The settings file was damaged and has been restored from the last backup.\nThe damaged file was kept as {}.",
         "config_reset":           "The settings file was damaged and no backup was available, so the defaults are used.\nThe damaged file was kept as {}.",
+        "secret_unreadable":      "The saved Spotify Client Secret belongs to another Windows account or computer.\nPlease enter it again in the Spotify settings.",
         "uninstall_app_btn":      "Uninstall DeuMediaDownloader",
         "uninstall_app_desc":     "Runs the uninstaller and closes the app.",
         "confirm_clear_data":     "Delete all settings and credentials?\nThis cannot be undone.",
@@ -649,6 +652,7 @@ STRINGS: dict[str, dict[str, str]] = {
         "config_title":           "Einstellungen",
         "config_restored":        "Die Einstellungsdatei war beschädigt und wurde aus der letzten Sicherung wiederhergestellt.\nDie beschädigte Datei liegt als {} im Datenordner.",
         "config_reset":           "Die Einstellungsdatei war beschädigt und es gab keine Sicherung, deshalb gelten die Standardwerte.\nDie beschädigte Datei liegt als {} im Datenordner.",
+        "secret_unreadable":      "Das gespeicherte Spotify Client Secret gehört zu einem anderen Windows-Konto oder PC.\nBitte gib es in den Spotify-Einstellungen erneut ein.",
         "uninstall_app_btn":      "DeuMediaDownloader deinstallieren",
         "uninstall_app_desc":     "Startet den Deinstaller und schlie\u00dft die App.",
         "confirm_clear_data":     "Alle Einstellungen und Zugangsdaten l\u00f6schen?\nDies kann nicht r\u00fcckg\u00e4ngig gemacht werden.",
@@ -780,6 +784,37 @@ def _read_json(path: Path) -> dict:
     return data
 
 
+# Stored encrypted with the Windows user's key (see secure_store.py), plain in memory.
+SECRET_KEYS = ("spotify_client_secret",)
+
+
+def _seal_secrets(cfg: dict) -> dict:
+    return {k: secure_store.protect(v) if k in SECRET_KEYS else v for k, v in cfg.items()}
+
+
+def _open_secrets(saved: dict) -> tuple[dict, bool]:
+    """Decrypt the secrets of a saved config. Returns (config, needs_save): plain
+    secrets from older versions and unreadable ones are rewritten."""
+    global _load_problem
+    opened, needs_save = dict(saved), False
+    for key in SECRET_KEYS:
+        value = saved.get(key)
+        if not value:
+            continue
+        if not secure_store.is_protected(value):
+            needs_save = secure_store.available()
+            continue
+        try:
+            opened[key] = secure_store.unprotect(value)
+        except ValueError as exc:
+            # Settings copied from another Windows account or machine.
+            log.error("Could not decrypt %s, it has to be entered again: %s", key, exc)
+            opened[key] = ""
+            needs_save = True
+            _load_problem = T("secret_unreadable")
+    return opened, needs_save
+
+
 def load_config() -> dict:
     """Saved settings over the defaults. A damaged config.json is kept as
     config.broken-<time>.json and the last good copy (config.json.bak) is used instead."""
@@ -787,7 +822,11 @@ def load_config() -> dict:
     with _config_lock:
         CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
         try:
-            return {**DEFAULT_CONFIG, **_read_json(CONFIG_FILE)}
+            saved, needs_save = _open_secrets(_read_json(CONFIG_FILE))
+            cfg = {**DEFAULT_CONFIG, **saved}
+            if needs_save:
+                save_config(cfg)
+            return cfg
         except FileNotFoundError:
             return DEFAULT_CONFIG.copy()
         except (OSError, ValueError) as exc:
@@ -800,7 +839,7 @@ def load_config() -> dict:
         restored = DEFAULT_CONFIG.copy()
         _load_problem = T("config_reset").format(broken.name)
         try:
-            restored = {**DEFAULT_CONFIG, **_read_json(_backup_file())}
+            restored = {**DEFAULT_CONFIG, **_open_secrets(_read_json(_backup_file()))[0]}
             _load_problem = T("config_restored").format(broken.name)
             log.warning("Restored settings from %s", _backup_file().name)
         except FileNotFoundError:
@@ -820,13 +859,16 @@ def take_load_problem() -> str:
 
 
 def save_config(config: dict) -> None:
-    data = json.dumps(config, indent=2).encode("utf-8")
+    data = json.dumps(_seal_secrets(config), indent=2).encode("utf-8")
     with _config_lock:
         if CONFIG_FILE.exists():
             try:
-                current = CONFIG_FILE.read_bytes()
-                json.loads(current)  # never replace a good backup with a damaged file
-                write_atomic(_backup_file(), current)
+                # Parsing first means a damaged file never replaces a good backup; sealing
+                # means a secret from an older plain-text file does not survive in the backup.
+                current = json.loads(CONFIG_FILE.read_bytes())
+                if not isinstance(current, dict):
+                    raise ValueError("not a JSON object")
+                write_atomic(_backup_file(), json.dumps(_seal_secrets(current), indent=2).encode("utf-8"))
             except (OSError, ValueError) as exc:
                 log.warning("Could not update the settings backup: %s", exc)
         write_atomic(CONFIG_FILE, data)

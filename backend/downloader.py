@@ -14,6 +14,7 @@ from typing import Optional, Callable, List, Dict, Any
 import requests
 import yt_dlp
 
+from . import secure_store
 from .config import AUDIO_FORMATS, ORIGINAL_EXTS, VIDEO_FORMATS, WIKI_PAGES, load_config, T
 from .converter import embed_metadata, fetch_cover, find_deno, find_ffmpeg
 
@@ -380,7 +381,7 @@ class SpotifyClient:
                 client_secret=client_secret,
                 redirect_uri="http://127.0.0.1:8888/callback",
                 scope="playlist-read-private playlist-read-collaborative",
-                cache_path=str(cache_path),
+                cache_handler=secure_store.token_cache(str(cache_path)),
                 open_browser=True,
             )
         )

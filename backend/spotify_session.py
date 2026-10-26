@@ -15,6 +15,7 @@ from typing import Any, Callable, Dict, Optional
 from urllib.parse import parse_qs, urlparse
 
 from . import config
+from . import secure_store
 from .config import T, TOKEN_DIR
 from .errors import RecordError
 from .login_page import render_login_page
@@ -40,7 +41,7 @@ def _make_auth(client_id: str, client_secret: str) -> Any:
         client_secret=client_secret,
         redirect_uri=REDIRECT_URI,
         scope=REC_SCOPES,
-        cache_path=str(TOKEN_DIR / f".spotify_record_token_{client_id}"),
+        cache_handler=secure_store.token_cache(str(TOKEN_DIR / f".spotify_record_token_{client_id}")),
         open_browser=False,
     )
 

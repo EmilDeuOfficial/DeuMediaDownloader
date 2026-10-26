@@ -168,6 +168,7 @@
     "config_title": "Settings",
     "config_restored": "The settings file was damaged and has been restored from the last backup.\nThe damaged file was kept as {}.",
     "config_reset": "The settings file was damaged and no backup was available, so the defaults are used.\nThe damaged file was kept as {}.",
+    "secret_unreadable": "The saved Spotify Client Secret belongs to another Windows account or computer.\nPlease enter it again in the Spotify settings.",
     "uninstall_app_btn": "Uninstall DeuMediaDownloader",
     "uninstall_app_desc": "Runs the uninstaller and closes the app.",
     "confirm_clear_data": "Delete all settings and credentials?\nThis cannot be undone.",
