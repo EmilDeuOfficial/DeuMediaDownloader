@@ -25,6 +25,7 @@
 .tb-group { display: inline-flex; gap: 4px; }
 
 .tb-btn {
+  position: relative;
   width: 36px;
   height: 28px;
   display: inline-flex;

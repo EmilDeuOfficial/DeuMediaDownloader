@@ -135,7 +135,52 @@ function simulate(task, failing) {
 
 const findTask = (service, id) => (tasks[service] || []).find((t) => t.id === id);
 
+// App update (?update=none: up to date, ?update=error: the check fails, ?update=installfail:
+// the install fails half way; without it a newer version is offered).
+const MOCK_NOTES = [
+  "## DeuMediaDownloader v9.9 - Mock release",
+  "",
+  "### Neu",
+  "- **Updates in der App**: Ein Klick auf das Update-Symbol in der Titelleiste lädt die neue Version und installiert sie.",
+  "- Die App startet danach von selbst neu.",
+  "",
+  "### Fix",
+  "- Kleine Fehler in der Warteschlange behoben, siehe [Wiki](https://github.com/EmilDeuOfficial/DeuMediaDownloader/wiki).",
+  "",
+  "### Download",
+  "| Datei | Beschreibung |",
+  "|-------|-------------|",
+  "| DeuMediaDownloader_Setup.exe | Windows-Installer |",
+].join("\n");
+let updateCancelled = false;
+const updateMode = () => new URLSearchParams(location.search).get("update");
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 export const mockApi = {
+  async check_app_update() {
+    await wait(700);
+    const strings = bootstrapData.strings;
+    const current = bootstrapData.version;
+    if (updateMode() === "error") return fail(strings.upd_err_network, { title: strings.upd_title });
+    if (updateMode() === "none") return ok({ available: false, current, version: current, notes: "", page: "", name: "", size: 0 });
+    return ok({ available: true, current, version: "9.9", notes: MOCK_NOTES, page: "https://github.com/EmilDeuOfficial/DeuMediaDownloader/releases", name: "", size: 50634244 });
+  },
+  async install_app_update() {
+    const strings = bootstrapData.strings;
+    updateCancelled = false;
+    for (let p = 0; p <= 100; p += 4) {
+      if (updateCancelled) return fail(strings.upd_err_cancelled, { title: strings.upd_title });
+      if (updateMode() === "installfail" && p >= 60) return fail(strings.upd_err_download, { title: strings.upd_title });
+      emit("update_progress", { progress: p / 100 });
+      await wait(90);
+    }
+    await wait(1200);
+    return ok();
+  },
+  async cancel_app_update() {
+    updateCancelled = true;
+    return ok();
+  },
   async bootstrap() {
     if (!bootstrapData) {
       const lang = new URLSearchParams(location.search).get("lang");

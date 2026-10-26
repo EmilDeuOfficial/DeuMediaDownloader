@@ -5,6 +5,7 @@ import { api } from "./bridge.js";
 export const app = createStore({
   appName: "DeuMediaDownloader",
   version: "",
+  lang: "en",
   ffmpegOk: true,
   ffmpegBySetup: false,
   config: {},

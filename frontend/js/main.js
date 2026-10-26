@@ -6,6 +6,8 @@ import { createLauncher } from "./views/launcher.js";
 import { createToolView } from "./views/tool-view.js";
 import { installResizeHandles, setResizable } from "./components/resize-handles.js";
 import { openSettings } from "./components/settings-modal.js";
+import { openUpdate } from "./components/update-modal.js";
+import { updates } from "./updates.js";
 import { replay } from "./motion.js";
 import { alertModal } from "./components/modal.js";
 
@@ -50,6 +52,7 @@ async function boot() {
   app.set({
     appName: data.app_name,
     version: data.version,
+    lang: data.lang,
     ffmpegOk: data.ffmpeg_ok,
     ffmpegBySetup: !!data.ffmpeg_by_setup,
     config: data.config,
@@ -59,6 +62,7 @@ async function boot() {
   views.launcher = createLauncher({
     appTitle: data.strings.launcher_title || data.app_name,
     onChoose: (id) => navigate(id),
+    onUpdate: openUpdate,
     onMinimize: () => api.minimize().catch(() => {}),
     onClose: () => api.close().catch(() => {}),
   });
@@ -67,6 +71,7 @@ async function boot() {
     const view = createToolView(SERVICES[id], {
       onBack: () => navigate("launcher"),
       onSettings: openSettings,
+      onUpdate: openUpdate,
     });
     const serviceIds = SERVICES[id].record ? [id, SERVICES[id].record.id] : [id];
     view.restoreTasks(serviceIds.flatMap((sid) => (data.tasks && data.tasks[sid]) || []));
@@ -80,6 +85,7 @@ async function boot() {
   installResizeHandles();
   startEvents();
   await navigate("launcher");
+  updates.check({ quiet: true });
   if (data.config_warning) await alertModal(data.strings.config_title, data.config_warning, "error");
 }
 

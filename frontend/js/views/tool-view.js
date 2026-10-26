@@ -16,7 +16,7 @@ import { animateOut, replay } from "../motion.js";
 const label = (text, cls = "") => h("span", { class: `field-label ${cls}`.trim() }, text);
 
 // One generic downloader screen. `service` is a descriptor from services.js.
-export function createToolView(service, { onBack, onSettings }) {
+export function createToolView(service, { onBack, onSettings, onUpdate }) {
   const cfgKeys = service.cfg;
   const cfg = () => app.get().config;
   const options = () => app.get().options;
@@ -62,6 +62,7 @@ export function createToolView(service, { onBack, onSettings }) {
     service: service.id,
     onBack,
     onSettings: () => onSettings(service.id),
+    onUpdate,
     onMinimize: () => api.minimize().catch(() => {}),
     onMaximize: toggleMaximize,
     onClose: () => api.close().catch(() => {}),

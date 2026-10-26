@@ -4,7 +4,7 @@ import { SERVICES, SERVICE_ORDER } from "../services.js";
 import { createLauncherBar } from "../components/titlebar.js";
 
 // Start screen: three cards, one per service (720x330, not resizable).
-export function createLauncher({ appTitle, onChoose, onMinimize, onClose }) {
+export function createLauncher({ appTitle, onChoose, onUpdate, onMinimize, onClose }) {
   const cards = SERVICE_ORDER.map((id) => {
     const svc = SERVICES[id];
     const l = svc.launcher;
@@ -29,7 +29,7 @@ export function createLauncher({ appTitle, onChoose, onMinimize, onClose }) {
   const el = h(
     "div",
     { class: "view launcher-view" },
-    createLauncherBar({ title: appTitle, onMinimize, onClose }),
+    createLauncherBar({ title: appTitle, onUpdate, onMinimize, onClose }),
     h(
       "div",
       { class: "launcher-body" },
