@@ -1,6 +1,6 @@
 {
   "app_name": "DeuMediaDownloader",
-  "version": "7.1",
+  "version": "7.2",
   "lang": "de",
   "strings": {
     "spotify_url": "Spotify URL",
@@ -127,7 +127,7 @@
     "open_youtube": "YouTube öffnen",
     "open_tiktok": "TikTok öffnen",
     "tiktok_desc": "Videos und\nAudio",
-    "spotify_win_title": "DeuMediaDownloader  v7.1",
+    "spotify_win_title": "DeuMediaDownloader  v7.2",
     "youtube_win_title": "YouTube Downloader",
     "tiktok_win_title": "TikTok Downloader",
     "no_credentials": "Keine Spotify-API-Zugangsdaten. Einstellungen öffnen.",
@@ -274,7 +274,7 @@
   "config_warning": "",
   "ffmpeg_ok": true,
   "ffmpeg_by_setup": false,
-  "ytdlp_version": "2026.8.19",
+  "ytdlp_version": "2026.10.21",
   "options": {
     "audio_formats": [
       "MP3 (320 kbps)",
