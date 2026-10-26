@@ -1,6 +1,9 @@
 pywebview>=5.0
 spotipy>=2.23.0
 yt-dlp>=2026.8.19
+# YouTube signature solver for yt-dlp; runs in the deno JavaScript runtime
+# (installed by the setup, see installer.iss).
+yt-dlp-ejs>=0.8.0
 mutagen>=1.47.0
 requests>=2.31.0
 # Not imported directly - yt-dlp's TikTok extractor needs this for browser

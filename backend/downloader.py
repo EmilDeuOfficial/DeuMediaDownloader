@@ -15,7 +15,7 @@ import requests
 import yt_dlp
 
 from .config import AUDIO_FORMATS, ORIGINAL_EXTS, VIDEO_FORMATS, WIKI_PAGES, load_config, T
-from .converter import embed_metadata, fetch_cover, find_ffmpeg
+from .converter import embed_metadata, fetch_cover, find_deno, find_ffmpeg
 
 
 # ---------------------------------------------------------------------------
@@ -68,11 +68,15 @@ _RATE_MAP = {"1M": 1_048_576, "5M": 5_242_880, "10M": 10_485_760, "50M": 52_428_
 _THUMBNAIL_EMBED_EXTS = {"mp3", "mkv", "mka", "ogg", "opus", "flac", "m4a", "mp4", "m4v", "mov"}
 
 
-def _ffmpeg_opts() -> dict:
+def _tool_opts() -> dict:
+    """Locations of the external programs yt-dlp uses (ffmpeg, the deno JavaScript runtime)."""
     opts: dict = {}
     path = find_ffmpeg()
     if path:
         opts["ffmpeg_location"] = str(Path(path).parent)
+    deno = find_deno()
+    if deno:
+        opts["js_runtimes"] = {"deno": {"path": deno}}
     return opts
 
 
@@ -525,7 +529,7 @@ def _search_entries(query: str) -> List[Dict[str, Any]]:
         "no_warnings":   True,
         "extract_flat":  True,
         "skip_download": True,
-        **_ffmpeg_opts(),
+        **_tool_opts(),
     }
     try:
         with yt_dlp.YoutubeDL(opts) as ydl:
@@ -641,7 +645,7 @@ def download_spotify_track(task: DownloadTask, ffmpeg_ok: bool) -> None:
             "no_warnings":    True,
             "progress_hooks": [ydl_hook],
             "noplaylist":     True,
-            **_ffmpeg_opts(),
+            **_tool_opts(),
         }
 
         if find_ffmpeg():
@@ -708,7 +712,7 @@ class YouTubeClient:
     """Used by the Spotify downloader to resolve YouTube URLs pasted into its URL field."""
     @staticmethod
     def _ydl_opts() -> dict:
-        return {"quiet": True, "no_warnings": True, **_ffmpeg_opts()}
+        return {"quiet": True, "no_warnings": True, **_tool_opts()}
 
     def get_track_info(self, url: str) -> TrackInfo:
         url = re.sub(r"[&?]list=[^&]+", "", url)
@@ -792,7 +796,7 @@ def extract_youtube_entries(url: str) -> List[Dict[str, Any]]:
         "extract_flat":  "in_playlist" if is_playlist else False,
         "noplaylist":    not is_playlist,
         "skip_download": True,
-        **_ffmpeg_opts(),
+        **_tool_opts(),
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=False)
@@ -883,7 +887,7 @@ def download_youtube_task(task: YouTubeTask, ffmpeg_ok: bool) -> None:
             "no_warnings":    True,
             "progress_hooks": [ydl_hook],
             "noplaylist":     True,
-            **_ffmpeg_opts(),
+            **_tool_opts(),
         }
 
         if not is_video and ffmpeg_ok:
@@ -1003,7 +1007,7 @@ def extract_tiktok_entries(url: str) -> List[Dict[str, Any]]:
         "no_warnings":   True,
         "extract_flat":  is_playlist,
         "skip_download": True,
-        **_ffmpeg_opts(),
+        **_tool_opts(),
         **_tiktok_cookie_opts(load_config()),
     }
     try:
@@ -1098,7 +1102,7 @@ def download_tiktok_task(task: TikTokTask, ffmpeg_ok: bool) -> None:
             "no_warnings":    True,
             "progress_hooks": [ydl_hook],
             "noplaylist":     True,
-            **_ffmpeg_opts(),
+            **_tool_opts(),
             **_tiktok_cookie_opts(cfg),
         }
 

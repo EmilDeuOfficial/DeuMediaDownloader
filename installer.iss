@@ -48,6 +48,7 @@ const
 var
   FFmpegPage: TOutputMsgMemoWizardPage;
   FFmpegInstalled: Boolean;
+  DenoInstalled: Boolean;
 
 function WebView2Installed(): Boolean;
 var
@@ -88,6 +89,41 @@ begin
       'FFmpeg could not be installed automatically.' + #13#10 +
       'Please install it manually after setup:' + #13#10 +
       'winget install yt-dlp.FFmpeg',
+      mbInformation, MB_OK
+    );
+end;
+
+// yt-dlp needs a JavaScript runtime for YouTube (signature solving, see yt-dlp-ejs).
+function DenoExists(): Boolean;
+var
+  ResultCode: Integer;
+begin
+  Result := Exec(ExpandConstant('{cmd}'), '/c where deno >nul 2>&1', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  Result := (Result and (ResultCode = 0)) or
+    FileExists(ExpandConstant('{%USERPROFILE}') + '\.deno\bin\deno.exe') or
+    FileExists(ExpandConstant('{localappdata}') + '\Microsoft\WinGet\Links\deno.exe');
+end;
+
+procedure InstallDeno();
+var
+  ResultCode: Integer;
+begin
+  WizardForm.StatusLabel.Caption := 'Installing Deno (JavaScript runtime for YouTube)...';
+  Exec(
+    ExpandConstant('{cmd}'),
+    '/c winget install DenoLand.Deno --accept-source-agreements --accept-package-agreements',
+    '',
+    SW_HIDE,
+    ewWaitUntilTerminated,
+    ResultCode
+  );
+  if ResultCode = 0 then
+    DenoInstalled := True
+  else
+    MsgBox(
+      'Deno could not be installed automatically.' + #13#10 +
+      'Without it some YouTube formats may be missing. Install it later with:' + #13#10 +
+      'winget install DenoLand.Deno',
       mbInformation, MB_OK
     );
 end;
@@ -144,6 +180,9 @@ begin
     end else begin
       FFmpegInstalled := True;
     end;
+    if not DenoExists() then begin
+      InstallDeno();
+    end;
   end;
 end;
 
@@ -178,5 +217,7 @@ begin
     S := S + 'Microsoft Edge WebView2 Runtime: will be installed automatically' + NewLine;
   if not FFmpegExists() then
     S := S + 'FFmpeg: will be installed automatically' + NewLine;
+  if not DenoExists() then
+    S := S + 'Deno (JavaScript runtime for YouTube): will be installed automatically' + NewLine;
   Result := S;
 end;

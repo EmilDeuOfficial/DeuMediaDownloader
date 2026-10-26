@@ -32,6 +32,28 @@ def find_ffmpeg() -> Optional[str]:
     return None
 
 
+def find_deno() -> Optional[str]:
+    """Return the deno executable path or None. yt-dlp needs a JavaScript runtime to
+    solve YouTube's signature challenges; without one many formats are missing."""
+    path = shutil.which("deno")
+    if path:
+        return path
+
+    home = Path(os.environ.get("USERPROFILE", str(Path.home())))
+    local = Path(os.environ.get("LOCALAPPDATA", ""))
+    candidates = [
+        home / ".deno" / "bin" / "deno.exe",            # official install script
+        local / "Microsoft" / "WinGet" / "Links" / "deno.exe",
+    ]
+    winget_base = local / "Microsoft" / "WinGet" / "Packages"
+    if winget_base.exists():
+        candidates += sorted(winget_base.glob("DenoLand.Deno*/deno.exe"))
+    for c in candidates:
+        if c.is_file():
+            return str(c)
+    return None
+
+
 def check_ffmpeg() -> bool:
     return find_ffmpeg() is not None
 

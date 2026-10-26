@@ -10,7 +10,7 @@ binaries = []
 hiddenimports = []
 
 # Packages that load code or data dynamically and need everything collected.
-for package in ("webview", "yt_dlp", "curl_cffi", "spotipy", "proctap"):
+for package in ("webview", "yt_dlp", "yt_dlp_ejs", "curl_cffi", "spotipy", "proctap"):
     pkg_datas, pkg_binaries, pkg_hidden = collect_all(package)
     datas += pkg_datas
     binaries += pkg_binaries
@@ -18,8 +18,9 @@ for package in ("webview", "yt_dlp", "curl_cffi", "spotipy", "proctap"):
 
 hiddenimports += collect_submodules("clr_loader")
 
-# backend/updater.py compares the bundled yt-dlp version with downloaded updates.
+# backend/updater.py compares the bundled versions with downloaded updates.
 datas += copy_metadata("yt-dlp")
+datas += copy_metadata("yt-dlp-ejs")
 
 a = Analysis(
     ["main.py"],
