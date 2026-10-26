@@ -62,6 +62,10 @@ def main():
             )
             sys.exit(1)
 
+    # Before anything imports yt_dlp: a newer downloaded yt-dlp wins over the bundled one.
+    from backend import updater
+    updater.activate()
+
     from backend.config import load_language
     load_language()
 
@@ -79,6 +83,7 @@ def main():
         os.environ["WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS"] = (args + " --autoplay-policy=no-user-gesture-required").strip()
 
     window = create_app(ffmpeg_ok)
+    updater.check_in_background()
     base = _resource_dir()
     icon = base / "img" / "app.ico"
     # Deliberately not private_mode=False/storage_path: the Spotify login is persisted by

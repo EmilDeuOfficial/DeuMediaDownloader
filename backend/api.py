@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, Optional, Tuple
 
 from . import clipboard
+from . import updater
 from . import config
 from .config import (
     APP_NAME,
@@ -166,6 +167,7 @@ class Api:
             "strings": active_strings(),
             "config": cfg,
             "ffmpeg_ok": self._ffmpeg_ok,
+            "ytdlp_version": updater.active_versions().get("yt-dlp", ""),
             "options": {
                 "audio_formats": list(AUDIO_FORMATS),
                 "video_formats": list(VIDEO_FORMATS),

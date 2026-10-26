@@ -1,6 +1,6 @@
 # -*- mode: python ; coding: utf-8 -*-
 # PyInstaller spec for DeuMediaDownloader (built by build.py).
-from PyInstaller.utils.hooks import collect_all, collect_submodules
+from PyInstaller.utils.hooks import collect_all, collect_submodules, copy_metadata
 
 datas = [
     ("frontend", "frontend"),
@@ -17,6 +17,9 @@ for package in ("webview", "yt_dlp", "curl_cffi", "spotipy", "proctap"):
     hiddenimports += pkg_hidden
 
 hiddenimports += collect_submodules("clr_loader")
+
+# backend/updater.py compares the bundled yt-dlp version with downloaded updates.
+datas += copy_metadata("yt-dlp")
 
 a = Analysis(
     ["main.py"],
