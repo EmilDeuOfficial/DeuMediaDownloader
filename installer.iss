@@ -2,6 +2,9 @@
 #define MyAppVersion "1.7.1"
 #define MyAppPublisher "DeuMediaDownloader"
 #define MyAppExeName "DeuMediaDownloader.exe"
+; Remembers which tools this setup installed, so the uninstaller (and the app's
+; "Uninstall FFmpeg" button) only removes what was not there before.
+#define StateKey "Software\DeuMediaDownloader"
 
 [Setup]
 AppId={{8F3A2B1C-4D5E-6F7A-8B9C-0D1E2F3A4B5C}
@@ -82,9 +85,10 @@ begin
     ewWaitUntilTerminated,
     ResultCode
   );
-  if ResultCode = 0 then
-    FFmpegInstalled := True
-  else
+  if ResultCode = 0 then begin
+    FFmpegInstalled := True;
+    RegWriteDWordValue(HKLM, '{#StateKey}', 'FFmpegInstalledBySetup', 1);
+  end else
     MsgBox(
       'FFmpeg could not be installed automatically.' + #13#10 +
       'Please install it manually after setup:' + #13#10 +
@@ -117,9 +121,10 @@ begin
     ewWaitUntilTerminated,
     ResultCode
   );
-  if ResultCode = 0 then
-    DenoInstalled := True
-  else
+  if ResultCode = 0 then begin
+    DenoInstalled := True;
+    RegWriteDWordValue(HKLM, '{#StateKey}', 'DenoInstalledBySetup', 1);
+  end else
     MsgBox(
       'Deno could not be installed automatically.' + #13#10 +
       'Without it some YouTube formats may be missing. Install it later with:' + #13#10 +
@@ -177,13 +182,18 @@ begin
     end;
     if not FFmpegExists() then begin
       InstallFFmpeg();
-    end else begin
-      FFmpegInstalled := True;
     end;
     if not DenoExists() then begin
       InstallDeno();
     end;
   end;
+end;
+
+function InstalledBySetup(Name: String): Boolean;
+var
+  Value: Cardinal;
+begin
+  Result := RegQueryDWordValue(HKLM, '{#StateKey}', Name, Value) and (Value = 1);
 end;
 
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
@@ -192,12 +202,20 @@ var
   DataDir: String;
 begin
   if CurUninstallStep = usPostUninstall then begin
-    // Remove FFmpeg
-    Exec(
-      ExpandConstant('{cmd}'),
-      '/c winget uninstall yt-dlp.FFmpeg --accept-source-agreements',
-      '', SW_HIDE, ewWaitUntilTerminated, ResultCode
-    );
+    // Only remove tools this setup installed; a FFmpeg or Deno the user had before stays.
+    if InstalledBySetup('FFmpegInstalledBySetup') then
+      Exec(
+        ExpandConstant('{cmd}'),
+        '/c winget uninstall yt-dlp.FFmpeg --accept-source-agreements',
+        '', SW_HIDE, ewWaitUntilTerminated, ResultCode
+      );
+    if InstalledBySetup('DenoInstalledBySetup') then
+      Exec(
+        ExpandConstant('{cmd}'),
+        '/c winget uninstall DenoLand.Deno --accept-source-agreements',
+        '', SW_HIDE, ewWaitUntilTerminated, ResultCode
+      );
+    RegDeleteKeyIncludingSubkeys(HKLM, '{#StateKey}');
     // Remove app config / data directory
     DataDir := ExpandConstant('{%USERPROFILE}') + '\.spotify_downloader';
     DelTree(DataDir, True, True, True);

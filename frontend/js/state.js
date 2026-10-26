@@ -6,6 +6,7 @@ export const app = createStore({
   appName: "DeuMediaDownloader",
   version: "",
   ffmpegOk: true,
+  ffmpegBySetup: false,
   config: {},
   options: {},
 });

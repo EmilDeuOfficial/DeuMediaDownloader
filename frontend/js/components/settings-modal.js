@@ -255,7 +255,7 @@ export function openSettings(serviceId) {
     "div",
     { class: "sm-scroll" },
     h("div", { class: "sm-danger-title" }, T("uninstall_section")),
-    UNINSTALL_ROWS.map((row) =>
+    UNINSTALL_ROWS.filter((row) => !row.onlyIf || app.get()[row.onlyIf]).map((row) =>
       h(
         "div",
         { class: `sm-uninstall${row.danger ? " danger" : ""}` },

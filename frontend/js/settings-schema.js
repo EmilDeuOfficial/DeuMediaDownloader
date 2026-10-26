@@ -144,9 +144,9 @@ export const SETTINGS_SCHEMA = {
   },
 };
 
-// Shared "Uninstall" tab.
+// Shared "Uninstall" tab. onlyIf names an app state flag that must be true to show the row.
 export const UNINSTALL_ROWS = [
   { icon: "trash", titleKey: "clear_data_btn", descKey: "clear_data_desc", confirmKey: "confirm_clear_data", action: "clear_data", danger: false },
-  { icon: "gear", titleKey: "uninstall_ffmpeg_btn", descKey: "uninstall_ffmpeg_desc", confirmKey: "confirm_uninstall_ffmpeg", action: "uninstall_ffmpeg", danger: false, doneKey: "uninstall_started" },
+  { icon: "gear", titleKey: "uninstall_ffmpeg_btn", descKey: "uninstall_ffmpeg_desc", confirmKey: "confirm_uninstall_ffmpeg", action: "uninstall_ffmpeg", danger: false, doneKey: "uninstall_started", onlyIf: "ffmpegBySetup" },
   { icon: "close", titleKey: "uninstall_app_btn", descKey: "uninstall_app_desc", confirmKey: "confirm_uninstall_app", action: "uninstall_app", danger: true },
 ];

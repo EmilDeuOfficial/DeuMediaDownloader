@@ -46,6 +46,19 @@ GEOMETRY_KEYS = {
     "launcher": "launcher_pos",
 }
 _APP_ID = "{8F3A2B1C-4D5E-6F7A-8B9C-0D1E2F3A4B5C}_is1"
+# Written by installer.iss for each tool the setup installed itself.
+_SETUP_STATE_KEY = r"Software\DeuMediaDownloader"
+
+
+def installed_by_setup(value_name: str) -> bool:
+    """True if the setup installed this tool (see installer.iss), so removing it is safe."""
+    try:
+        import winreg
+        with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, _SETUP_STATE_KEY) as key:
+            value, _ = winreg.QueryValueEx(key, value_name)
+            return value == 1
+    except OSError:
+        return False
 
 
 class ApiError(Exception):
@@ -167,6 +180,7 @@ class Api:
             "strings": active_strings(),
             "config": cfg,
             "ffmpeg_ok": self._ffmpeg_ok,
+            "ffmpeg_by_setup": installed_by_setup("FFmpegInstalledBySetup"),
             "ytdlp_version": updater.active_versions().get("yt-dlp", ""),
             "options": {
                 "audio_formats": list(AUDIO_FORMATS),
@@ -381,6 +395,8 @@ class Api:
 
     @_safe
     def uninstall_ffmpeg(self) -> None:
+        if not installed_by_setup("FFmpegInstalledBySetup"):
+            raise ApiError(T("ffmpeg_not_by_setup"))
         subprocess.Popen(
             ["winget", "uninstall", "yt-dlp.FFmpeg", "--accept-source-agreements"],
             creationflags=subprocess.CREATE_NO_WINDOW,

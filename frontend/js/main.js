@@ -50,6 +50,7 @@ async function boot() {
     appName: data.app_name,
     version: data.version,
     ffmpegOk: data.ffmpeg_ok,
+    ffmpegBySetup: !!data.ffmpeg_by_setup,
     config: data.config,
     options: data.options,
   });
