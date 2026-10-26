@@ -34,6 +34,7 @@ Full documentation is in the [wiki](https://github.com/EmilDeuOfficial/DeuMediaD
 | Python 3.10+ | Runtime |
 | Microsoft Edge WebView2 Runtime | Renders the UI (preinstalled on Windows 11, the installer adds it if missing) |
 | FFmpeg | Audio conversion & quality control |
+| Deno | JavaScript runtime yt-dlp needs for YouTube (the installer adds it if missing) |
 | Spotify Developer Account | API credentials (free, only for the Spotify downloader) |
 
 ---
@@ -143,6 +144,9 @@ DeuMediaDownloader/
 │   ├── login_page.py       Page shown in the browser after the Spotify login
 │   ├── converter.py        FFmpeg helpers + mutagen metadata embedding
 │   ├── clipboard.py        Windows clipboard access for the Paste button
+│   ├── updater.py          Keeps yt-dlp current inside the .exe (downloads from PyPI)
+│   ├── secure_store.py     Encrypts the Spotify secret and login tokens (Windows DPAPI)
+│   ├── logs.py             Rotating log file in the data folder
 │   ├── errors.py           Short, translated error texts for the queue
 │   └── config.py           Constants, format definitions, translations, config I/O
 ├── frontend/               HTML, CSS and JavaScript UI (vanilla ES modules)
@@ -153,7 +157,7 @@ DeuMediaDownloader/
 │   └── tests/              Node unit tests
 ├── img/                    App icon
 ├── tools/                  Dev helpers (smoke test, mock data, icon generator)
-├── build.py                PyInstaller + Inno Setup build
+├── build.py                PyInstaller + Inno Setup build (optional code signing, see the file header)
 ├── installer.iss           Inno Setup script
 └── requirements.txt
 ```
@@ -228,6 +232,12 @@ Install it and restart the app.
 
 **Track not found / wrong match** - yt-dlp searches YouTube Music;
 rare tracks may not be available there.
+
+**Some YouTube formats are missing** - yt-dlp needs the Deno JavaScript runtime for
+YouTube. Install it with `winget install DenoLand.Deno` and restart the app.
+
+**Something else went wrong** - the app writes a log file to
+`%USERPROFILE%/.spotify_downloader/logs/app.log`. Please attach it to a bug report.
 
 ---
 
