@@ -23,6 +23,8 @@
 [data-service="spotify"] { --accent: #1db954; --accent-hover: #17a347; --accent-dim: #145c30; --item-accent: #1db954; }
 [data-service="youtube"] { --accent: #cc2222; --accent-hover: #aa1111; --accent-dim: #3a0a0a; --item-accent: #ff4444; }
 [data-service="tiktok"]  { --accent: #dc1a4b; --accent-hover: #c71542; --accent-dim: #4a0a1a; --item-accent: #ee1d52; }
+[data-service="soundcloud"] { --accent: #e64d00; --accent-hover: #c94300; --accent-dim: #4a1c05; --item-accent: #ff5500; }
+[data-service="instagram"]  { --accent: #d62976; --accent-hover: #b81f64; --accent-dim: #4a0f2b; --item-accent: #e1306c; }
 
 *, *::before, *::after { box-sizing: border-box; }
 

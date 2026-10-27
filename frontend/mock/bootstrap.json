@@ -28,6 +28,10 @@
     "youtube_url_ph": "Paste a YouTube video or playlist URL…",
     "tiktok_url": "TikTok URL",
     "tiktok_url_ph": "Paste a TikTok video URL…",
+    "soundcloud_url": "SoundCloud URL",
+    "soundcloud_url_ph": "Paste a SoundCloud track, playlist or profile URL…",
+    "instagram_url": "Instagram URL",
+    "instagram_url_ph": "Paste an Instagram post, reel, story or profile URL…",
     "queue_count_one": "({} item)",
     "queue_count_many": "({} items)",
     "tip_back": "Back",
@@ -127,6 +131,7 @@
     "err_short_path": "Folder not found",
     "err_short_file_in_use": "File in use",
     "err_short_tiktok_cookies": "TikTok cookie problem",
+    "err_short_instagram_cookies": "Instagram login problem",
     "err_short_unknown": "Unknown error",
     "download_queue": "Download Queue",
     "log_panel": "Log",
@@ -157,9 +162,15 @@
     "open_youtube": "Open YouTube",
     "open_tiktok": "Open TikTok",
     "tiktok_desc": "Videos and\naudio",
+    "open_soundcloud": "Open SoundCloud",
+    "soundcloud_desc": "Tracks, sets\nand profiles",
+    "open_instagram": "Open Instagram",
+    "instagram_desc": "Reels, posts\nand stories",
     "spotify_win_title": "DeuMediaDownloader  v7.2",
     "youtube_win_title": "YouTube Downloader",
     "tiktok_win_title": "TikTok Downloader",
+    "soundcloud_win_title": "SoundCloud Downloader",
+    "instagram_win_title": "Instagram Downloader",
     "no_credentials": "No Spotify API credentials. Open Settings to configure them.",
     "spotify_init": "Spotify client initialised.",
     "spotify_auth_err": "Spotify auth error: {}",
@@ -168,6 +179,8 @@
     "fetching_spotify": "Fetching {} info from Spotify…",
     "fetching_youtube": "Fetching YouTube info…",
     "fetching_tiktok": "Fetching TikTok info…",
+    "fetching_soundcloud": "Fetching SoundCloud info…",
+    "fetching_instagram": "Fetching Instagram info…",
     "queued_n_tracks": "Queued {} track(s)  [{}]",
     "queued_n_videos": "Queued {} video(s)  [{}]",
     "err_resolving": "Error resolving URL: {}",
@@ -180,6 +193,8 @@
     "mb_no_url_spotify": "Please paste a Spotify URL first.",
     "mb_no_url_youtube": "Please paste a YouTube URL first.",
     "mb_no_url_tiktok": "Please paste a TikTok URL first.",
+    "mb_no_url_soundcloud": "Please paste a SoundCloud URL first.",
+    "mb_no_url_instagram": "Please paste an Instagram URL first.",
     "mb_no_outdir_title": "No Output Directory",
     "mb_no_outdir": "Please choose an output directory.",
     "mb_api_title": "API Credentials Required",
@@ -258,7 +273,29 @@
     "tt_cookies_file_ph": "No file selected",
     "tt_cookies_file_clear": "Clear",
     "tt_err_dpapi": "This browser's cookies can't be read (Windows security feature). Use Firefox or a cookie file. Tutorial: {}",
-    "tt_err_no_browser": "Browser or TikTok login not found. Pick another browser or use a cookie file. Tutorial: {}"
+    "tt_err_no_browser": "Browser or TikTok login not found. Pick another browser or use a cookie file. Tutorial: {}",
+    "sc_settings_title": "SoundCloud Settings",
+    "sc_embed_thumb_desc": "Embed the track artwork into the audio file",
+    "ig_settings_title": "Instagram Settings",
+    "ig_embed_thumb_desc": "Embed the post cover into audio files",
+    "ig_cookies_desc": "Instagram often asks for a login. Your browser's login cookies usually fix it.",
+    "ig_err_dpapi": "This browser's cookies can't be read (Windows security feature). Use Firefox or a cookie file. Tutorial: {}",
+    "ig_err_no_browser": "Browser or Instagram login not found. Pick another browser or use a cookie file. Tutorial: {}",
+    "ig_err_login": "Instagram wants you to log in for this link. Add your browser cookies or a cookie file in the Instagram settings. Tutorial: {}",
+    "sel_title": "Choose what to download",
+    "sel_found": "{} items found. Untick the ones you do not want.",
+    "sel_all": "Select all",
+    "sel_none": "Select none",
+    "sel_count": "{} of {} selected",
+    "sel_download": "Download selected",
+    "sel_download_n": "Download {}",
+    "sel_filter_ph": "Filter by title…",
+    "sel_expired": "This list is no longer available. Please paste the link again.",
+    "drop_hint": "Drop a link to download it",
+    "link_found_clip": "{} link found in the clipboard",
+    "link_use": "Use link",
+    "link_dismiss": "Dismiss",
+    "link_unsupported": "This is not a link of a supported site (Spotify, YouTube, TikTok, SoundCloud, Instagram)."
   },
   "config": {
     "spotify_client_id": "",
@@ -266,6 +303,8 @@
     "output_dir": "C:/Users/Demo/Music/Spotify Downloads",
     "yt_output_dir": "C:/Users/Demo/Music/YouTube Downloads",
     "tt_output_dir": "C:/Users/Demo/Music/TikTok Downloads",
+    "sc_output_dir": "C:/Users/Demo/Music/SoundCloud Downloads",
+    "ig_output_dir": "C:/Users/Demo/Music/Instagram Downloads",
     "default_format": "MP3 (320 kbps)",
     "yt_format": "MP3 (320 kbps)",
     "yt_format_audio": "MP3 (320 kbps)",
@@ -297,9 +336,29 @@
     "tt_win_geo": "820x720",
     "tt_cookies_browser": "",
     "tt_cookies_file": "",
+    "sc_format": "MP3 (320 kbps)",
+    "sc_concurrent": 2,
+    "sc_embed_thumbnail": true,
+    "sc_normalize": false,
+    "sc_rate_limit": "",
+    "sc_open_folder": true,
+    "sc_win_geo": "820x720",
+    "ig_format_video": "MP4 (1080p)",
+    "ig_format_audio": "MP3 (320 kbps)",
+    "ig_media_type": "Video",
+    "ig_concurrent": 2,
+    "ig_embed_thumbnail": true,
+    "ig_normalize": false,
+    "ig_rate_limit": "",
+    "ig_open_folder": true,
+    "ig_win_geo": "820x720",
+    "ig_cookies_browser": "",
+    "ig_cookies_file": "",
     "sp_filename_template": "{artist} - {title}",
     "yt_filename_template": "{title}",
-    "tt_filename_template": "{title}"
+    "tt_filename_template": "{title}",
+    "sc_filename_template": "{artist} - {title}",
+    "ig_filename_template": "{title}"
   },
   "config_warning": "",
   "ffmpeg_ok": true,
@@ -668,6 +727,34 @@
         "tmpl_title_artist"
       ]
     ],
+    "sc_templates": [
+      [
+        "{artist} - {title}",
+        "tmpl_artist_title"
+      ],
+      [
+        "{title} - {artist}",
+        "tmpl_title_artist"
+      ],
+      [
+        "{title}",
+        "tmpl_title_only"
+      ]
+    ],
+    "ig_templates": [
+      [
+        "{title}",
+        "tmpl_title_only"
+      ],
+      [
+        "{artist} - {title}",
+        "tmpl_artist_title"
+      ],
+      [
+        "{title} - {artist}",
+        "tmpl_title_artist"
+      ]
+    ],
     "cookie_browsers": [
       [
         "",
@@ -700,6 +787,7 @@
     ],
     "wiki": {
       "tiktok_cookies": "https://github.com/EmilDeuOfficial/DeuMediaDownloader/wiki/TikTok-Cookies",
+      "instagram_cookies": "https://github.com/EmilDeuOfficial/DeuMediaDownloader/wiki/Instagram-Cookies",
       "spotify_api": "https://github.com/EmilDeuOfficial/DeuMediaDownloader/wiki/Spotify-API-Setup"
     }
   },

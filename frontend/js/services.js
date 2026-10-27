@@ -47,9 +47,37 @@ export const SERVICES = {
       mediaDefault: "Video",
     },
   },
+  soundcloud: {
+    id: "soundcloud",
+    title: "SoundCloud",
+    launcher: { btn: "#ff5500", btnHover: "#e64d00", btnText: "#ffffff", descKey: "soundcloud_desc", openKey: "open_soundcloud" },
+    urlLabelKey: "soundcloud_url",
+    urlPlaceholderKey: "soundcloud_url_ph",
+    queueGlyph: "note",
+    mediaToggle: false,
+    dropdownWidth: 220,
+    cfg: { outDir: "sc_output_dir", format: "sc_format", formatDefault: "MP3 (320 kbps)" },
+  },
+  instagram: {
+    id: "instagram",
+    title: "Instagram",
+    launcher: { btn: "#e1306c", btnHover: "#c42a5d", btnText: "#ffffff", descKey: "instagram_desc", openKey: "open_instagram" },
+    urlLabelKey: "instagram_url",
+    urlPlaceholderKey: "instagram_url_ph",
+    queueGlyph: "play",
+    mediaToggle: true,
+    dropdownWidth: 220,
+    cfg: {
+      outDir: "ig_output_dir",
+      formatAudio: "ig_format_audio",
+      formatVideo: "ig_format_video",
+      mediaType: "ig_media_type",
+      mediaDefault: "Video",
+    },
+  },
 };
 
-export const SERVICE_ORDER = ["spotify", "youtube", "tiktok"];
+export const SERVICE_ORDER = ["spotify", "youtube", "tiktok", "soundcloud", "instagram"];
 export const AUDIO_DEFAULT = "MP3 (320 kbps)";
 export const VIDEO_DEFAULT = "MP4 (1080p)";
 export const RECORD_DEFAULT = "FLAC (Lossless)";

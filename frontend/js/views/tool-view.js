@@ -8,6 +8,8 @@ import { createDropdown } from "../components/dropdown.js";
 import { createQueueItem } from "../components/queue-item.js";
 import { createLogPanel } from "../components/log-panel.js";
 import { alertModal, showModal } from "../components/modal.js";
+import { chooseEntries } from "../components/selection-modal.js";
+import { findLink, belongsElsewhere } from "../links.js";
 import { setResizable } from "../components/resize-handles.js";
 import { icon } from "../icons.js";
 import { initialSelection, resolveQuality, qualityText, groupsForMode } from "../formats.js";
@@ -16,7 +18,7 @@ import { animateOut, replay } from "../motion.js";
 const label = (text, cls = "") => h("span", { class: `field-label ${cls}`.trim() }, text);
 
 // One generic downloader screen. `service` is a descriptor from services.js.
-export function createToolView(service, { onBack, onSettings, onUpdate }) {
+export function createToolView(service, { onBack, onSettings, onUpdate, onLink }) {
   const cfgKeys = service.cfg;
   const cfg = () => app.get().config;
   const options = () => app.get().options;
@@ -90,6 +92,14 @@ export function createToolView(service, { onBack, onSettings, onUpdate }) {
   urlInput.addEventListener("keydown", (ev) => {
     if (ev.key === "Enter") start();
   });
+  // A link of another site pasted here opens that site's downloader instead (see links.js).
+  urlInput.addEventListener("paste", (ev) => {
+    const link = findLink(ev.clipboardData?.getData("text"));
+    if (link && belongsElsewhere(service.id, link.service)) {
+      ev.preventDefault();
+      onLink?.(link);
+    }
+  });
   const inputPanel = h(
     "section",
     { class: "panel input-panel" },
@@ -106,7 +116,9 @@ export function createToolView(service, { onBack, onSettings, onUpdate }) {
   async function paste() {
     try {
       const text = await api.paste();
-      if (text) urlInput.value = text;
+      const link = findLink(text);
+      if (link && belongsElsewhere(service.id, link.service)) onLink?.(link);
+      else if (text) urlInput.value = text;
     } catch (err) {
       console.error(err);
     }
@@ -334,10 +346,13 @@ export function createToolView(service, { onBack, onSettings, onUpdate }) {
     dlBtn.textContent = (busy ? T("loading") : T(actionKey())).trim();
   }
 
+  let submittedUrl = "";   // brought back if the user closes the list of a playlist without choosing
+
   async function start() {
     if (dlBtn.disabled) return;
     setBusy(true);
     try {
+      submittedUrl = urlInput.value;
       await api.submit(activeId(), urlInput.value, outInput.value, currentName());
       urlInput.value = "";
     } catch (err) {
@@ -355,6 +370,22 @@ export function createToolView(service, { onBack, onSettings, onUpdate }) {
   on("task_status", mine((task) => items.get(task.id)?.update(task)));
   on("task_progress", mine((p) => items.get(p.id)?.update({ progress: p.progress })));
   on("resolve_done", mine(() => setBusy(false)));
+  // A playlist, profile or channel: the user picks the entries, then they are queued.
+  on("resolve_choice", mine(async (p) => {
+    let picked = null;
+    try {
+      picked = await chooseEntries({ service: p.service, entries: p.entries });
+      if (picked && picked.length) {
+        await api.choose_items(p.service, p.token, picked);
+      } else {
+        await api.discard_items(p.service, p.token);
+        if (!urlInput.value) urlInput.value = submittedUrl;
+      }
+    } catch (err) {
+      setBusy(false);
+      alertModal(err.title || T("mb_error_title"), err.message, "warning");
+    }
+  }));
   on("resolve_error", mine((p) => {
     setBusy(false);
     if (el.hidden) return;
@@ -406,6 +437,14 @@ export function createToolView(service, { onBack, onSettings, onUpdate }) {
     },
     focus() {
       urlInput.focus();
+    },
+    /** Put a link into the URL field (dropped on the window, or taken from the clipboard). */
+    setUrl(url) {
+      urlInput.value = url;
+      urlInput.focus();
+    },
+    getUrl() {
+      return urlInput.value.trim();
     },
     /** Called when the view becomes visible again: pick up config changed elsewhere (settings). */
     refresh() {

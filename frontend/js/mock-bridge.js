@@ -17,11 +17,17 @@ const SAMPLE_NAMES = {
   spotify_record: ["Daft Punk - Get Lucky", "Queen - Bohemian Rhapsody"],
   youtube: ["Lo-fi beats to relax and study to", "Rick Astley - Never Gonna Give You Up", "A very long video title that needs to be cut off at some point because it is too long"],
   tiktok: ["cooluser - dance challenge #fyp", "chef - 60 second pasta", "cat - zoomies"],
+  soundcloud: ["Forss - Flickermood", "Forss - Soulhack", "Forss - Funk for Nerds"],
+  instagram: ["chef - Pasta in 60 seconds #food", "chef - 2024-01-31", "cat - zoomies"],
 };
+
+// A link like these is a playlist, profile or channel: the app lists its entries first (?mock=1 only).
+const LIST_URL = /playlist|\/sets\/|list=|\/@[^/]+\/?$|profile|channel/i;
+const pending = new Map();
 
 let config = {};
 let bootstrapData = null;
-const tasks = { spotify: [], spotify_record: [], youtube: [], tiktok: [] };
+const tasks = { spotify: [], spotify_record: [], youtube: [], tiktok: [], soundcloud: [], instagram: [] };
 let recordLoggedIn = false;
 let counter = 0;
 let maximized = false;
@@ -133,6 +139,18 @@ function simulate(task, failing) {
   setTimeout(tick, 400);
 }
 
+function queueNames(service, names, fmt, failThird) {
+  const strings = bootstrapData.strings;
+  emit("log", { service, msg: strings[service.startsWith("spotify") ? "queued_n_tracks" : "queued_n_videos"].replace("{}", names.length).replace("{}", fmt) });
+  names.forEach((name, idx) => {
+    const task = { id: `mock-${++counter}`, service, name: name.length > 60 ? name.slice(0, 57) + "\u2026" : name, format: fmt, ext: mockExt(fmt), status: "QUEUED", progress: 0, error: "" };
+    tasks[service].push(task);
+    emit("task_added", view(task));
+    emit("log", { service, msg: strings.log_queued.replace("{}", name) });
+    simulate(task, failThird && idx === 2);
+  });
+}
+
 const findTask = (service, id) => (tasks[service] || []).find((t) => t.id === id);
 
 // App update (?update=none: up to date, ?update=error: the check fails, ?update=installfail:
@@ -216,18 +234,34 @@ export const mockApi = {
     }
     setTimeout(() => {
       emit("log", { service, msg: "(mock) fetching info" });
-      const names = SAMPLE_NAMES[service];
-      emit("log", { service, msg: strings[service.startsWith("spotify") ? "queued_n_tracks" : "queued_n_videos"].replace("{}", names.length).replace("{}", fmt) });
-      names.forEach((name, idx) => {
-        const task = { id: `mock-${++counter}`, service, name: name.length > 60 ? name.slice(0, 57) + "\u2026" : name, format: fmt, ext: mockExt(fmt), status: "QUEUED", progress: 0, error: "" };
-        tasks[service].push(task);
-        emit("task_added", view(task));
-        emit("log", { service, msg: strings.log_queued.replace("{}", name) });
-        simulate(task, idx === 2 && /err/i.test(url));
-      });
+      if (LIST_URL.test(url)) {
+        const base = SAMPLE_NAMES[service];
+        const names = Array.from({ length: 24 }, (_, i) => `${base[i % base.length]} (${i + 1})`);
+        const token = `mock-list-${++counter}`;
+        pending.set(token, { names, fmt });
+        emit("resolve_choice", { service, token, entries: names.map((title, index) => ({ index, title })) });
+        return;
+      }
+      queueNames(service, SAMPLE_NAMES[service], fmt, /err/i.test(url));
       emit("resolve_done", { service });
     }, 600);
     return ok();
+  },
+  async choose_items(service, token, indices) {
+    const offer = pending.get(token);
+    if (!offer) return fail(bootstrapData.strings.sel_expired, { title: bootstrapData.strings.sel_title });
+    pending.delete(token);
+    queueNames(service, indices.map((i) => offer.names[i]), offer.fmt, false);
+    emit("resolve_done", { service });
+    return ok(true);
+  },
+  async discard_items(service, token) {
+    const known = pending.delete(token);
+    emit("resolve_done", { service });
+    return ok(known);
+  },
+  async paste() {
+    return ok(new URLSearchParams(location.search).get("clip") || "");
   },
   async pause_task(service, id) {
     const t = findTask(service, id);

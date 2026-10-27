@@ -144,6 +144,71 @@ export const SETTINGS_SCHEMA = {
   },
 };
 
+
+SETTINGS_SCHEMA.soundcloud = {
+  titleKey: "sc_settings_title",
+  height: 560,
+  sections: [
+    {
+      titleKey: "tt_sec_downloads",
+      inside: true,
+      fields: [{ type: "slider", key: "sc_concurrent", labelKey: "tt_concurrent_lbl", min: 1, max: 5, default: 2 }],
+    },
+    {
+      titleKey: "tt_sec_media",
+      inside: true,
+      fields: [
+        { type: "toggle", key: "sc_embed_thumbnail", labelKey: "tt_embed_thumb_lbl", descKey: "sc_embed_thumb_desc", default: true },
+        { type: "toggle", key: "sc_normalize", labelKey: "sp_normalize_lbl", descKey: "sp_normalize_desc", default: false },
+        { type: "toggle", key: "sc_open_folder", labelKey: "sp_open_folder_lbl", descKey: "sp_open_folder_desc", default: true },
+      ],
+    },
+    {
+      titleKey: "tt_sec_network",
+      inside: true,
+      fields: [{ type: "select", key: "sc_rate_limit", labelKey: "tt_rate_limit_lbl", options: "rate", width: 200, default: "" }],
+    },
+    filenameSection("sc_templates", "sc_filename_template", "{artist} - {title}"),
+  ],
+};
+
+SETTINGS_SCHEMA.instagram = {
+  titleKey: "ig_settings_title",
+  height: 600,
+  sections: [
+    {
+      titleKey: "tt_sec_downloads",
+      inside: true,
+      fields: [{ type: "slider", key: "ig_concurrent", labelKey: "tt_concurrent_lbl", min: 1, max: 5, default: 2 }],
+    },
+    {
+      titleKey: "tt_sec_media",
+      inside: true,
+      fields: [
+        { type: "toggle", key: "ig_embed_thumbnail", labelKey: "tt_embed_thumb_lbl", descKey: "ig_embed_thumb_desc", default: true },
+        { type: "toggle", key: "ig_normalize", labelKey: "sp_normalize_lbl", descKey: "sp_normalize_desc", default: false },
+        { type: "toggle", key: "ig_open_folder", labelKey: "sp_open_folder_lbl", descKey: "sp_open_folder_desc", default: true },
+      ],
+    },
+    {
+      titleKey: "tt_sec_network",
+      inside: true,
+      fields: [{ type: "select", key: "ig_rate_limit", labelKey: "tt_rate_limit_lbl", options: "rate", width: 200, default: "" }],
+    },
+    {
+      titleKey: "tt_sec_auth",
+      inside: true,
+      fields: [
+        { type: "note", textKey: "ig_cookies_desc" },
+        { type: "link", labelKey: "wiki_tutorial", wiki: "instagram_cookies" },
+        { type: "select", key: "ig_cookies_browser", labelKey: "tt_cookies_lbl", options: "cookie_browsers", width: 260, default: "" },
+        { type: "file", key: "ig_cookies_file", labelKey: "tt_cookies_file_lbl", descKey: "tt_cookies_file_desc", placeholderKey: "tt_cookies_file_ph", clearKey: "tt_cookies_file_clear" },
+      ],
+    },
+    filenameSection("ig_templates", "ig_filename_template", "{title}"),
+  ],
+};
+
 // Shared "Uninstall" tab. onlyIf names an app state flag that must be true to show the row.
 export const UNINSTALL_ROWS = [
   { icon: "trash", titleKey: "clear_data_btn", descKey: "clear_data_desc", confirmKey: "confirm_clear_data", action: "clear_data", danger: false },

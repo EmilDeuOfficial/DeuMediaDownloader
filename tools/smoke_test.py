@@ -44,7 +44,7 @@ def wait_for(window, code, timeout=20.0):
 
 def probe(window):
     try:
-        report["loaded"] = wait_for(window, "document.querySelectorAll('.view').length === 4")
+        report["loaded"] = wait_for(window, "document.querySelectorAll('.view').length === 6")
         if not report["loaded"]:
             report["body"] = js(window, "document.body.innerText")
             return

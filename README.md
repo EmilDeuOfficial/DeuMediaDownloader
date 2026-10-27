@@ -1,6 +1,6 @@
 # DeuMediaDownloader
 
-A modern Windows desktop app to download **music and videos** from Spotify, YouTube and TikTok.
+A modern Windows desktop app to download **music and videos** from Spotify, YouTube, TikTok, SoundCloud and Instagram.
 Save audio (MP3, AAC, OGG, Opus, FLAC, AIFF, WAV) or video (MP4, MOV, AVI, MKV, WebM) in the quality you choose.
 
 ![Version](https://img.shields.io/badge/version-v7.2-brightgreen)
@@ -14,7 +14,9 @@ Save audio (MP3, AAC, OGG, Opus, FLAC, AIFF, WAV) or video (MP4, MOV, AVI, MKV, 
 ## Features
 
 - **Audio and video** - Music as MP3, AAC, OGG Vorbis, Opus, FLAC, AIFF, WAV or the untouched original; videos as MP4, MOV, AVI, MKV or WebM up to 4K
-- **Three sources** - Spotify (tracks, playlists, albums), YouTube (videos, playlists), TikTok (videos, profiles, hashtags, sounds)
+- **Five sources** - Spotify (tracks, playlists, albums), YouTube (videos, playlists, channels), TikTok (videos, profiles, hashtags, sounds), SoundCloud (tracks, sets, profiles), Instagram (reels, posts, stories, profiles)
+- **Pick what to download** - A playlist, channel, set or profile is listed first; tick or untick single entries (with a filter and Shift-click ranges) before anything is queued
+- **Drop a link, paste a link** - Drag a link onto the window, or copy one anywhere: the app recognises the site, opens the matching downloader and fills in the link
 - **Format and quality** - Pick the format and the quality separately; the quality list follows the format
 - **Queue** - Live progress, plus pause, resume and cancel for every download
 - **Spotify recording** - Instead of a YouTube match, record the real Spotify stream in a hidden player (Premium, real time, Windows 10 2004 or newer)
@@ -82,20 +84,25 @@ python main.py
 
 On first launch, open the Spotify downloader, click the **gear icon** in the
 top-right and paste your Spotify Client ID and Client Secret, then click **Save**.
-The YouTube and TikTok downloaders work without any credentials.
+The YouTube, TikTok and SoundCloud downloaders work without any credentials. Instagram usually
+needs your browser login, see the [Instagram cookies tutorial](https://github.com/EmilDeuOfficial/DeuMediaDownloader/wiki/Instagram-Cookies).
 
 ---
 
 ## Usage
 
-1. Open the launcher and pick **Spotify**, **YouTube** or **TikTok**
+1. Open the launcher and pick **Spotify**, **YouTube**, **TikTok**, **SoundCloud** or **Instagram**
 2. Copy a URL and paste it into the URL field (or click **Paste**):
-   a Spotify track, playlist or album, a YouTube video or playlist,
-   or a TikTok video, profile, hashtag or sound
-3. YouTube and TikTok: choose **Audio** or **Video** (Spotify downloads are audio)
+   a Spotify track, playlist or album, a YouTube video, playlist or channel,
+   a TikTok video, profile, hashtag or sound, a SoundCloud track, set or profile,
+   or an Instagram reel, post, story or profile.
+   You can also drag a link onto the window, or just copy it: when the window is used again
+   the app offers the link from the clipboard and opens the right downloader
+3. YouTube, TikTok and Instagram: choose **Audio** or **Video** (Spotify and SoundCloud downloads are audio)
 4. Choose a **Format** and a **Quality** (MP3 320 kbps, FLAC, MP4 1080p, MKV 4K, ...)
 5. Select an output folder with **Browse**
-6. Click **Download**
+6. Click **Download**. For a playlist, channel, set or profile a list opens first: untick what you
+   do not want (or filter by title) and click **Download**
 
 Items are added to the queue and downloaded in parallel; every entry can be paused,
 resumed or cancelled. Audio files get title, artist, album and cover art embedded automatically.
@@ -138,13 +145,13 @@ DeuMediaDownloader/
 │   ├── api.py              Object exposed to JavaScript (window.pywebview.api)
 │   ├── events.py           Pushes events from Python threads to the page
 │   ├── services.py         Per-service runtimes: resolve URL, queue tasks, forward updates
-│   ├── downloader.py       Spotify / YouTube / TikTok download logic (yt-dlp)
+│   ├── downloader.py       Download logic for all sites (yt-dlp)
 │   ├── record.py           Spotify recording pipeline (play, record, encode, tag)
 │   ├── recorder.py         Per-process audio capture (WASAPI process loopback)
 │   ├── spotify_session.py  Hidden Spotify player window: login, playback, state
 │   ├── login_page.py       Page shown in the browser after the Spotify login
 │   ├── converter.py        FFmpeg helpers + mutagen metadata embedding
-│   ├── clipboard.py        Windows clipboard access for the Paste button
+│   ├── clipboard.py        Windows clipboard access for the Paste button and link detection
 │   ├── app_update.py       Finds, downloads and verifies a newer app release (GitHub)
 │   ├── updater.py          Keeps yt-dlp current inside the .exe (downloads from PyPI)
 │   ├── secure_store.py     Encrypts the Spotify secret and login tokens (Windows DPAPI)
@@ -205,7 +212,7 @@ the volume (FFmpeg `loudnorm`).
 The audio source is YouTube (about 256 kbps at best), so the lossless formats are
 convenient containers, not better sound than a 320 kbps MP3.
 
-Video (YouTube and TikTok):
+Video (YouTube, TikTok and Instagram):
 
 | Format | Qualities | Notes |
 |---|---|---|
