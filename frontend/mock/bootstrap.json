@@ -292,10 +292,7 @@
     "sel_filter_ph": "Filter by title…",
     "sel_expired": "This list is no longer available. Please paste the link again.",
     "drop_hint": "Drop a link to download it",
-    "link_found_clip": "{} link found in the clipboard",
-    "link_use": "Use link",
-    "link_dismiss": "Dismiss",
-    "link_unsupported": "This is not a link of a supported site (Spotify, YouTube, TikTok, SoundCloud, Instagram)."
+    "link_unsupported": "No link found in what you dropped."
   },
   "config": {
     "spotify_client_id": "",

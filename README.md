@@ -16,7 +16,7 @@ Save audio (MP3, AAC, OGG, Opus, FLAC, AIFF, WAV) or video (MP4, MOV, AVI, MKV, 
 - **Audio and video** - Music as MP3, AAC, OGG Vorbis, Opus, FLAC, AIFF, WAV or the untouched original; videos as MP4, MOV, AVI, MKV or WebM up to 4K
 - **Five sources** - Spotify (tracks, playlists, albums), YouTube (videos, playlists, channels), TikTok (videos, profiles, hashtags, sounds), SoundCloud (tracks, sets, profiles), Instagram (reels, posts, stories, profiles)
 - **Pick what to download** - A playlist, channel, set or profile is listed first; tick or untick single entries (with a filter and Shift-click ranges) before anything is queued
-- **Drop a link, paste a link** - Drag a link onto the window, or copy one anywhere: the app recognises the site, opens the matching downloader and fills in the link
+- **Drop a link** - Drag a link from your browser onto a downloader window and it lands in the URL field
 - **Format and quality** - Pick the format and the quality separately; the quality list follows the format
 - **Queue** - Live progress, plus pause, resume and cancel for every download
 - **Spotify recording** - Instead of a YouTube match, record the real Spotify stream in a hidden player (Premium, real time, Windows 10 2004 or newer)
@@ -96,8 +96,7 @@ needs your browser login, see the [Instagram cookies tutorial](https://github.co
    a Spotify track, playlist or album, a YouTube video, playlist or channel,
    a TikTok video, profile, hashtag or sound, a SoundCloud track, set or profile,
    or an Instagram reel, post, story or profile.
-   You can also drag a link onto the window, or just copy it: when the window is used again
-   the app offers the link from the clipboard and opens the right downloader
+   You can also drag a link from your browser onto the window
 3. YouTube, TikTok and Instagram: choose **Audio** or **Video** (Spotify and SoundCloud downloads are audio)
 4. Choose a **Format** and a **Quality** (MP3 320 kbps, FLAC, MP4 1080p, MKV 4K, ...)
 5. Select an output folder with **Browse**
@@ -151,7 +150,7 @@ DeuMediaDownloader/
 │   ├── spotify_session.py  Hidden Spotify player window: login, playback, state
 │   ├── login_page.py       Page shown in the browser after the Spotify login
 │   ├── converter.py        FFmpeg helpers + mutagen metadata embedding
-│   ├── clipboard.py        Windows clipboard access for the Paste button and link detection
+│   ├── clipboard.py        Windows clipboard access for the Paste button
 │   ├── app_update.py       Finds, downloads and verifies a newer app release (GitHub)
 │   ├── updater.py          Keeps yt-dlp current inside the .exe (downloads from PyPI)
 │   ├── secure_store.py     Encrypts the Spotify secret and login tokens (Windows DPAPI)

@@ -10,8 +10,7 @@ import { openUpdate } from "./components/update-modal.js";
 import { updates } from "./updates.js";
 import { replay } from "./motion.js";
 import { alertModal } from "./components/modal.js";
-import { installDropTarget, watchClipboard } from "./link-intake.js";
-import { hideLinkBanner } from "./components/link-banner.js";
+import { installDropTarget } from "./link-intake.js";
 
 // No browser context menu (Reload, Inspect, ...) except where copy/paste is useful.
 document.addEventListener("contextmenu", (ev) => {
@@ -48,15 +47,6 @@ async function navigate(name) {
   views[name].focus?.();
 }
 
-// A link from outside (drop, clipboard): open the downloader of its site and put the link in.
-async function openLink({ url, service }) {
-  hideLinkBanner();
-  const view = views[service];
-  if (!view) return;
-  if (current !== service) await navigate(service);
-  view.setUrl(url);
-}
-
 async function boot() {
   const data = await api.bootstrap();
   setStrings(data.strings);
@@ -82,7 +72,6 @@ async function boot() {
       onBack: () => navigate("launcher"),
       onSettings: openSettings,
       onUpdate: openUpdate,
-      onLink: openLink,
     });
     const serviceIds = SERVICES[id].record ? [id, SERVICES[id].record.id] : [id];
     view.restoreTasks(serviceIds.flatMap((sid) => (data.tasks && data.tasks[sid]) || []));
@@ -96,8 +85,11 @@ async function boot() {
   installResizeHandles();
   startEvents();
   await navigate("launcher");
-  installDropTarget({ onLink: openLink });
-  watchClipboard({ onLink: openLink, isShown: (url) => Object.values(views).some((view) => view.getUrl?.() === url) });
+  // A link dropped on a downloader goes into its URL field; the launcher takes no drops.
+  installDropTarget({
+    isActive: () => current !== null && current !== "launcher",
+    onLink: (url) => views[current]?.setUrl?.(url),
+  });
   updates.check({ quiet: true });
   if (data.config_warning) await alertModal(data.strings.config_title, data.config_warning, "error");
 }

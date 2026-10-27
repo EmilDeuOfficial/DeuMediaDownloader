@@ -9,7 +9,7 @@
 .brand-youtube { -webkit-mask-image: url(../img/youtube-icon.svg); mask-image: url(../img/youtube-icon.svg); background-color: #ff0000; }
 .brand-tiktok  { -webkit-mask-image: url(../img/tiktok-icon.svg);  mask-image: url(../img/tiktok-icon.svg);  background-color: #ee1d52; }
 .brand-soundcloud { -webkit-mask-image: url(../img/soundcloud-icon.svg); mask-image: url(../img/soundcloud-icon.svg); background-color: #ff5500; }
-.brand-instagram  { -webkit-mask-image: url(../img/instagram-icon.svg);  mask-image: url(../img/instagram-icon.svg);  background-color: #e1306c; }
+.brand-instagram  { -webkit-mask-image: url(../img/instagram-icon.svg);  mask-image: url(../img/instagram-icon.svg);  background-image: linear-gradient(45deg, #fdc468 0%, #fa7e1e 22%, #d62976 55%, #962fbf 100%); }
 
 /* ---- Title bars ---- */
 .titlebar {
@@ -61,8 +61,8 @@
 }
 .btn.neutral { background: var(--bg-card); }
 .btn.neutral:hover { background: var(--border); }
-.btn.accent { background: var(--accent); font-weight: 700; color: var(--on-accent); }
-.btn.accent:hover:not(:disabled) { background: var(--accent-hover); }
+.btn.accent { background: var(--accent-fill); font-weight: 700; color: var(--on-accent); }
+.btn.accent:hover:not(:disabled) { background: var(--accent-fill-hover); }
 .btn.danger { background: var(--error); color: #fff; }
 .btn.danger:hover { background: #c0392b; }
 .btn.small { height: 26px; font-size: 11px; padding: 0 10px; }
@@ -110,7 +110,7 @@
 }
 .seg-btn .icon { font-size: 14px; }
 .seg-btn:hover:not(.active) { background: var(--bg-secondary); }
-.seg-btn.active { background: var(--accent); color: var(--on-accent); }
+.seg-btn.active { background: var(--accent-fill); color: var(--on-accent); }
 
 /* ---- Dropdown ---- */
 .dropdown {
@@ -133,7 +133,7 @@
 .dd-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dd-arrow { display: inline-flex; color: var(--accent); font-size: 14px; transition: transform 0.18s ease; }
 .dropdown.open .dd-arrow { transform: rotate(180deg); }
-.dropdown:hover, .dropdown.open { background: var(--accent); }
+.dropdown:hover, .dropdown.open { background: var(--accent-fill); }
 .dropdown:hover .dd-inner, .dropdown.open .dd-inner { background: var(--bg-card); }
 
 .dropdown.disabled { opacity: 0.55; cursor: default; }
@@ -204,7 +204,7 @@
 .qi-ext { flex: none; padding: 0 6px; border-radius: 4px; background: var(--bg-secondary); color: var(--text-secondary); font-size: 10px; font-weight: 700; line-height: 16px; letter-spacing: 0.04em; }
 .qi-status { grid-column: 2; grid-row: 2; min-width: 0; font-size: 11px; color: var(--text-secondary); padding-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .qi-bar { grid-column: 1 / 4; grid-row: 3; height: 6px; border-radius: 3px; background: var(--bg-secondary); overflow: hidden; margin-top: 4px; }
-.qi-fill { height: 100%; width: 0; border-radius: 3px; background: var(--item-accent); transition: width 0.1s linear; }
+.qi-fill { height: 100%; width: 0; border-radius: 3px; background: var(--item-fill); transition: width 0.1s linear; }
 .queue-item[data-status="SEARCHING"] .qi-status,
 .queue-item[data-status="CONVERTING"] .qi-status,
 .queue-item[data-status="EMBEDDING"] .qi-status { color: var(--warning); }
@@ -303,7 +303,7 @@
 .sel-footer .btn { height: 32px; min-width: 76px; }
 .sel-count { font-size: 12px; color: var(--text-secondary); }
 
-/* ---- Link dropped on the window / found in the clipboard ---- */
+/* ---- Link dropped on the window ---- */
 .drop-overlay {
   position: fixed;
   inset: 0;
@@ -322,26 +322,3 @@
   font-size: 15px;
   font-weight: 700;
 }
-.link-banner {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 14px;
-  z-index: 1800;
-  margin: 0 auto;
-  width: min(560px, calc(100vw - 32px));
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 8px 10px 14px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--bg-card);
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
-  animation: rise-in var(--dur-slow, 0.25s) var(--ease-out, ease-out) both;
-}
-.lb-text { flex: 1; min-width: 0; }
-.lb-title { font-size: 12px; font-weight: 700; }
-.lb-url { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; color: var(--text-secondary); }
-.link-banner .btn { flex: none; }
-.lb-close { flex: none; width: 28px; }

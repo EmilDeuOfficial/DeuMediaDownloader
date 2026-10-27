@@ -61,7 +61,7 @@ export const SERVICES = {
   instagram: {
     id: "instagram",
     title: "Instagram",
-    launcher: { btn: "#e1306c", btnHover: "#c42a5d", btnText: "#ffffff", descKey: "instagram_desc", openKey: "open_instagram" },
+    launcher: { btn: "linear-gradient(45deg, #fdc468 0%, #fa7e1e 22%, #d62976 55%, #962fbf 100%)", btnHover: "linear-gradient(45deg, #e8b35c 0%, #e1710f 22%, #bd2266 55%, #7f26a3 100%)", btnText: "#ffffff", descKey: "instagram_desc", openKey: "open_instagram" },
     urlLabelKey: "instagram_url",
     urlPlaceholderKey: "instagram_url_ph",
     queueGlyph: "play",

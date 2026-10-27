@@ -9,7 +9,6 @@ import { createQueueItem } from "../components/queue-item.js";
 import { createLogPanel } from "../components/log-panel.js";
 import { alertModal, showModal } from "../components/modal.js";
 import { chooseEntries } from "../components/selection-modal.js";
-import { findLink, belongsElsewhere } from "../links.js";
 import { setResizable } from "../components/resize-handles.js";
 import { icon } from "../icons.js";
 import { initialSelection, resolveQuality, qualityText, groupsForMode } from "../formats.js";
@@ -18,7 +17,7 @@ import { animateOut, replay } from "../motion.js";
 const label = (text, cls = "") => h("span", { class: `field-label ${cls}`.trim() }, text);
 
 // One generic downloader screen. `service` is a descriptor from services.js.
-export function createToolView(service, { onBack, onSettings, onUpdate, onLink }) {
+export function createToolView(service, { onBack, onSettings, onUpdate }) {
   const cfgKeys = service.cfg;
   const cfg = () => app.get().config;
   const options = () => app.get().options;
@@ -92,14 +91,7 @@ export function createToolView(service, { onBack, onSettings, onUpdate, onLink }
   urlInput.addEventListener("keydown", (ev) => {
     if (ev.key === "Enter") start();
   });
-  // A link of another site pasted here opens that site's downloader instead (see links.js).
-  urlInput.addEventListener("paste", (ev) => {
-    const link = findLink(ev.clipboardData?.getData("text"));
-    if (link && belongsElsewhere(service.id, link.service)) {
-      ev.preventDefault();
-      onLink?.(link);
-    }
-  });
+
   const inputPanel = h(
     "section",
     { class: "panel input-panel" },
@@ -116,9 +108,7 @@ export function createToolView(service, { onBack, onSettings, onUpdate, onLink }
   async function paste() {
     try {
       const text = await api.paste();
-      const link = findLink(text);
-      if (link && belongsElsewhere(service.id, link.service)) onLink?.(link);
-      else if (text) urlInput.value = text;
+      if (text) urlInput.value = text;
     } catch (err) {
       console.error(err);
     }
@@ -438,13 +428,10 @@ export function createToolView(service, { onBack, onSettings, onUpdate, onLink }
     focus() {
       urlInput.focus();
     },
-    /** Put a link into the URL field (dropped on the window, or taken from the clipboard). */
+    /** Put a link into the URL field (dropped on the window). */
     setUrl(url) {
       urlInput.value = url;
       urlInput.focus();
-    },
-    getUrl() {
-      return urlInput.value.trim();
     },
     /** Called when the view becomes visible again: pick up config changed elsewhere (settings). */
     refresh() {

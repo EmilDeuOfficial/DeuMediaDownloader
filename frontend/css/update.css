@@ -6,7 +6,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--accent);
+  background: var(--accent-fill);
   box-shadow: 0 0 0 2px var(--bg-secondary);
   transform: scale(0);
   transition: transform var(--dur) var(--ease-spring);
@@ -52,7 +52,7 @@
 .upd-text { margin: 4px 0; color: var(--text-secondary); }
 
 .upd-bar { height: 6px; border-radius: 3px; background: var(--bg-primary); overflow: hidden; }
-.upd-bar-fill { height: 100%; width: 0; border-radius: 3px; background: var(--accent); transition: width 0.25s var(--ease-soft); }
+.upd-bar-fill { height: 100%; width: 0; border-radius: 3px; background: var(--accent-fill); transition: width 0.25s var(--ease-soft); }
 .upd-bar.indeterminate .upd-bar-fill { width: 35%; animation: upd-slide 1.2s var(--ease-soft) infinite; }
 @keyframes upd-slide { from { transform: translateX(-100%); } to { transform: translateX(290%); } }
 .update-modal[data-step="download"] .upd-bar-fill,

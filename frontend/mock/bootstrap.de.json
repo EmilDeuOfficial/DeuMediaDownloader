@@ -292,10 +292,7 @@
     "sel_filter_ph": "Nach Titel filtern…",
     "sel_expired": "Diese Liste ist nicht mehr verfügbar. Bitte füge den Link erneut ein.",
     "drop_hint": "Link hier ablegen, um ihn herunterzuladen",
-    "link_found_clip": "{}-Link in der Zwischenablage gefunden",
-    "link_use": "Link verwenden",
-    "link_dismiss": "Schließen",
-    "link_unsupported": "Das ist kein Link einer unterstützten Seite (Spotify, YouTube, TikTok, SoundCloud, Instagram)."
+    "link_unsupported": "In dem, was du abgelegt hast, ist kein Link."
   },
   "config": {
     "spotify_client_id": "",

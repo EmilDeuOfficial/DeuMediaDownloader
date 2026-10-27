@@ -571,12 +571,9 @@ STRINGS: dict[str, dict[str, str]] = {
         "sel_download_n":         "Download {}",
         "sel_filter_ph":          "Filter by title…",
         "sel_expired":            "This list is no longer available. Please paste the link again.",
-        # Links found in the clipboard or dropped on the window
+        # Link dropped on the window
         "drop_hint":              "Drop a link to download it",
-        "link_found_clip":        "{} link found in the clipboard",
-        "link_use":               "Use link",
-        "link_dismiss":           "Dismiss",
-        "link_unsupported":       "This is not a link of a supported site (Spotify, YouTube, TikTok, SoundCloud, Instagram).",
+        "link_unsupported":       "No link found in what you dropped.",
     },
     "de": {
         # Labels
@@ -887,12 +884,9 @@ STRINGS: dict[str, dict[str, str]] = {
         "sel_download_n":         "{} herunterladen",
         "sel_filter_ph":          "Nach Titel filtern\u2026",
         "sel_expired":            "Diese Liste ist nicht mehr verf\u00fcgbar. Bitte f\u00fcge den Link erneut ein.",
-        # Links aus der Zwischenablage oder per Drag und Drop
+        # Link per Drag und Drop
         "drop_hint":              "Link hier ablegen, um ihn herunterzuladen",
-        "link_found_clip":        "{}-Link in der Zwischenablage gefunden",
-        "link_use":               "Link verwenden",
-        "link_dismiss":           "Schlie\u00dfen",
-        "link_unsupported":       "Das ist kein Link einer unterst\u00fctzten Seite (Spotify, YouTube, TikTok, SoundCloud, Instagram).",
+        "link_unsupported":       "In dem, was du abgelegt hast, ist kein Link.",
     },
 }
 
