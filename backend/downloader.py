@@ -7,6 +7,7 @@ import shutil
 import threading
 import queue
 import time
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
@@ -102,15 +103,15 @@ def _base_opts() -> dict:
     return opts
 
 
-def _tiktok_cookie_opts(cfg: dict) -> dict:
-    """TikTok blocks most cookie-less requests. A manually exported cookie file
-    (cfg["tt_cookies_file"]) always works and takes priority since it needs no
-    browser-side decryption; otherwise fall back to reading the selected browser's
-    cookie jar directly (cfg["tt_cookies_browser"])."""
-    cookie_file = cfg.get("tt_cookies_file", "")
+def _cookie_opts(cfg: dict, prefix: str) -> dict:
+    """Login cookies for a site that blocks anonymous requests (TikTok, Instagram). A manually
+    exported cookie file (cfg["<prefix>_cookies_file"]) always works and takes priority since it
+    needs no browser-side decryption; otherwise fall back to reading the selected browser's
+    cookie jar directly (cfg["<prefix>_cookies_browser"]). Sites without these settings get none."""
+    cookie_file = cfg.get(f"{prefix}_cookies_file", "")
     if cookie_file:
         return {"cookiefile": cookie_file}
-    browser = cfg.get("tt_cookies_browser", "")
+    browser = cfg.get(f"{prefix}_cookies_browser", "")
     return {"cookiesfrombrowser": (browser,)} if browser else {}
 
 
@@ -183,6 +184,23 @@ def _friendly_tiktok_error(msg: str) -> str:
         return T("tt_err_dpapi").format(WIKI_PAGES["tiktok_cookies"])
     if "could not find" in msg and "cookies database" in msg:
         return T("tt_err_no_browser").format(WIKI_PAGES["tiktok_cookies"])
+    return msg
+
+
+# What Instagram answers when it wants a login (or has rate limited the anonymous request).
+_INSTAGRAM_LOGIN_HINTS = ("login required", "rate-limit reached", "empty media response",
+                          "requested content is not available", "restricted video")
+
+
+def _friendly_instagram_error(msg: str) -> str:
+    """Same cookie problems as TikTok, plus Instagram's "log in" answers, with a link to the tutorial."""
+    low = msg.lower()
+    if "Failed to decrypt with DPAPI" in msg:
+        return T("ig_err_dpapi").format(WIKI_PAGES["instagram_cookies"])
+    if "could not find" in msg and "cookies database" in msg:
+        return T("ig_err_no_browser").format(WIKI_PAGES["instagram_cookies"])
+    if any(hint in low for hint in _INSTAGRAM_LOGIN_HINTS):
+        return T("ig_err_login").format(WIKI_PAGES["instagram_cookies"])
     return msg
 
 
@@ -806,8 +824,32 @@ class YouTubeTask:
         return self.title or self.url
 
 
+_YT_CHANNEL = re.compile(r"youtube\.com/(?:@[^/?#]+|channel/[^/?#]+|c/[^/?#]+|user/[^/?#]+)(?P<tab>/[^?#]*)?")
+_YT_TABS = ("videos", "shorts", "streams", "live", "releases", "podcasts", "playlists", "featured")
+
+
+def is_youtube_playlist(url: str) -> bool:
+    return "playlist?list=" in url or ("/playlist" in url and "watch?v=" not in url)
+
+
+def _youtube_channel_url(url: str) -> Optional[str]:
+    """The tab to list for a channel link (the Videos tab if the link names none), or None
+    when `url` is not a channel."""
+    match = _YT_CHANNEL.search(url)
+    if not match or "watch?v=" in url:
+        return None
+    tab = (match.group("tab") or "").strip("/").split("/")[0]
+    if tab in _YT_TABS:
+        return url
+    base = url[:match.start("tab")] if match.group("tab") else url.split("?")[0].split("#")[0].rstrip("/")
+    return base.rstrip("/") + "/videos"
+
+
 def extract_youtube_entries(url: str) -> List[Dict[str, Any]]:
-    is_playlist = "playlist?list=" in url or ("/playlist" in url and "watch?v=" not in url)
+    channel = _youtube_channel_url(url)
+    if channel:
+        url = channel
+    is_playlist = bool(channel) or is_youtube_playlist(url)
 
     if not is_playlist:
         url = re.sub(r"[&?]list=[^&]+", "", url)
@@ -972,21 +1014,35 @@ class YouTubeDownloadManager(_TaskManager):
 
 
 # ===========================================================================
-# TIKTOK
+# TIKTOK, SOUNDCLOUD, INSTAGRAM
+#
+# Three sites with the same shape: a URL turns into a flat list of {url, title} entries, each
+# entry becomes one task. They differ in the config prefix ("tt", "sc", "ig"), the login
+# cookies they need and how their titles are built.
 # ===========================================================================
 
 def is_tiktok_url(url: str) -> bool:
     return "tiktok.com" in url
 
 
-def _tiktok_title(info: dict) -> str:
-    uploader = (info.get("uploader") or info.get("creator") or "").strip()
-    desc     = (info.get("description") or "").strip()
-    title    = (info.get("title") or "").strip()
+def is_soundcloud_url(url: str) -> bool:
+    return "soundcloud.com" in url or "snd.sc" in url
+
+
+def is_instagram_url(url: str) -> bool:
+    return "instagram.com" in url or "instagr.am" in url
+
+
+def _social_title(info: dict, generic_prefixes: tuple) -> str:
+    """"<uploader> - <description>" for a short video. Placeholder texts the site puts in
+    when there is no caption ("TikTok video #...", "Video by ...") fall back to the upload date."""
+    uploader = (info.get("uploader") or info.get("creator") or info.get("channel") or "").strip()
+    desc     = " ".join((info.get("description") or "").split())
+    title    = " ".join((info.get("title") or "").split())
     vid_id   = info.get("id", "video")
 
     def _generic(s: str) -> bool:
-        return s.startswith("TikTok video #") or s == vid_id
+        return s.startswith(generic_prefixes) or s == vid_id
 
     if desc and not _generic(desc):
         text = desc[:80].strip()
@@ -999,8 +1055,23 @@ def _tiktok_title(info: dict) -> str:
     return f"{uploader} - {text}" if uploader else text
 
 
+def _tiktok_title(info: dict) -> str:
+    return _social_title(info, ("TikTok video #",))
+
+
+def _instagram_title(info: dict) -> str:
+    return _social_title(info, ("Video by ", "Post by ", "Reel by "))
+
+
+def _soundcloud_title(info: dict) -> str:
+    """"<artist> - <track>"; the artist is missing in a flat playlist entry."""
+    artist = (info.get("artist") or info.get("uploader") or "").strip()
+    title  = (info.get("title") or "").strip() or str(info.get("id", "track"))
+    return f"{artist} - {title}" if artist else title
+
+
 @dataclass
-class TikTokTask:
+class SiteTask:
     task_id:     str
     url:         str
     title:       str
@@ -1021,47 +1092,124 @@ class TikTokTask:
         return self.title or self.url
 
 
-def extract_tiktok_entries(url: str) -> List[Dict[str, Any]]:
-    is_playlist = ("/tag/" in url or "/music/" in url or
-                   ("/@" in url and "/video/" not in url))
+class TikTokTask(SiteTask):
+    pass
 
+
+class SoundCloudTask(SiteTask):
+    pass
+
+
+class InstagramTask(SiteTask):
+    pass
+
+
+def _entries_from_info(info: dict, url: str, title_of: Callable[[dict], str],
+                       fallback_url: Callable[[dict], str],
+                       inherit_owner: bool = False) -> List[Dict[str, Any]]:
+    """Entries of a playlist or a single item. With `inherit_owner` an entry that does not say who
+    posted it belongs to the profile that was listed (Instagram lists only ids and links)."""
+    entries: List[Dict[str, Any]] = []
+    if info.get("_type") == "playlist":
+        owner = (info.get("uploader") or info.get("channel") or "") if inherit_owner else ""
+        for entry in info.get("entries") or []:
+            if not entry:
+                continue
+            if owner and not (entry.get("uploader") or entry.get("creator") or entry.get("channel")):
+                entry = {**entry, "uploader": owner}
+            entries.append({
+                "url":   entry.get("url") or entry.get("webpage_url") or fallback_url(entry),
+                "title": title_of(entry),
+            })
+    else:
+        entries.append({"url": info.get("webpage_url") or url, "title": title_of(info)})
+    return entries
+
+
+def _extract_site_entries(url: str, flat, cookies: dict, title_of: Callable[[dict], str],
+                          fallback_url: Callable[[dict], str],
+                          friendly: Callable[[str], str],
+                          enrich: Optional[Callable[[dict], dict]] = None,
+                          inherit_owner: bool = False) -> List[Dict[str, Any]]:
     ydl_opts = {
         "quiet":         True,
         "no_warnings":   True,
-        "extract_flat":  is_playlist,
+        "extract_flat":  flat,
         "skip_download": True,
         **_base_opts(),
-        **_tiktok_cookie_opts(load_config()),
+        **cookies,
     }
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
     except Exception as exc:
-        raise type(exc)(_friendly_tiktok_error(str(exc))) from exc
+        raise type(exc)(friendly(str(exc))) from exc
 
     if info is None:
         raise ValueError("Could not extract info from URL.")
-
-    entries: List[Dict[str, Any]] = []
-    if info.get("_type") == "playlist":
-        for entry in info.get("entries") or []:
-            if not entry:
-                continue
-            vid_url = (
-                entry.get("url")
-                or entry.get("webpage_url")
-                or f"https://www.tiktok.com/video/{entry.get('id', '')}"
-            )
-            entries.append({"url": vid_url, "title": _tiktok_title(entry)})
-    else:
-        entries.append({
-            "url":   info.get("webpage_url") or url,
-            "title": _tiktok_title(info),
-        })
-    return entries
+    if enrich:
+        info = enrich(info)
+    return _entries_from_info(info, url, title_of, fallback_url, inherit_owner)
 
 
-def download_tiktok_task(task: TikTokTask, ffmpeg_ok: bool) -> None:
+def extract_tiktok_entries(url: str) -> List[Dict[str, Any]]:
+    is_playlist = ("/tag/" in url or "/music/" in url or
+                   ("/@" in url and "/video/" not in url))
+    return _extract_site_entries(
+        url, is_playlist, _cookie_opts(load_config(), "tt"), _tiktok_title,
+        lambda e: f"https://www.tiktok.com/video/{e.get('id', '')}", _friendly_tiktok_error)
+
+
+_LOOKUP_THREADS = 6
+
+
+def _slug_title(url: str) -> str:
+    """"city-ports" for https://soundcloud.com/artist/city-ports, as a last resort."""
+    slug = url.split("?")[0].rstrip("/").rsplit("/", 1)[-1]
+    return slug.replace("-", " ").replace("_", " ").strip() or "track"
+
+
+def _soundcloud_lookup(info: dict) -> dict:
+    """SoundCloud lists the tracks of a set without their names. Look the missing ones up,
+    a few at a time; a track that cannot be looked up is named after its link."""
+    entries = info.get("entries") if info.get("_type") == "playlist" else None
+    missing = [e for e in entries or [] if e and not e.get("title") and e.get("url")]
+    if not missing:
+        return info
+
+    def lookup(entry: dict) -> dict:
+        try:
+            with yt_dlp.YoutubeDL({"quiet": True, "no_warnings": True, "skip_download": True,
+                                   "noplaylist": True, **_base_opts()}) as ydl:
+                full = ydl.extract_info(entry["url"], download=False)
+            if full and full.get("title"):
+                return {**entry, "title": full["title"], "uploader": full.get("uploader"),
+                        "artist": full.get("artist")}
+        except Exception as exc:
+            log.debug("Could not look up %s: %s", entry["url"], exc)
+        return {**entry, "title": _slug_title(entry["url"])}
+
+    with ThreadPoolExecutor(max_workers=_LOOKUP_THREADS) as pool:
+        found = dict(zip((id(e) for e in missing), pool.map(lookup, missing)))
+    return {**info, "entries": [found.get(id(e), e) for e in entries]}
+
+
+def extract_soundcloud_entries(url: str) -> List[Dict[str, Any]]:
+    """A track, a set (playlist or album), or a profile with all its tracks."""
+    return _extract_site_entries(
+        url, "in_playlist", {}, _soundcloud_title, lambda e: url, lambda msg: msg,
+        enrich=_soundcloud_lookup)
+
+
+def extract_instagram_entries(url: str) -> List[Dict[str, Any]]:
+    """A post, a reel, a story, or a profile with its posts (profiles need a login)."""
+    return _extract_site_entries(
+        url, "in_playlist", _cookie_opts(load_config(), "ig"), _instagram_title,
+        lambda e: url, _friendly_instagram_error, inherit_owner=True)
+
+
+def _download_site_task(task: SiteTask, ffmpeg_ok: bool, prefix: str, default_title: str,
+                        friendly: Callable[[str], str]) -> None:
     def _status(s: DownloadStatus, msg: str = ""):
         task.status    = s
         task.error_msg = msg
@@ -1082,14 +1230,13 @@ def download_tiktok_task(task: TikTokTask, ffmpeg_ok: bool) -> None:
         out_dir  = Path(task.output_dir)
         out_dir.mkdir(parents=True, exist_ok=True)
 
-        raw_title = task.title or "video"
+        raw_title = task.title or default_title
         if " - " in raw_title:
-            _tt_artist, _tt_title = raw_title.split(" - ", 1)
+            _artist, _title = raw_title.split(" - ", 1)
         else:
-            _tt_artist, _tt_title = "", raw_title
-        tmpl       = cfg.get("tt_filename_template", "{title}")
-        safe_title = _apply_template(tmpl, artist=_tt_artist.strip(),
-                                     title=_tt_title.strip())
+            _artist, _title = "", raw_title
+        tmpl       = cfg.get(f"{prefix}_filename_template", "{title}")
+        safe_title = _apply_template(tmpl, artist=_artist.strip(), title=_title.strip())
         final_path = _existing_output(out_dir, safe_title, fmt_info)
 
         if final_path:
@@ -1126,17 +1273,17 @@ def download_tiktok_task(task: TikTokTask, ffmpeg_ok: bool) -> None:
             "progress_hooks": [ydl_hook],
             "noplaylist":     True,
             **_base_opts(),
-            **_tiktok_cookie_opts(cfg),
+            **_cookie_opts(cfg, prefix),
         }
 
         if not is_video and ffmpeg_ok:
-            chain, pp_args = _audio_chain(fmt_info, bool(cfg.get("tt_normalize", False)))
+            chain, pp_args = _audio_chain(fmt_info, bool(cfg.get(f"{prefix}_normalize", False)))
             postprocessors += chain
             if pp_args:
                 ydl_opts["postprocessor_args"] = pp_args
 
         can_embed = fmt_info.get("original") or ext in _THUMBNAIL_EMBED_EXTS
-        if cfg.get("tt_embed_thumbnail", True) and not is_video and ffmpeg_ok and can_embed:
+        if cfg.get(f"{prefix}_embed_thumbnail", True) and not is_video and ffmpeg_ok and can_embed:
             ydl_opts["writethumbnail"] = True
             postprocessors.append({"key": "EmbedThumbnail"})
 
@@ -1146,7 +1293,7 @@ def download_tiktok_task(task: TikTokTask, ffmpeg_ok: bool) -> None:
         if postprocessors:
             ydl_opts["postprocessors"] = postprocessors
 
-        rate = cfg.get("tt_rate_limit", "")
+        rate = cfg.get(f"{prefix}_rate_limit", "")
         if rate and rate in _RATE_MAP:
             ydl_opts["ratelimit"] = _RATE_MAP[rate]
 
@@ -1165,12 +1312,34 @@ def download_tiktok_task(task: TikTokTask, ffmpeg_ok: bool) -> None:
 
     except Exception as exc:
         remove_partial_files(task)
-        _status(DownloadStatus.ERROR, _friendly_tiktok_error(str(exc)))
+        _status(DownloadStatus.ERROR, friendly(str(exc)))
         _progress(0.0)
         if task.on_done:
             task.on_done(task)
 
 
+def download_tiktok_task(task: TikTokTask, ffmpeg_ok: bool) -> None:
+    _download_site_task(task, ffmpeg_ok, "tt", "video", _friendly_tiktok_error)
+
+
+def download_soundcloud_task(task: SoundCloudTask, ffmpeg_ok: bool) -> None:
+    _download_site_task(task, ffmpeg_ok, "sc", "track", lambda msg: msg)
+
+
+def download_instagram_task(task: InstagramTask, ffmpeg_ok: bool) -> None:
+    _download_site_task(task, ffmpeg_ok, "ig", "video", _friendly_instagram_error)
+
+
 class TikTokDownloadManager(_TaskManager):
     def _run(self, task) -> None:
         download_tiktok_task(task, self._ffmpeg_ok)
+
+
+class SoundCloudDownloadManager(_TaskManager):
+    def _run(self, task) -> None:
+        download_soundcloud_task(task, self._ffmpeg_ok)
+
+
+class InstagramDownloadManager(_TaskManager):
+    def _run(self, task) -> None:
+        download_instagram_task(task, self._ffmpeg_ok)

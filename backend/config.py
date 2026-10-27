@@ -18,6 +18,7 @@ APP_VERSION = "7.2"
 WIKI_URL = "https://github.com/EmilDeuOfficial/DeuMediaDownloader/wiki"
 WIKI_PAGES = {
     "tiktok_cookies": WIKI_URL + "/TikTok-Cookies",
+    "instagram_cookies": WIKI_URL + "/Instagram-Cookies",
     "spotify_api":    WIKI_URL + "/Spotify-API-Setup",
 }
 CONFIG_FILE   = Path.home() / ".spotify_downloader" / "config.json"
@@ -149,6 +150,8 @@ DEFAULT_CONFIG = {
     "output_dir":            str(Path.home() / "Music" / "Spotify Downloads"),
     "yt_output_dir":         str(Path.home() / "Music" / "YouTube Downloads"),
     "tt_output_dir":         str(Path.home() / "Music" / "TikTok Downloads"),
+    "sc_output_dir":         str(Path.home() / "Music" / "SoundCloud Downloads"),
+    "ig_output_dir":         str(Path.home() / "Music" / "Instagram Downloads"),
     "default_format":        "MP3 (320 kbps)",
     "yt_format":             "MP3 (320 kbps)",
     "yt_format_audio":       "MP3 (320 kbps)",
@@ -184,10 +187,32 @@ DEFAULT_CONFIG = {
     "tt_win_geo":            "820x720",
     "tt_cookies_browser":    "",
     "tt_cookies_file":       "",
+    # SoundCloud-specific settings (audio only)
+    "sc_format":             "MP3 (320 kbps)",
+    "sc_concurrent":         2,
+    "sc_embed_thumbnail":    True,
+    "sc_normalize":          False,
+    "sc_rate_limit":         "",
+    "sc_open_folder":        True,
+    "sc_win_geo":            "820x720",
+    # Instagram-specific settings
+    "ig_format_video":       "MP4 (1080p)",
+    "ig_format_audio":       "MP3 (320 kbps)",
+    "ig_media_type":         "Video",
+    "ig_concurrent":         2,
+    "ig_embed_thumbnail":    True,
+    "ig_normalize":          False,
+    "ig_rate_limit":         "",
+    "ig_open_folder":        True,
+    "ig_win_geo":            "820x720",
+    "ig_cookies_browser":    "",
+    "ig_cookies_file":       "",
     # Filename templates
     "sp_filename_template":  "{artist} - {title}",
     "yt_filename_template":  "{title}",
     "tt_filename_template":  "{title}",
+    "sc_filename_template":  "{artist} - {title}",
+    "ig_filename_template":  "{title}",
 }
 
 # Filename template options  {format_string: translation_key}
@@ -211,7 +236,15 @@ TT_FILENAME_TEMPLATES = {
     "{title} - {artist}": "tmpl_title_artist",
 }
 
-# TikTok now blocks most unauthenticated scraping; browsing with a logged-in session's
+SC_FILENAME_TEMPLATES = {
+    "{artist} - {title}": "tmpl_artist_title",
+    "{title} - {artist}": "tmpl_title_artist",
+    "{title}":        "tmpl_title_only",
+}
+
+IG_FILENAME_TEMPLATES = dict(TT_FILENAME_TEMPLATES)
+
+# TikTok and Instagram block most unauthenticated scraping; browsing with a logged-in session's
 # cookies (via yt-dlp's cookiesfrombrowser) lets downloads pass as authenticated traffic.
 # Keys are yt-dlp's own browser identifiers.  {value: translation_key}
 TT_COOKIE_BROWSERS = {
@@ -258,6 +291,10 @@ STRINGS: dict[str, dict[str, str]] = {
         "youtube_url_ph":      "Paste a YouTube video or playlist URL…",
         "tiktok_url":          "TikTok URL",
         "tiktok_url_ph":       "Paste a TikTok video URL…",
+        "soundcloud_url":      "SoundCloud URL",
+        "soundcloud_url_ph":   "Paste a SoundCloud track, playlist or profile URL…",
+        "instagram_url":       "Instagram URL",
+        "instagram_url_ph":    "Paste an Instagram post, reel, story or profile URL…",
         "queue_count_one":     "({} item)",
         "queue_count_many":    "({} items)",
         "tip_back":            "Back",
@@ -358,6 +395,7 @@ STRINGS: dict[str, dict[str, str]] = {
         "err_short_path":      "Folder not found",
         "err_short_file_in_use": "File in use",
         "err_short_tiktok_cookies": "TikTok cookie problem",
+        "err_short_instagram_cookies": "Instagram login problem",
         "err_short_unknown":   "Unknown error",
         # Panel titles
         "download_queue":      "Download Queue",
@@ -392,10 +430,16 @@ STRINGS: dict[str, dict[str, str]] = {
         "open_youtube":        "Open YouTube",
         "open_tiktok":         "Open TikTok",
         "tiktok_desc":         "Videos and\naudio",
+        "open_soundcloud":     "Open SoundCloud",
+        "soundcloud_desc":     "Tracks, sets\nand profiles",
+        "open_instagram":      "Open Instagram",
+        "instagram_desc":      "Reels, posts\nand stories",
         # Window titles
         "spotify_win_title":   f"{APP_NAME}  v{APP_VERSION}",
         "youtube_win_title":   "YouTube Downloader",
         "tiktok_win_title":    "TikTok Downloader",
+        "soundcloud_win_title": "SoundCloud Downloader",
+        "instagram_win_title": "Instagram Downloader",
         # Log / status messages
         "no_credentials":      "No Spotify API credentials. Open Settings to configure them.",
         "spotify_init":        "Spotify client initialised.",
@@ -405,6 +449,8 @@ STRINGS: dict[str, dict[str, str]] = {
         "fetching_spotify":    "Fetching {} info from Spotify\u2026",
         "fetching_youtube":    "Fetching YouTube info\u2026",
         "fetching_tiktok":     "Fetching TikTok info\u2026",
+        "fetching_soundcloud": "Fetching SoundCloud info\u2026",
+        "fetching_instagram":  "Fetching Instagram info\u2026",
         "queued_n_tracks":     "Queued {} track(s)  [{}]",
         "queued_n_videos":     "Queued {} video(s)  [{}]",
         "err_resolving":       "Error resolving URL: {}",
@@ -418,6 +464,8 @@ STRINGS: dict[str, dict[str, str]] = {
         "mb_no_url_spotify":   "Please paste a Spotify URL first.",
         "mb_no_url_youtube":   "Please paste a YouTube URL first.",
         "mb_no_url_tiktok":    "Please paste a TikTok URL first.",
+        "mb_no_url_soundcloud": "Please paste a SoundCloud URL first.",
+        "mb_no_url_instagram": "Please paste an Instagram URL first.",
         "mb_no_outdir_title":  "No Output Directory",
         "mb_no_outdir":        "Please choose an output directory.",
         "mb_api_title":        "API Credentials Required",
@@ -503,6 +551,32 @@ STRINGS: dict[str, dict[str, str]] = {
         "tt_cookies_file_clear":  "Clear",
         "tt_err_dpapi":           "This browser's cookies can't be read (Windows security feature). Use Firefox or a cookie file. Tutorial: {}",
         "tt_err_no_browser":      "Browser or TikTok login not found. Pick another browser or use a cookie file. Tutorial: {}",
+        # SoundCloud settings dialog
+        "sc_settings_title":      "SoundCloud Settings",
+        "sc_embed_thumb_desc":    "Embed the track artwork into the audio file",
+        # Instagram settings dialog
+        "ig_settings_title":      "Instagram Settings",
+        "ig_embed_thumb_desc":    "Embed the post cover into audio files",
+        "ig_cookies_desc":        "Instagram often asks for a login. Your browser's login cookies usually fix it.",
+        "ig_err_dpapi":           "This browser's cookies can't be read (Windows security feature). Use Firefox or a cookie file. Tutorial: {}",
+        "ig_err_no_browser":      "Browser or Instagram login not found. Pick another browser or use a cookie file. Tutorial: {}",
+        "ig_err_login":           "Instagram wants you to log in for this link. Add your browser cookies or a cookie file in the Instagram settings. Tutorial: {}",
+        # Choosing items of a playlist, profile or channel
+        "sel_title":              "Choose what to download",
+        "sel_found":              "{} items found. Untick the ones you do not want.",
+        "sel_all":                "Select all",
+        "sel_none":               "Select none",
+        "sel_count":              "{} of {} selected",
+        "sel_download":           "Download selected",
+        "sel_download_n":         "Download {}",
+        "sel_filter_ph":          "Filter by title…",
+        "sel_expired":            "This list is no longer available. Please paste the link again.",
+        # Links found in the clipboard or dropped on the window
+        "drop_hint":              "Drop a link to download it",
+        "link_found_clip":        "{} link found in the clipboard",
+        "link_use":               "Use link",
+        "link_dismiss":           "Dismiss",
+        "link_unsupported":       "This is not a link of a supported site (Spotify, YouTube, TikTok, SoundCloud, Instagram).",
     },
     "de": {
         # Labels
@@ -533,6 +607,10 @@ STRINGS: dict[str, dict[str, str]] = {
         "youtube_url_ph":      "YouTube-Video- oder Playlist-URL einfügen…",
         "tiktok_url":          "TikTok-URL",
         "tiktok_url_ph":       "TikTok-Video-URL einfügen…",
+        "soundcloud_url":      "SoundCloud-URL",
+        "soundcloud_url_ph":   "SoundCloud-Track-, Playlist- oder Profil-URL einfügen…",
+        "instagram_url":       "Instagram-URL",
+        "instagram_url_ph":    "Instagram-Beitrags-, Reel-, Story- oder Profil-URL einfügen…",
         "queue_count_one":     "({} Eintrag)",
         "queue_count_many":    "({} Einträge)",
         "tip_back":            "Zurück",
@@ -633,6 +711,7 @@ STRINGS: dict[str, dict[str, str]] = {
         "err_short_path":      "Ordner nicht gefunden",
         "err_short_file_in_use": "Datei in Benutzung",
         "err_short_tiktok_cookies": "TikTok-Cookie-Problem",
+        "err_short_instagram_cookies": "Instagram-Anmeldeproblem",
         "err_short_unknown":   "Unbekannter Fehler",
         # Panel titles
         "download_queue":      "Download-Warteschlange",
@@ -667,10 +746,16 @@ STRINGS: dict[str, dict[str, str]] = {
         "open_youtube":        "YouTube \u00f6ffnen",
         "open_tiktok":         "TikTok \u00f6ffnen",
         "tiktok_desc":         "Videos und\nAudio",
+        "open_soundcloud":     "SoundCloud \u00f6ffnen",
+        "soundcloud_desc":     "Tracks, Sets\nund Profile",
+        "open_instagram":      "Instagram \u00f6ffnen",
+        "instagram_desc":      "Reels, Beitr\u00e4ge\nund Storys",
         # Window titles
         "spotify_win_title":   f"{APP_NAME}  v{APP_VERSION}",
         "youtube_win_title":   "YouTube Downloader",
         "tiktok_win_title":    "TikTok Downloader",
+        "soundcloud_win_title": "SoundCloud Downloader",
+        "instagram_win_title": "Instagram Downloader",
         # Log / status messages
         "no_credentials":      "Keine Spotify-API-Zugangsdaten. Einstellungen \u00f6ffnen.",
         "spotify_init":        "Spotify-Client initialisiert.",
@@ -680,6 +765,8 @@ STRINGS: dict[str, dict[str, str]] = {
         "fetching_spotify":    "{}-Info von Spotify wird geladen\u2026",
         "fetching_youtube":    "YouTube-Info wird geladen\u2026",
         "fetching_tiktok":     "TikTok-Info wird geladen\u2026",
+        "fetching_soundcloud": "SoundCloud-Info wird geladen\u2026",
+        "fetching_instagram":  "Instagram-Info wird geladen\u2026",
         "queued_n_tracks":     "{} Track(s) in Warteschlange  [{}]",
         "queued_n_videos":     "{} Video(s) in Warteschlange  [{}]",
         "err_resolving":       "Fehler beim Laden der URL: {}",
@@ -693,6 +780,8 @@ STRINGS: dict[str, dict[str, str]] = {
         "mb_no_url_spotify":   "Bitte zuerst eine Spotify-URL einf\u00fcgen.",
         "mb_no_url_youtube":   "Bitte zuerst eine YouTube-URL einf\u00fcgen.",
         "mb_no_url_tiktok":    "Bitte zuerst eine TikTok-URL einf\u00fcgen.",
+        "mb_no_url_soundcloud": "Bitte zuerst eine SoundCloud-URL einf\u00fcgen.",
+        "mb_no_url_instagram": "Bitte zuerst eine Instagram-URL einf\u00fcgen.",
         "mb_no_outdir_title":  "Kein Ausgabeordner",
         "mb_no_outdir":        "Bitte einen Ausgabeordner w\u00e4hlen.",
         "mb_api_title":        "API-Zugangsdaten erforderlich",
@@ -778,6 +867,32 @@ STRINGS: dict[str, dict[str, str]] = {
         "tt_cookies_file_clear":  "Entfernen",
         "tt_err_dpapi":           "Die Cookies dieses Browsers sind nicht lesbar (Windows-Sicherheitsfeature). Nutze Firefox oder eine Cookie-Datei. Anleitung: {}",
         "tt_err_no_browser":      "Browser oder TikTok-Login nicht gefunden. Wähle einen anderen Browser oder eine Cookie-Datei. Anleitung: {}",
+        # SoundCloud-Einstellungen
+        "sc_settings_title":      "SoundCloud Einstellungen",
+        "sc_embed_thumb_desc":    "Track-Cover in die Audiodatei einbetten",
+        # Instagram-Einstellungen
+        "ig_settings_title":      "Instagram Einstellungen",
+        "ig_embed_thumb_desc":    "Beitrags-Cover in Audiodateien einbetten",
+                "ig_cookies_desc":        "Instagram verlangt oft eine Anmeldung. Die Login-Cookies deines Browsers beheben das meist.",
+        "ig_err_dpapi":           "Die Cookies dieses Browsers sind nicht lesbar (Windows-Sicherheitsfeature). Nutze Firefox oder eine Cookie-Datei. Anleitung: {}",
+        "ig_err_no_browser":      "Browser oder Instagram-Login nicht gefunden. W\u00e4hle einen anderen Browser oder eine Cookie-Datei. Anleitung: {}",
+        "ig_err_login":           "Instagram verlangt f\u00fcr diesen Link eine Anmeldung. Hinterlege Browser-Cookies oder eine Cookie-Datei in den Instagram-Einstellungen. Anleitung: {}",
+        # Auswahl in Playlists, Profilen und Kan\u00e4len
+        "sel_title":              "Auswahl der Downloads",
+        "sel_found":              "{} Eintr\u00e4ge gefunden. Entferne das H\u00e4kchen bei allem, was du nicht willst.",
+        "sel_all":                "Alle ausw\u00e4hlen",
+        "sel_none":               "Keine ausw\u00e4hlen",
+        "sel_count":              "{} von {} ausgew\u00e4hlt",
+        "sel_download":           "Auswahl herunterladen",
+        "sel_download_n":         "{} herunterladen",
+        "sel_filter_ph":          "Nach Titel filtern\u2026",
+        "sel_expired":            "Diese Liste ist nicht mehr verf\u00fcgbar. Bitte f\u00fcge den Link erneut ein.",
+        # Links aus der Zwischenablage oder per Drag und Drop
+        "drop_hint":              "Link hier ablegen, um ihn herunterzuladen",
+        "link_found_clip":        "{}-Link in der Zwischenablage gefunden",
+        "link_use":               "Link verwenden",
+        "link_dismiss":           "Schlie\u00dfen",
+        "link_unsupported":       "Das ist kein Link einer unterst\u00fctzten Seite (Spotify, YouTube, TikTok, SoundCloud, Instagram).",
     },
 }
 

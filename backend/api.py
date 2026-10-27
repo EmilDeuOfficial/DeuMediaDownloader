@@ -26,6 +26,8 @@ from .config import (
     AUDIO_FORMATS,
     AUDIO_GROUPS,
     DEFAULT_CONFIG,
+    IG_FILENAME_TEMPLATES,
+    SC_FILENAME_TEMPLATES,
     SP_FILENAME_TEMPLATES,
     T,
     TT_COOKIE_BROWSERS,
@@ -40,13 +42,15 @@ from .config import (
 
 log = logging.getLogger(__name__)
 
-LAUNCHER_SIZE = (720, 330)
+LAUNCHER_SIZE = (900, 330)
 TOOL_DEFAULT_SIZE = (820, 720)
 TOOL_MIN_SIZE = (700, 600)
 GEOMETRY_KEYS = {
     "spotify": "sp_win_geo",
     "youtube": "yt_win_geo",
     "tiktok": "tt_win_geo",
+    "soundcloud": "sc_win_geo",
+    "instagram": "ig_win_geo",
     "launcher": "launcher_pos",
 }
 _APP_ID = "{8F3A2B1C-4D5E-6F7A-8B9C-0D1E2F3A4B5C}_is1"
@@ -197,6 +201,8 @@ class Api:
                 "sp_templates": [[k, v] for k, v in SP_FILENAME_TEMPLATES.items()],
                 "yt_templates": [[k, v] for k, v in YT_FILENAME_TEMPLATES.items()],
                 "tt_templates": [[k, v] for k, v in TT_FILENAME_TEMPLATES.items()],
+                "sc_templates": [[k, v] for k, v in SC_FILENAME_TEMPLATES.items()],
+                "ig_templates": [[k, v] for k, v in IG_FILENAME_TEMPLATES.items()],
                 "cookie_browsers": [[k, v] for k, v in TT_COOKIE_BROWSERS.items()],
                 "wiki": dict(WIKI_PAGES),
             },
@@ -233,6 +239,18 @@ class Api:
         if not out_dir:
             raise ApiError(T("mb_no_outdir"), T("mb_no_outdir_title"))
         rt.submit(url, out_dir, fmt)
+
+    @_safe
+    def choose_items(self, service: str, token: str, indices: list) -> bool:
+        """Queue the entries the user ticked in the list that submit() offered."""
+        if not self._runtime(service).choose(token, [i for i in indices or [] if isinstance(i, int)]):
+            raise ApiError(T("sel_expired"), T("sel_title"))
+        return True
+
+    @_safe
+    def discard_items(self, service: str, token: str) -> bool:
+        """The user closed the list without choosing."""
+        return self._runtime(service).discard(token)
 
     @_safe
     def clear_done(self, service: str) -> list:

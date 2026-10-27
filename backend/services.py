@@ -16,6 +16,10 @@ from .errors import short_error
 from .downloader import (
     DownloadStatus,
     DownloadTask,
+    InstagramDownloadManager,
+    InstagramTask,
+    SoundCloudDownloadManager,
+    SoundCloudTask,
     SpotifyClient,
     SpotifyDownloadManager,
     TikTokDownloadManager,
@@ -24,6 +28,8 @@ from .downloader import (
     YouTubeDownloadManager,
     YouTubeTask,
     _apply_template,
+    extract_instagram_entries,
+    extract_soundcloud_entries,
     extract_tiktok_entries,
     extract_youtube_entries,
     is_youtube_url,
@@ -33,9 +39,11 @@ from .record import SpotifyRecordManager
 
 log = logging.getLogger(__name__)
 
-SERVICE_IDS = ("spotify", "youtube", "tiktok")
+SERVICE_IDS = ("spotify", "youtube", "tiktok", "soundcloud", "instagram")
 _NAME_MAX = 60
 _FINISHED = (DownloadStatus.DONE, DownloadStatus.ERROR, DownloadStatus.CANCELLED)
+# Lists the user has not answered yet (playlist, profile or channel waiting for the choice).
+_MAX_PENDING = 8
 # A task in one of these states can be paused or cancelled; CONVERTING and EMBEDDING are short
 # ffmpeg steps that are not interrupted.
 _INTERRUPTIBLE = (DownloadStatus.QUEUED, DownloadStatus.SEARCHING, DownloadStatus.DOWNLOADING,
@@ -80,6 +88,14 @@ class ServiceSpec:
     can_pause: bool = True
     # Returns {"message", "kind"} when a submit cannot start (for example "not logged in").
     precheck: Optional[Callable[[], Optional[dict]]] = None
+
+
+def item_label(item: Any) -> str:
+    """Text for an entry in the list the user picks from."""
+    if isinstance(item, dict):
+        return str(item.get("title") or item.get("url") or "")
+    name = getattr(item, "display_name", None)
+    return str(name() if callable(name) else item)
 
 
 def _status_text(status: DownloadStatus) -> str:
@@ -144,6 +160,8 @@ class ServiceRuntime:
         self._workers: Optional[int] = None
         self._tasks: Dict[str, Any] = {}
         self._notified: set = set()  # task ids whose on_done was already handled
+        # token -> (items, out_dir, fmt) of a resolved list that waits for the user's choice
+        self._pending: Dict[str, tuple] = {}
         self._lock = threading.Lock()
 
     # ------------------------------------------------------------------ setup
@@ -185,9 +203,10 @@ class ServiceRuntime:
         try:
             ctx = ResolveContext(log=self._log, client=self._client, config=self._config)
             items = self._spec.resolve(url, ctx)
-            self._log(T(self._spec.queued_key).format(len(items), fmt))
-            for item in items:
-                self._queue(item, out_dir, fmt)
+            if len(items) > 1:
+                self._offer(items, out_dir, fmt)
+                return
+            self._queue_all(items, out_dir, fmt)
             self._em.emit("resolve_done", {"service": self._spec.id})
         except Exception as exc:
             msg = str(exc)
@@ -195,6 +214,48 @@ class ServiceRuntime:
             self._em.emit("resolve_error", {
                 "service": self._spec.id, "message": msg, "kind": "error",
             })
+
+    def _queue_all(self, items: list, out_dir: str, fmt: str) -> None:
+        self._log(T(self._spec.queued_key).format(len(items), fmt))
+        for item in items:
+            self._queue(item, out_dir, fmt)
+
+    # ------------------------------------------------------ choose from a list
+    def _offer(self, items: list, out_dir: str, fmt: str) -> None:
+        """A playlist, profile or channel: show its entries first and queue what the user ticks."""
+        token = uuid.uuid4().hex
+        with self._lock:
+            while len(self._pending) >= _MAX_PENDING:
+                del self._pending[next(iter(self._pending))]
+            self._pending[token] = (items, out_dir, fmt)
+        self._em.emit("resolve_choice", {
+            "service": self._spec.id,
+            "token": token,
+            "entries": [{"index": i, "title": item_label(item)} for i, item in enumerate(items)],
+        })
+
+    def choose(self, token: str, indices: List[int]) -> bool:
+        """Queue the entries of an offered list whose positions are in `indices`.
+        False if the list is gone (answered twice, or pushed out by newer lists)."""
+        with self._lock:
+            pending = self._pending.pop(token, None)
+        if pending is None:
+            return False
+        items, out_dir, fmt = pending
+        wanted = sorted({i for i in indices if isinstance(i, int) and 0 <= i < len(items)})
+        try:
+            if wanted:
+                self._queue_all([items[i] for i in wanted], out_dir, fmt)
+        finally:
+            self._em.emit("resolve_done", {"service": self._spec.id})
+        return True
+
+    def discard(self, token: str) -> bool:
+        """The user closed the list without choosing."""
+        with self._lock:
+            known = self._pending.pop(token, None) is not None
+        self._em.emit("resolve_done", {"service": self._spec.id})
+        return known
 
     def _queue(self, item: Any, out_dir: str, fmt: str) -> None:
         spec = self._spec
@@ -369,6 +430,16 @@ def _tiktok_resolve(url: str, ctx: ResolveContext) -> list:
     return extract_tiktok_entries(url)
 
 
+def _soundcloud_resolve(url: str, ctx: ResolveContext) -> list:
+    ctx.log(T("fetching_soundcloud"))
+    return extract_soundcloud_entries(url)
+
+
+def _instagram_resolve(url: str, ctx: ResolveContext) -> list:
+    ctx.log(T("fetching_instagram"))
+    return extract_instagram_entries(url)
+
+
 def _spotify_spec() -> ServiceSpec:
     return ServiceSpec(
         id="spotify",
@@ -438,8 +509,40 @@ def _tiktok_spec() -> ServiceSpec:
     )
 
 
+def _soundcloud_spec() -> ServiceSpec:
+    return ServiceSpec(
+        id="soundcloud",
+        concurrency_key="sc_concurrent",
+        open_folder_key="sc_open_folder",
+        make_manager=SoundCloudDownloadManager,
+        resolve=_soundcloud_resolve,
+        make_task=lambda entry, out_dir, fmt: SoundCloudTask(
+            task_id=str(uuid.uuid4()), url=entry["url"], title=entry["title"],
+            output_dir=out_dir, format_name=fmt),
+        task_name=_flat_task_name("sc_filename_template"),
+        log_name=lambda task: task.display_name(),
+        queued_key="queued_n_tracks",
+    )
+
+
+def _instagram_spec() -> ServiceSpec:
+    return ServiceSpec(
+        id="instagram",
+        concurrency_key="ig_concurrent",
+        open_folder_key="ig_open_folder",
+        make_manager=InstagramDownloadManager,
+        resolve=_instagram_resolve,
+        make_task=lambda entry, out_dir, fmt: InstagramTask(
+            task_id=str(uuid.uuid4()), url=entry["url"], title=entry["title"],
+            output_dir=out_dir, format_name=fmt),
+        task_name=_flat_task_name("ig_filename_template"),
+        log_name=lambda task: task.display_name(),
+        queued_key="queued_n_videos",
+    )
+
+
 def build_runtimes(emitter: Any, ffmpeg_ok: bool, session: Any = None) -> Dict[str, ServiceRuntime]:
-    specs = [_spotify_spec(), _youtube_spec(), _tiktok_spec()]
+    specs = [_spotify_spec(), _youtube_spec(), _tiktok_spec(), _soundcloud_spec(), _instagram_spec()]
     if session is not None:
         specs.append(_spotify_record_spec(session))
     return {s.id: ServiceRuntime(s, emitter, ffmpeg_ok) for s in specs}

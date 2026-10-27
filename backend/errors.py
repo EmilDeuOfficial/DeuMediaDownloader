@@ -43,6 +43,8 @@ def short_error(message: str) -> str:
 
     if WIKI_PAGES["tiktok_cookies"] in text:
         return T("err_short_tiktok_cookies")
+    if WIKI_PAGES["instagram_cookies"] in text:
+        return T("err_short_instagram_cookies")
     no_match_start = T("err_no_match").split("{}")[0].strip()
     if no_match_start and text.startswith(no_match_start):
         return T("err_short_no_match")
