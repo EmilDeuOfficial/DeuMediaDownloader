@@ -28,11 +28,10 @@
 [data-service="youtube"] { --accent: #cc2222; --accent-hover: #aa1111; --accent-dim: #3a0a0a; --item-accent: #ff4444; }
 [data-service="tiktok"]  {
   --accent: #fe2c55; --accent-hover: #e0214a; --accent-dim: #4a0a17; --item-accent: #fe2c55;
-  /* TikTok's two brand colours: cyan to pink. Dark text, white is unreadable on the cyan end. */
-  --accent-fill: linear-gradient(120deg, #25f4ee 0%, #fe2c55 100%);
-  --accent-fill-hover: linear-gradient(120deg, #1fd6d1 0%, #e0214a 100%);
-  --item-fill: linear-gradient(90deg, #25f4ee, #fe2c55);
-  --on-accent: #0b0f14;
+  /* TikTok's two brand colours, blue to pink; the blue stop keeps the blend clean and white text readable. */
+  --accent-fill: linear-gradient(120deg, #11b4d4 0%, #5a63e6 42%, #fe2c55 100%);
+  --accent-fill-hover: linear-gradient(120deg, #0e9bb8 0%, #4a52cc 42%, #e0214a 100%);
+  --item-fill: linear-gradient(90deg, #11b4d4, #5a63e6 45%, #fe2c55);
 }
 [data-service="soundcloud"] { --accent: #e64d00; --accent-hover: #c94300; --accent-dim: #4a1c05; --item-accent: #ff5500; }
 [data-service="instagram"]  {
