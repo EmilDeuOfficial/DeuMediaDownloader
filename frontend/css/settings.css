@@ -96,7 +96,7 @@
 .switch input { position: absolute; inset: 0; z-index: 1; margin: 0; opacity: 0; cursor: pointer; }
 .switch-track { position: absolute; inset: 0; border-radius: 11px; background: var(--border); transition: background-color 0.15s; }
 .switch-track::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: var(--text-primary); transition: transform 0.15s; }
-.switch input:checked + .switch-track { background: var(--accent-fill); }
+.switch input:checked + .switch-track { background: var(--accent-mark); }
 .switch input:checked + .switch-track::after { transform: translateX(22px); }
 .switch input:focus-visible + .switch-track { outline: 2px solid var(--accent); outline-offset: 2px; }
 

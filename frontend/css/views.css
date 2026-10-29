@@ -19,7 +19,7 @@
 .launcher-card .brand-icon { margin-bottom: 4px; }
 .lc-title { font-size: 16px; font-weight: 700; }
 .lc-desc { margin: 4px 0 16px; font-size: 11px; color: var(--text-secondary); text-align: center; white-space: pre-line; }
-.lc-open { height: 36px; background: var(--btn); font-weight: 700; color: var(--btn-text, #fff); }
+.lc-open { height: 36px; background: var(--btn); box-shadow: var(--accent-glow); font-weight: 700; color: var(--btn-text, #fff); }
 .lc-open:hover { background: var(--btn-hover); }
 
 /* ---- Tool view ---- */

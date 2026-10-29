@@ -1,0 +1,49 @@
+/* Gradient accents of the Instagram and TikTok views.
+   --accent-mark holds the gradient (see base.css); everything coloured in these two views uses it
+   where CSS allows: borders, switches, slider, progress, headings and links. Warning and danger
+   colours are not touched. Focus outlines and the small line icons keep the plain accent colour. */
+
+:is([data-service="instagram"], [data-service="tiktok"]) {
+  --grad-text: var(--accent-mark);
+}
+
+/* ---- Borders ---- */
+:is([data-service="instagram"], [data-service="tiktok"]) .entry:focus {
+  border-color: transparent;
+  background: linear-gradient(var(--bg-input), var(--bg-input)) padding-box, var(--accent-mark) border-box;
+}
+:is([data-service="instagram"], [data-service="tiktok"]).dd-popup {
+  border-color: transparent;
+  background: linear-gradient(var(--bg-card), var(--bg-card)) padding-box, var(--accent-mark) border-box;
+}
+:is([data-service="instagram"], [data-service="tiktok"]) .launcher-card:hover,
+.launcher-card:is([data-service="instagram"], [data-service="tiktok"]):hover {
+  border-color: transparent;
+  background: linear-gradient(var(--bg-card), var(--bg-card)) padding-box, var(--accent-mark) border-box;
+}
+
+/* ---- Slider ---- */
+:is([data-service="instagram"], [data-service="tiktok"]) .sm-slider::-webkit-slider-runnable-track {
+  background: var(--accent-mark) 0 0 / calc(9px + (100% - 18px) * var(--f)) 100% no-repeat, var(--border);
+}
+:is([data-service="instagram"], [data-service="tiktok"]) .sm-slider::-webkit-slider-thumb {
+  border-color: transparent;
+  background: linear-gradient(var(--text-primary), var(--text-primary)) padding-box, var(--accent-mark) border-box;
+}
+:is([data-service="instagram"], [data-service="tiktok"]) .sm-slider-value {
+  background: var(--accent-fill);
+  box-shadow: var(--accent-glow);
+  color: var(--on-accent);
+}
+
+/* ---- Text in the accent colour ---- */
+:is([data-service="instagram"], [data-service="tiktok"]) .slider-ticks .active,
+:is([data-service="instagram"], [data-service="tiktok"]) .upd-heading,
+:is([data-service="instagram"], [data-service="tiktok"]) .ext-link,
+:is([data-service="instagram"], [data-service="tiktok"]) .queue-item[data-status="DONE"] .qi-status {
+  background: var(--grad-text);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}

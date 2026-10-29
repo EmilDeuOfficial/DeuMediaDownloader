@@ -7,7 +7,7 @@
 }
 .brand-spotify { -webkit-mask-image: url(../img/spotify-icon.svg); mask-image: url(../img/spotify-icon.svg); background-color: #1db954; }
 .brand-youtube { -webkit-mask-image: url(../img/youtube-icon.svg); mask-image: url(../img/youtube-icon.svg); background-color: #ff0000; }
-.brand-tiktok  { -webkit-mask-image: url(../img/tiktok-icon.svg);  mask-image: url(../img/tiktok-icon.svg);  background-image: linear-gradient(120deg, #11b4d4 0%, #5a63e6 42%, #fe2c55 100%); }
+.brand-tiktok  { background: url(../img/tiktok-logo.svg) center / contain no-repeat; }
 .brand-soundcloud { -webkit-mask-image: url(../img/soundcloud-icon.svg); mask-image: url(../img/soundcloud-icon.svg); background-color: #ff5500; }
 .brand-instagram  { -webkit-mask-image: url(../img/instagram-icon.svg);  mask-image: url(../img/instagram-icon.svg);  background-image: linear-gradient(45deg, #fdc468 0%, #fa7e1e 22%, #d62976 55%, #962fbf 100%); }
 
@@ -61,7 +61,7 @@
 }
 .btn.neutral { background: var(--bg-card); }
 .btn.neutral:hover { background: var(--border); }
-.btn.accent { background: var(--accent-fill); font-weight: 700; color: var(--on-accent); }
+.btn.accent { background: var(--accent-fill); box-shadow: var(--accent-glow); font-weight: 700; color: var(--on-accent); }
 .btn.accent:hover:not(:disabled) { background: var(--accent-fill-hover); }
 .btn.danger { background: var(--error); color: #fff; }
 .btn.danger:hover { background: #c0392b; }
@@ -110,7 +110,7 @@
 }
 .seg-btn .icon { font-size: 14px; }
 .seg-btn:hover:not(.active) { background: var(--bg-secondary); }
-.seg-btn.active { background: var(--accent-fill); color: var(--on-accent); }
+.seg-btn.active { background: var(--accent-fill); box-shadow: var(--accent-glow); color: var(--on-accent); }
 
 /* ---- Dropdown ---- */
 .dropdown {
@@ -133,7 +133,7 @@
 .dd-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dd-arrow { display: inline-flex; color: var(--accent); font-size: 14px; transition: transform 0.18s ease; }
 .dropdown.open .dd-arrow { transform: rotate(180deg); }
-.dropdown:hover, .dropdown.open { background: var(--accent-fill); }
+.dropdown:hover, .dropdown.open { background: var(--accent-mark); }
 .dropdown:hover .dd-inner, .dropdown.open .dd-inner { background: var(--bg-card); }
 
 .dropdown.disabled { opacity: 0.55; cursor: default; }
