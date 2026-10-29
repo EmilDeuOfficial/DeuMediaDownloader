@@ -61,7 +61,7 @@
 }
 .btn.neutral { background: var(--bg-card); }
 .btn.neutral:hover { background: var(--border); }
-.btn.accent { background: var(--accent-fill); box-shadow: var(--accent-glow); font-weight: 700; color: var(--on-accent); }
+.btn.accent { background: var(--accent-fill); box-shadow: var(--accent-glow), 0 0 0 0 transparent; font-weight: 700; color: var(--on-accent); }
 .btn.accent:hover:not(:disabled) { background: var(--accent-fill-hover); }
 .btn.danger { background: var(--error); color: #fff; }
 .btn.danger:hover { background: #c0392b; }

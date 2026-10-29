@@ -54,7 +54,8 @@
   transition-duration: var(--dur), var(--dur), 0.12s, var(--dur), var(--dur);
   transition-timing-function: var(--ease-soft);
 }
-.btn.accent:hover:not(:disabled) { box-shadow: 0 4px 16px color-mix(in srgb, var(--accent) 28%, transparent); }
+.btn.accent:hover:not(:disabled) { box-shadow: var(--accent-glow-hover), 0 4px 16px color-mix(in srgb, var(--accent) 28%, transparent); }
+.lc-open:hover { box-shadow: var(--accent-glow-hover); }
 .tb-btn .icon { transition: transform var(--dur-slow) var(--ease-soft); }
 .tb-btn[data-action="settings"]:hover .icon { transform: rotate(45deg); }
 .tb-btn[data-action="back"]:hover .icon { transform: translateX(-2px); }

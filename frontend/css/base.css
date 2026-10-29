@@ -21,7 +21,8 @@
   --accent-fill: var(--accent);
   --accent-fill-hover: var(--accent-hover);
   --item-fill: var(--item-accent);
-  --accent-glow: none;                 /* extra shadow of filled buttons */
+  --accent-glow: 0 0 0 0 transparent, 0 0 0 0 transparent;   /* two offset copies behind filled buttons, none by default */
+  --accent-glow-hover: 0 0 0 0 transparent, 0 0 0 0 transparent;
   --accent-mark: var(--accent-fill);   /* small filled marks: switches, update dot, bars, hover edges */
   --on-accent: #ffffff;   /* text on accent surfaces (buttons, active toggles) */
 }
@@ -31,7 +32,8 @@
   --accent-fill: var(--accent);
   --accent-fill-hover: var(--accent-hover);
   --item-fill: var(--item-accent);
-  --accent-glow: none;
+  --accent-glow: 0 0 0 0 transparent, 0 0 0 0 transparent;
+  --accent-glow-hover: 0 0 0 0 transparent, 0 0 0 0 transparent;
   --accent-mark: var(--accent-fill);
 }
 
@@ -43,6 +45,7 @@
   --accent-fill: #000000;
   --accent-fill-hover: #1a1a1f;
   --accent-glow: -2px -2px 0 #25f4ee, 2px 2px 0 #fe2c55;
+  --accent-glow-hover: -3px -3px 0 #25f4ee, 3px 3px 0 #fe2c55;   /* the copies move apart on hover */
   /* Everything else that is coloured (borders, switches, bars, text): cyan to pink with a short blend. */
   --accent-mark: linear-gradient(120deg, #25f4ee 30%, #fe2c55 70%);
   --item-fill: linear-gradient(90deg, #25f4ee 30%, #fe2c55 70%);
