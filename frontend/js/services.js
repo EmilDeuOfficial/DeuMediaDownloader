@@ -33,7 +33,7 @@ export const SERVICES = {
   tiktok: {
     id: "tiktok",
     title: "TikTok",
-    launcher: { btn: "#dc1a4b", btnHover: "#c71542", btnText: "#ffffff", descKey: "tiktok_desc", openKey: "open_tiktok" },
+    launcher: { btn: "linear-gradient(120deg, #25f4ee 0%, #fe2c55 100%)", btnHover: "linear-gradient(120deg, #1fd6d1 0%, #e0214a 100%)", btnText: "#0b0f14", descKey: "tiktok_desc", openKey: "open_tiktok" },
     urlLabelKey: "tiktok_url",
     urlPlaceholderKey: "tiktok_url_ph",
     queueGlyph: "note",

@@ -7,7 +7,7 @@
 }
 .brand-spotify { -webkit-mask-image: url(../img/spotify-icon.svg); mask-image: url(../img/spotify-icon.svg); background-color: #1db954; }
 .brand-youtube { -webkit-mask-image: url(../img/youtube-icon.svg); mask-image: url(../img/youtube-icon.svg); background-color: #ff0000; }
-.brand-tiktok  { -webkit-mask-image: url(../img/tiktok-icon.svg);  mask-image: url(../img/tiktok-icon.svg);  background-color: #ee1d52; }
+.brand-tiktok  { -webkit-mask-image: url(../img/tiktok-icon.svg);  mask-image: url(../img/tiktok-icon.svg);  background-image: linear-gradient(120deg, #25f4ee 0%, #fe2c55 100%); }
 .brand-soundcloud { -webkit-mask-image: url(../img/soundcloud-icon.svg); mask-image: url(../img/soundcloud-icon.svg); background-color: #ff5500; }
 .brand-instagram  { -webkit-mask-image: url(../img/instagram-icon.svg);  mask-image: url(../img/instagram-icon.svg);  background-image: linear-gradient(45deg, #fdc468 0%, #fa7e1e 22%, #d62976 55%, #962fbf 100%); }
 
