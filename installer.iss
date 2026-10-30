@@ -217,6 +217,45 @@ begin
   Result := WizardSilent() and (ExpandConstant('{param:RESTARTAPP|0}') = '1');
 end;
 
+function AppRunning(): Boolean;
+var
+  ResultCode: Integer;
+begin
+  Result := Exec(
+    ExpandConstant('{cmd}'),
+    '/c tasklist /FI "IMAGENAME eq {#MyAppExeName}" /NH | find /I "{#MyAppExeName}" >nul',
+    '', SW_HIDE, ewWaitUntilTerminated, ResultCode
+  ) and (ResultCode = 0);
+end;
+
+// The in-app updater starts this setup while the app is still shutting down. Restart Manager
+// cannot always close the frameless window, and with /SUPPRESSMSGBOXES the setup then aborts and
+// rolls back. So wait for the app to end by itself and stop it if it is still running.
+procedure StopRunningApp();
+var
+  ResultCode, I: Integer;
+begin
+  for I := 1 to 20 do begin
+    if not AppRunning() then
+      Exit;
+    Sleep(500);
+  end;
+  Log('{#MyAppExeName} is still running after 10 seconds, stopping it');
+  Exec(
+    ExpandConstant('{cmd}'),
+    '/c taskkill /F /T /IM {#MyAppExeName} >nul 2>&1',
+    '', SW_HIDE, ewWaitUntilTerminated, ResultCode
+  );
+  Sleep(1000);
+end;
+
+function InitializeSetup(): Boolean;
+begin
+  Result := True;
+  if RestartAfterUpdate() then
+    StopRunningApp();
+end;
+
 procedure WriteLanguageFile();
 var
   LangDir: String;

@@ -443,6 +443,15 @@ class Api:
         self._save_geometry(self._view)
         self._close_session()
         self._window.destroy()
+        self._exit_soon()
+
+    @staticmethod
+    def _exit_soon(delay: float = 5.0) -> None:
+        """The setup replaces this .exe, so the process has to be gone even when a stray
+        thread or window keeps it alive after the main window was destroyed."""
+        timer = threading.Timer(delay, os._exit, args=(0,))
+        timer.daemon = True
+        timer.start()
 
     @_safe
     def cancel_app_update(self) -> None:

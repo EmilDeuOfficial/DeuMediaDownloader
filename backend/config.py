@@ -12,7 +12,7 @@ log = logging.getLogger(__name__)
 APP_NAME = "DeuMediaDownloader"
 # The one place for the version number: build.py and DeuMediaDownloader.spec write it into
 # the .exe, installer.iss reads it from there, and the release tag is "v" + APP_VERSION.
-APP_VERSION = "7.3"
+APP_VERSION = "7.3.1"
 
 # Tutorials live in the GitHub wiki; the app links to these pages.
 WIKI_URL = "https://github.com/EmilDeuOfficial/DeuMediaDownloader/wiki"

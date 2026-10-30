@@ -3,7 +3,7 @@
 A modern Windows desktop app to download **music and videos** from Spotify, YouTube, TikTok, SoundCloud and Instagram.
 Save audio (MP3, AAC, OGG, Opus, FLAC, AIFF, WAV) or video (MP4, MOV, AVI, MKV, WebM) in the quality you choose.
 
-![Version](https://img.shields.io/badge/version-v7.3-brightgreen)
+![Version](https://img.shields.io/badge/version-v7.3.1-brightgreen)
 ![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-blue)
 ![Backend](https://img.shields.io/badge/backend-Python%203.10%2B-lightgrey)
 ![Frontend](https://img.shields.io/badge/frontend-HTML%20%2B%20CSS%20%2B%20JS-lightgrey)
