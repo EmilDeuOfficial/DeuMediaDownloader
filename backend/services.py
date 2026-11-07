@@ -105,6 +105,18 @@ def _status_text(status: DownloadStatus) -> str:
     return status.value if text == key else text
 
 
+def task_url(task: Any) -> str:
+    """Link the task was downloaded from (shown in the queue's "Copy link" menu)."""
+    url = getattr(task, "url", "") or ""
+    if url:
+        return url
+    track = getattr(task, "track", None)
+    track_id = getattr(track, "track_id", "") or ""
+    if track_id.startswith(("http://", "https://")):
+        return track_id                      # a YouTube link pasted into the Spotify view
+    return f"https://open.spotify.com/track/{track_id}" if track_id else ""
+
+
 def serialize_task(spec: ServiceSpec, task: Any, config: dict) -> dict:
     status: DownloadStatus = task.status
     label = _status_text(status)
@@ -124,6 +136,7 @@ def serialize_task(spec: ServiceSpec, task: Any, config: dict) -> dict:
         "progress": task.progress,
         "error": task.error_msg,
         "can_pause": spec.can_pause,
+        "url": task_url(task),
     }
 
 
@@ -294,6 +307,14 @@ class ServiceRuntime:
         with self._lock:
             return self._tasks.get(task_id)
 
+    def output_file(self, task_id: str) -> str:
+        """The finished file of a task, or "" when it has none (yet)."""
+        task = self._task(task_id)
+        if task is None or task.status != DownloadStatus.DONE:
+            return ""
+        path = getattr(task, "output_file", "") or ""
+        return path if path and os.path.isfile(path) else ""
+
     def _set_status(self, task: Any, status: DownloadStatus, progress: Optional[float] = None) -> None:
         task.status = status
         task.error_msg = ""
@@ -326,9 +347,10 @@ class ServiceRuntime:
         return True
 
     def cancel(self, task_id: str) -> bool:
-        """Cancel a queued, paused or running task and remove its partial files."""
+        """Cancel a queued, paused or running task and remove its partial files. A conversion
+        can be cancelled too (it can take minutes for a long video); the worker stops it."""
         task = self._task(task_id)
-        if task is None or task.status not in _INTERRUPTIBLE + (DownloadStatus.PAUSED,):
+        if task is None or task.status not in _INTERRUPTIBLE + (DownloadStatus.PAUSED, DownloadStatus.CONVERTING):
             return False
         task.stop = "cancel"
         if task.status in (DownloadStatus.QUEUED, DownloadStatus.PAUSED):

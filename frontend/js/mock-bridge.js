@@ -95,7 +95,9 @@ function simulate(task, failing) {
     if (task.step < steps.length) {
       const status = steps[task.step];
       setStatus(status);
-      if (status === "DOWNLOADING" || status === "RECORDING") {
+      if (status === "DOWNLOADING" || status === "RECORDING" || status === "CONVERTING") {
+        // like the real worker: the download fills the bar up to where the conversion starts
+        const until = status === "CONVERTING" ? 1 : steps.includes("CONVERTING") ? 0.6 : 1;
         let p = task.progress || 0;
         const timer = setInterval(() => {
           if (task.stop) {
@@ -103,10 +105,10 @@ function simulate(task, failing) {
             halted();
             return;
           }
-          p = Math.min(1, p + (status === "RECORDING" ? 0.008 : 0.03) + Math.random() * 0.03);
+          p = Math.min(until, p + (status === "RECORDING" ? 0.008 : status === "CONVERTING" ? 0.012 : 0.03) + Math.random() * 0.02);
           task.progress = p;
           emit("task_progress", { service: task.service, id: task.id, progress: p });
-          if (p >= 1) {
+          if (p >= until) {
             clearInterval(timer);
             task.step++;
             setTimeout(tick, 250);
@@ -143,7 +145,7 @@ function queueNames(service, names, fmt, failThird) {
   const strings = bootstrapData.strings;
   emit("log", { service, msg: strings[service.startsWith("spotify") ? "queued_n_tracks" : "queued_n_videos"].replace("{}", names.length).replace("{}", fmt) });
   names.forEach((name, idx) => {
-    const task = { id: `mock-${++counter}`, service, name: name.length > 60 ? name.slice(0, 57) + "\u2026" : name, format: fmt, ext: mockExt(fmt), status: "QUEUED", progress: 0, error: "" };
+    const task = { id: `mock-${++counter}`, service, name: name.length > 60 ? name.slice(0, 57) + "\u2026" : name, format: fmt, ext: mockExt(fmt), status: "QUEUED", progress: 0, error: "", url: `https://example.com/${service}/${counter}` };
     tasks[service].push(task);
     emit("task_added", view(task));
     emit("log", { service, msg: strings.log_queued.replace("{}", name) });
@@ -279,9 +281,19 @@ export const mockApi = {
     t.resume();
     return ok(true);
   },
+  async reveal_task(service, id) {
+    const t = findTask(service, id);
+    if (!t || t.status !== "DONE") return ok(false);
+    emit("log", { service, msg: `(mock) Explorer: ${t.name}.${t.ext}` });
+    return ok(true);
+  },
+  async copy_text(text) {
+    window.__mockClipboard = text;
+    return ok(true);
+  },
   async cancel_task(service, id) {
     const t = findTask(service, id);
-    if (!t || !["QUEUED", "SEARCHING", "DOWNLOADING", "RECORDING", "PAUSED"].includes(t.status)) return ok(false);
+    if (!t || !["QUEUED", "SEARCHING", "DOWNLOADING", "RECORDING", "CONVERTING", "PAUSED"].includes(t.status)) return ok(false);
     t.stop = "cancel";
     if (t.status === "QUEUED" || t.status === "PAUSED") {
       t.progress = 0;

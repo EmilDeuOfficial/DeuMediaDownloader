@@ -19,6 +19,7 @@ import yt_dlp
 from . import secure_store
 from .config import AUDIO_FORMATS, ORIGINAL_EXTS, VIDEO_FORMATS, WIKI_PAGES, load_config, T
 from .converter import embed_metadata, fetch_cover, find_deno, find_ffmpeg
+from . import video_convert
 
 log = logging.getLogger(__name__)
 
@@ -309,6 +310,89 @@ def _finish_interrupted(task, reason: str, status_cb, progress_cb) -> None:
         # Paused: keep the partial file and the progress; resuming re-queues the task
         # and yt-dlp continues from the .part file.
         status_cb(DownloadStatus.PAUSED)
+
+
+class _ProgressTracker:
+    """Maps the download and everything after it onto one progress bar.
+
+    yt-dlp downloads video and audio as two files one after the other; their bytes are added
+    up, so the bar does not jump back to zero for the second file. The download fills the bar
+    up to `download_share`, the conversion (see _convert_video) fills the rest.
+    """
+
+    def __init__(self, task, status, progress, download_share: float):
+        self._task = task
+        self._status = status
+        self._progress = progress
+        self.share = download_share
+        self._files: Dict[str, List[int]] = {}
+        self._expected = 0
+        self.duration = 0.0
+
+    def download_hook(self, d: dict) -> None:
+        if d["status"] != "downloading":
+            return
+        _check_stop(self._task)
+        if self._task.status != DownloadStatus.DOWNLOADING:
+            self._status(DownloadStatus.DOWNLOADING)
+        info = d.get("info_dict") or {}
+        if not self.duration:
+            self.duration = float(info.get("duration") or 0)
+        if not self._expected:
+            self._expected = sum(int(f.get("filesize") or f.get("filesize_approx") or 0)
+                                 for f in info.get("requested_formats") or [])
+        total = d.get("total_bytes") or d.get("total_bytes_estimate") or 0
+        self._files[d.get("filename") or ""] = [int(d.get("downloaded_bytes") or 0), int(total)]
+        done = sum(v[0] for v in self._files.values())
+        whole = max(self._expected, sum(v[1] for v in self._files.values()))
+        if whole > 0:
+            # Without sizes in advance the second file raises the total; never move back.
+            value = min(done / whole, 1.0) * self.share
+            if value > self._task.progress:
+                self._progress(value)
+
+    def postprocessor_hook(self, d: dict) -> None:
+        """Merging, audio extraction and the like: shown as converting."""
+        if d.get("status") == "started" and d.get("postprocessor") != "MoveFiles":
+            self.converting()
+
+    def converting(self) -> None:
+        if self._task.status != DownloadStatus.CONVERTING:
+            self._status(DownloadStatus.CONVERTING)
+            self._progress(max(self._task.progress, self.share))
+
+    def convert_progress(self, fraction: float) -> None:
+        self._progress(self.share + (0.99 - self.share) * fraction)
+
+    def hooks(self) -> Dict[str, Any]:
+        return {"progress_hooks": [self.download_hook], "postprocessor_hooks": [self.postprocessor_hook]}
+
+
+# Share of the progress bar for the download when the video is converted afterwards (the
+# conversion of a long 4K video can take as long as the download).
+_CONVERT_DOWNLOAD_SHARE = 0.5
+
+# MOV and AVI are converted after the download: an H.264 stream can simply be copied into them,
+# so among the formats of the chosen resolution H.264 (and AAC) is preferred. "res" comes first,
+# so this never lowers the resolution.
+_CONVERT_FORMAT_SORT = ["res", "vcodec:h264", "acodec:aac"]
+
+
+def _convert_video(task, stem: str, ext: str, tracker: _ProgressTracker) -> None:
+    """Turn the downloaded video in the work folder into `stem.ext` (MOV or AVI) with progress."""
+    work = _work_dir(task)
+    sources = [p for p in work.glob(glob.escape(stem) + ".*")
+               if not _is_partial(p) and p.suffix.lower() != f".{ext}"]
+    if not sources:
+        return
+    src = max(sources, key=lambda p: p.stat().st_size)
+    tracker.converting()
+    try:
+        video_convert.convert(find_ffmpeg() or "ffmpeg", src, work / f"{stem}.{ext}",
+                              tracker.convert_progress, lambda: bool(task.stop), tracker.duration)
+    except video_convert.ConvertCancelled:
+        raise TaskInterrupted(task.stop or "cancel")
+    src.unlink(missing_ok=True)
 
 
 class _TaskManager:
@@ -659,16 +743,7 @@ def download_spotify_track(task: DownloadTask, ffmpeg_ok: bool) -> None:
                 task.on_done(task)
             return
 
-        def ydl_hook(d: dict):
-            if d["status"] == "downloading":
-                _check_stop(task)
-                total      = d.get("total_bytes") or d.get("total_bytes_estimate") or 0
-                downloaded = d.get("downloaded_bytes", 0)
-                if total > 0:
-                    _progress(min(downloaded / total * 0.8, 0.8))
-            elif d["status"] == "finished":
-                _status(DownloadStatus.CONVERTING)
-                _progress(0.85)
+        tracker = _ProgressTracker(task, _status, _progress, 0.8)
 
         _status(DownloadStatus.SEARCHING)
         _progress(0.0)
@@ -684,7 +759,7 @@ def download_spotify_track(task: DownloadTask, ffmpeg_ok: bool) -> None:
             "outtmpl":        str(work / f"{safe_filename}.%(ext)s"),
             "quiet":          True,
             "no_warnings":    True,
-            "progress_hooks": [ydl_hook],
+            **tracker.hooks(),
             "noplaylist":     True,
             **_base_opts(),
         }
@@ -927,16 +1002,8 @@ def download_youtube_task(task: YouTubeTask, ffmpeg_ok: bool) -> None:
                 task.on_done(task)
             return
 
-        def ydl_hook(d: dict):
-            if d["status"] == "downloading":
-                _check_stop(task)
-                total      = d.get("total_bytes") or d.get("total_bytes_estimate") or 0
-                downloaded = d.get("downloaded_bytes", 0)
-                if total > 0:
-                    _progress(min(downloaded / total * 0.8, 0.8))
-            elif d["status"] == "finished":
-                _status(DownloadStatus.CONVERTING)
-                _progress(0.85)
+        convert = is_video and bool(fmt_info.get("convert")) and ffmpeg_ok
+        tracker = _ProgressTracker(task, _status, _progress, _CONVERT_DOWNLOAD_SHARE if convert else 0.95)
 
         _status(DownloadStatus.DOWNLOADING)
         _progress(0.0)
@@ -950,10 +1017,12 @@ def download_youtube_task(task: YouTubeTask, ffmpeg_ok: bool) -> None:
             **_merge_opts(is_video, fmt_info, ext),
             "quiet":          True,
             "no_warnings":    True,
-            "progress_hooks": [ydl_hook],
             "noplaylist":     True,
+            **tracker.hooks(),
             **_base_opts(),
         }
+        if convert:
+            ydl_opts["format_sort"] = list(_CONVERT_FORMAT_SORT)
 
         if not is_video and ffmpeg_ok:
             chain, pp_args = _audio_chain(fmt_info, bool(cfg.get("yt_normalize", False)))
@@ -977,9 +1046,6 @@ def download_youtube_task(task: YouTubeTask, ffmpeg_ok: bool) -> None:
             postprocessors.append({"key": "SponsorBlock", "categories": cats})
             postprocessors.append({"key": "ModifyChapters", "remove_sponsor_segments": cats})
 
-        if is_video and fmt_info.get("convert") and ffmpeg_ok:
-            postprocessors.append({"key": "FFmpegVideoConvertor", "preferedformat": ext})
-
         if postprocessors:
             ydl_opts["postprocessors"] = postprocessors
 
@@ -989,6 +1055,9 @@ def download_youtube_task(task: YouTubeTask, ffmpeg_ok: bool) -> None:
 
         _check_stop(task)
         _run_ydl(task, ydl_opts, task.url)
+        _check_stop(task)
+        if convert:
+            _convert_video(task, safe_title, ext, tracker)
 
         final_path = _publish_result(task, safe_title, ext)
         task.output_file = str(final_path)
@@ -1247,16 +1316,8 @@ def _download_site_task(task: SiteTask, ffmpeg_ok: bool, prefix: str, default_ti
                 task.on_done(task)
             return
 
-        def ydl_hook(d: dict):
-            if d["status"] == "downloading":
-                _check_stop(task)
-                total      = d.get("total_bytes") or d.get("total_bytes_estimate") or 0
-                downloaded = d.get("downloaded_bytes", 0)
-                if total > 0:
-                    _progress(min(downloaded / total * 0.8, 0.8))
-            elif d["status"] == "finished":
-                _status(DownloadStatus.CONVERTING)
-                _progress(0.85)
+        convert = is_video and bool(fmt_info.get("convert")) and ffmpeg_ok
+        tracker = _ProgressTracker(task, _status, _progress, _CONVERT_DOWNLOAD_SHARE if convert else 0.95)
 
         _status(DownloadStatus.DOWNLOADING)
         _progress(0.0)
@@ -1270,11 +1331,13 @@ def _download_site_task(task: SiteTask, ffmpeg_ok: bool, prefix: str, default_ti
             **_merge_opts(is_video, fmt_info, ext),
             "quiet":          True,
             "no_warnings":    True,
-            "progress_hooks": [ydl_hook],
             "noplaylist":     True,
+            **tracker.hooks(),
             **_base_opts(),
             **_cookie_opts(cfg, prefix),
         }
+        if convert:
+            ydl_opts["format_sort"] = list(_CONVERT_FORMAT_SORT)
 
         if not is_video and ffmpeg_ok:
             chain, pp_args = _audio_chain(fmt_info, bool(cfg.get(f"{prefix}_normalize", False)))
@@ -1287,9 +1350,6 @@ def _download_site_task(task: SiteTask, ffmpeg_ok: bool, prefix: str, default_ti
             ydl_opts["writethumbnail"] = True
             postprocessors.append({"key": "EmbedThumbnail"})
 
-        if is_video and fmt_info.get("convert") and ffmpeg_ok:
-            postprocessors.append({"key": "FFmpegVideoConvertor", "preferedformat": ext})
-
         if postprocessors:
             ydl_opts["postprocessors"] = postprocessors
 
@@ -1299,6 +1359,9 @@ def _download_site_task(task: SiteTask, ffmpeg_ok: bool, prefix: str, default_ti
 
         _check_stop(task)
         _run_ydl(task, ydl_opts, task.url)
+        _check_stop(task)
+        if convert:
+            _convert_video(task, safe_title, ext, tracker)
 
         final_path = _publish_result(task, safe_title, ext)
         task.output_file = str(final_path)

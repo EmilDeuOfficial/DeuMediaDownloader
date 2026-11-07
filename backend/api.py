@@ -268,6 +268,20 @@ class Api:
     def cancel_task(self, service: str, task_id: str) -> bool:
         return self._runtime(service).cancel(task_id)
 
+    @_safe
+    def reveal_task(self, service: str, task_id: str) -> bool:
+        """Open Explorer with the finished file of a task selected. Only files the app itself
+        downloaded can be shown, the page never passes a path."""
+        path = self._runtime(service).output_file(task_id)
+        if not path:
+            return False
+        subprocess.Popen(["explorer", "/select,", os.path.normpath(path)])
+        return True
+
+    @_safe
+    def copy_text(self, text: str) -> bool:
+        return clipboard.write_text(str(text or ""))
+
     # ------------------------------------------------------ Spotify recording
     def _recorder(self) -> Any:
         if self._session is None:

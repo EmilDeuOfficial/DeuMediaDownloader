@@ -3,7 +3,7 @@
 A modern Windows desktop app to download **music and videos** from Spotify, YouTube, TikTok, SoundCloud and Instagram.
 Save audio (MP3, AAC, OGG, Opus, FLAC, AIFF, WAV) or video (MP4, MOV, AVI, MKV, WebM) in the quality you choose.
 
-![Version](https://img.shields.io/badge/version-v7.3.1-brightgreen)
+![Version](https://img.shields.io/badge/version-v7.4-brightgreen)
 ![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-blue)
 ![Backend](https://img.shields.io/badge/backend-Python%203.10%2B-lightgrey)
 ![Frontend](https://img.shields.io/badge/frontend-HTML%20%2B%20CSS%20%2B%20JS-lightgrey)
@@ -18,7 +18,7 @@ Save audio (MP3, AAC, OGG, Opus, FLAC, AIFF, WAV) or video (MP4, MOV, AVI, MKV, 
 - **Pick what to download** - A playlist, channel, set or profile is listed first; tick or untick single entries (with a filter and Shift-click ranges) before anything is queued
 - **Drop a link** - Drag a link from your browser onto a downloader window and it lands in the URL field
 - **Format and quality** - Pick the format and the quality separately; the quality list follows the format
-- **Queue** - Live progress, plus pause, resume and cancel for every download
+- **Queue** - Live progress in percent (including the conversion), pause, resume and cancel for every download; click a finished entry to show the file in Explorer, right click to copy its link
 - **Spotify recording** - Instead of a YouTube match, record the real Spotify stream in a hidden player (Premium, real time, Windows 10 2004 or newer)
 - **Metadata** - Title, artist, album, year and cover art are embedded in the audio files
 - **YouTube extras** - Subtitles, SponsorBlock and a speed limit
@@ -216,15 +216,17 @@ Video (YouTube, TikTok and Instagram):
 | Format | Qualities | Notes |
 |---|---|---|
 | MP4 | 2160p (4K) / 1440p (2K) / 1080p / 720p / 480p / 360p | Widely compatible |
-| MOV | 2160p (4K) / 1440p (2K) / 1080p / 720p / 480p / 360p | Converted with FFmpeg |
+| MOV | 2160p (4K) / 1440p (2K) / 1080p / 720p / 480p / 360p | H.264 is copied, anything else is re-encoded (graphics card when available) |
 | AVI | 2160p (4K) / 1440p (2K) / 1080p / 720p / 480p / 360p | Converted with FFmpeg (Xvid) |
 | MKV | Best / 2160p (4K) / 1440p (2K) / 1080p / 720p / 480p / 360p | Best available quality |
 | WebM | Best / 2160p (4K) / 1440p (2K) / 1080p / 720p / 480p / 360p | Open format |
 
 The heights are upper bounds: a video that only exists in 1080p is saved in 1080p. Above
 1080p YouTube only offers AV1 and VP9 streams, so 2K and 4K files use those codecs (some
-older players need an AV1 extension). 4K files are large, and MOV and AVI are re-encoded
-after the download, so 4K in those two takes a long time.
+older players need an AV1 extension). 4K files are large. MOV and AVI are converted after the
+download with a progress bar: an H.264 stream is copied as it is (seconds), anything else is
+re-encoded, for MOV on the graphics card (NVIDIA, Intel or AMD) when there is one, otherwise
+with a fast CPU preset. The conversion can be cancelled from the queue.
 
 The lists are generated from two small tables in `config.py` (`_AUDIO_SPEC`,
 `_VIDEO_SPEC`); audio below 129 kbps and video below 360p are not offered.

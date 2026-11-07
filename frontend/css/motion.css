@@ -98,6 +98,9 @@
 /* after the status rules, so a finished item with an error still slides out */
 .queue-list .queue-item.leaving { animation: collapse-out var(--dur) var(--ease-out) forwards; pointer-events: none; }
 
+.ctx-menu { animation: pop-in var(--dur) var(--ease-out); transform-origin: top left; }
+.ctx-item { transition: background-color var(--dur-fast) var(--ease-soft); }
+
 /* ---- Log ---- */
 .log-line { animation: fade-in var(--dur) ease; }
 

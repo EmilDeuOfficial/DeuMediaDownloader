@@ -12,7 +12,7 @@ log = logging.getLogger(__name__)
 APP_NAME = "DeuMediaDownloader"
 # The one place for the version number: build.py and DeuMediaDownloader.spec write it into
 # the .exe, installer.iss reads it from there, and the release tag is "v" + APP_VERSION.
-APP_VERSION = "7.3.1"
+APP_VERSION = "7.4"
 
 # Tutorials live in the GitHub wiki; the app links to these pages.
 WIKI_URL = "https://github.com/EmilDeuOfficial/DeuMediaDownloader/wiki"
@@ -379,6 +379,10 @@ STRINGS: dict[str, dict[str, str]] = {
         "tip_pause":           "Pause",
         "tip_resume":          "Resume",
         "tip_cancel":          "Cancel",
+        "tip_show_file":       "Show in Explorer",
+        "ctx_copy_link":       "Copy link",
+        "ctx_show_file":       "Show in Explorer",
+        "log_link_copied":     "Link copied to the clipboard.",
         "wiki_tutorial":       "Tutorial in the GitHub wiki",
         "tip_clear_done":      "Remove finished items",
         "queue_empty":         "No downloads yet. Paste a link above to start.",
@@ -692,6 +696,10 @@ STRINGS: dict[str, dict[str, str]] = {
         "tip_pause":           "Pausieren",
         "tip_resume":          "Fortsetzen",
         "tip_cancel":          "Abbrechen",
+        "tip_show_file":       "Im Explorer anzeigen",
+        "ctx_copy_link":       "Link kopieren",
+        "ctx_show_file":       "Im Explorer anzeigen",
+        "log_link_copied":     "Link in die Zwischenablage kopiert.",
         "wiki_tutorial":       "Anleitung im GitHub-Wiki",
         "tip_clear_done":      "Erledigte Einträge entfernen",
         "queue_empty":         "Noch keine Downloads. Füge oben einen Link ein.",

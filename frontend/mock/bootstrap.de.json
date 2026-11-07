@@ -1,6 +1,6 @@
 {
   "app_name": "DeuMediaDownloader",
-  "version": "7.2",
+  "version": "7.4",
   "lang": "de",
   "strings": {
     "spotify_url": "Spotify URL",
@@ -115,6 +115,10 @@
     "tip_pause": "Pausieren",
     "tip_resume": "Fortsetzen",
     "tip_cancel": "Abbrechen",
+    "tip_show_file": "Im Explorer anzeigen",
+    "ctx_copy_link": "Link kopieren",
+    "ctx_show_file": "Im Explorer anzeigen",
+    "log_link_copied": "Link in die Zwischenablage kopiert.",
     "wiki_tutorial": "Anleitung im GitHub-Wiki",
     "tip_clear_done": "Erledigte Einträge entfernen",
     "queue_empty": "Noch keine Downloads. Füge oben einen Link ein.",
@@ -166,7 +170,7 @@
     "soundcloud_desc": "Tracks, Sets\nund Profile",
     "open_instagram": "Instagram öffnen",
     "instagram_desc": "Reels, Beiträge\nund Storys",
-    "spotify_win_title": "DeuMediaDownloader  v7.2",
+    "spotify_win_title": "DeuMediaDownloader  v7.4",
     "youtube_win_title": "YouTube Downloader",
     "tiktok_win_title": "TikTok Downloader",
     "soundcloud_win_title": "SoundCloud Downloader",

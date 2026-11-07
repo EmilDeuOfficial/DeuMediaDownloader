@@ -157,6 +157,14 @@ def _finalize(task: DownloadTask, info: RecordingInfo, cfg: dict, ffmpeg: str, s
         progress(0.92)
         _encode(ffmpeg, info, _work_dir(task) / f"{stem}.{ext}", fmt_info,
                 track.duration_ms, bool(cfg.get("sp_normalize", False)))
+        if task.stop == "cancel":
+            # cancelled while encoding (the cancel button stays usable during a conversion)
+            remove_partial_files(task)
+            status(DownloadStatus.CANCELLED)
+            progress(0.0)
+            if task.on_done:
+                task.on_done(task)
+            return
         task.output_file = str(_publish_result(task, stem, ext))
 
         status(DownloadStatus.EMBEDDING)

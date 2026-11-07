@@ -297,11 +297,21 @@ export function createToolView(service, { onBack, onSettings, onUpdate }) {
       onPause: (id) => control(api.pause_task, id),
       onResume: (id) => control(api.resume_task, id),
       onCancel: (id) => control(api.cancel_task, id),
+      onReveal: (id) => control(api.reveal_task, id),
+      onCopyLink: copyLink,
     });
     items.set(task.id, item);
     taskService.set(task.id, task.service || service.id);
     queueList.append(item.el);
     updateCount();
+  }
+
+  async function copyLink(url) {
+    try {
+      if (await api.copy_text(url)) log.append(T("log_link_copied"));
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   async function control(method, taskId) {
