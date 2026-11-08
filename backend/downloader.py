@@ -193,6 +193,23 @@ _INSTAGRAM_LOGIN_HINTS = ("login required", "rate-limit reached", "empty media r
                           "requested content is not available", "restricted video")
 
 
+# What YouTube answers when a video needs a signed-in (age verified) account.
+_YOUTUBE_LOGIN_HINTS = ("confirm your age", "age-restricted", "inappropriate for some users",
+                        "members-only", "join this channel")
+
+
+def _friendly_youtube_error(msg: str) -> str:
+    """yt-dlp's long "use --cookies-from-browser" text, replaced by a hint to the settings."""
+    low = msg.lower()
+    if "Failed to decrypt with DPAPI" in msg:
+        return T("yt_err_dpapi").format(WIKI_PAGES["youtube_cookies"])
+    if "could not find" in msg and "cookies database" in msg:
+        return T("yt_err_no_browser").format(WIKI_PAGES["youtube_cookies"])
+    if any(hint in low for hint in _YOUTUBE_LOGIN_HINTS):
+        return T("yt_err_age").format(WIKI_PAGES["youtube_cookies"])
+    return msg
+
+
 def _friendly_instagram_error(msg: str) -> str:
     """Same cookie problems as TikTok, plus Instagram's "log in" answers, with a link to the tutorial."""
     low = msg.lower()
@@ -762,6 +779,7 @@ def download_spotify_track(task: DownloadTask, ffmpeg_ok: bool) -> None:
             **tracker.hooks(),
             "noplaylist":     True,
             **_base_opts(),
+            **_cookie_opts(cfg, "yt"),   # the source is YouTube: same sign-in as the YouTube downloader
         }
 
         if find_ffmpeg():
@@ -828,7 +846,7 @@ class YouTubeClient:
     """Used by the Spotify downloader to resolve YouTube URLs pasted into its URL field."""
     @staticmethod
     def _ydl_opts() -> dict:
-        return {"quiet": True, "no_warnings": True, **_base_opts()}
+        return {"quiet": True, "no_warnings": True, **_base_opts(), **_cookie_opts(load_config(), "yt")}
 
     def get_track_info(self, url: str) -> TrackInfo:
         url = re.sub(r"[&?]list=[^&]+", "", url)
@@ -937,9 +955,13 @@ def extract_youtube_entries(url: str) -> List[Dict[str, Any]]:
         "noplaylist":    not is_playlist,
         "skip_download": True,
         **_base_opts(),
+        **_cookie_opts(load_config(), "yt"),
     }
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(url, download=False)
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=False)
+    except Exception as exc:
+        raise type(exc)(_friendly_youtube_error(str(exc))) from exc
 
     if info is None:
         raise ValueError("Could not extract info from URL.")
@@ -1020,6 +1042,7 @@ def download_youtube_task(task: YouTubeTask, ffmpeg_ok: bool) -> None:
             "noplaylist":     True,
             **tracker.hooks(),
             **_base_opts(),
+            **_cookie_opts(cfg, "yt"),
         }
         if convert:
             ydl_opts["format_sort"] = list(_CONVERT_FORMAT_SORT)
@@ -1071,7 +1094,7 @@ def download_youtube_task(task: YouTubeTask, ffmpeg_ok: bool) -> None:
 
     except Exception as exc:
         remove_partial_files(task)
-        _status(DownloadStatus.ERROR, str(exc))
+        _status(DownloadStatus.ERROR, _friendly_youtube_error(str(exc)))
         _progress(0.0)
         if task.on_done:
             task.on_done(task)

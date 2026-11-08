@@ -72,7 +72,7 @@ export const SETTINGS_SCHEMA = {
 
   youtube: {
     titleKey: "yt_settings_title",
-    height: 560,
+    height: 620,
     sections: [
       {
         titleKey: "yt_sec_downloads",
@@ -101,6 +101,16 @@ export const SETTINGS_SCHEMA = {
         titleKey: "yt_sec_network",
         inside: true,
         fields: [{ type: "select", key: "yt_rate_limit", labelKey: "yt_rate_limit_lbl", options: "rate", width: 200, default: "" }],
+      },
+      {
+        titleKey: "yt_sec_auth",
+        inside: true,
+        fields: [
+          { type: "note", textKey: "yt_cookies_desc" },
+          { type: "link", labelKey: "wiki_tutorial", wiki: "youtube_cookies" },
+          { type: "select", key: "yt_cookies_browser", labelKey: "tt_cookies_lbl", options: "cookie_browsers", width: 260, default: "" },
+          { type: "file", key: "yt_cookies_file", labelKey: "tt_cookies_file_lbl", descKey: "tt_cookies_file_desc", placeholderKey: "tt_cookies_file_ph", clearKey: "tt_cookies_file_clear" },
+        ],
       },
       filenameSection("yt_templates", "yt_filename_template", "{title}"),
     ],

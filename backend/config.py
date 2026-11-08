@@ -12,13 +12,14 @@ log = logging.getLogger(__name__)
 APP_NAME = "DeuMediaDownloader"
 # The one place for the version number: build.py and DeuMediaDownloader.spec write it into
 # the .exe, installer.iss reads it from there, and the release tag is "v" + APP_VERSION.
-APP_VERSION = "7.4"
+APP_VERSION = "7.4.1"
 
 # Tutorials live in the GitHub wiki; the app links to these pages.
 WIKI_URL = "https://github.com/EmilDeuOfficial/DeuMediaDownloader/wiki"
 WIKI_PAGES = {
     "tiktok_cookies": WIKI_URL + "/TikTok-Cookies",
     "instagram_cookies": WIKI_URL + "/Instagram-Cookies",
+    "youtube_cookies":   WIKI_URL + "/YouTube-Cookies",
     "spotify_api":    WIKI_URL + "/Spotify-API-Setup",
 }
 CONFIG_FILE   = Path.home() / ".spotify_downloader" / "config.json"
@@ -175,6 +176,8 @@ DEFAULT_CONFIG = {
     "yt_normalize":          False,
     "yt_rate_limit":         "",
     "yt_open_folder":        True,
+    "yt_cookies_browser":    "",
+    "yt_cookies_file":       "",
     # TikTok-specific settings
     "tt_format_video":       "MP4 (1080p)",
     "tt_format_audio":       "MP3 (320 kbps)",
@@ -400,6 +403,12 @@ STRINGS: dict[str, dict[str, str]] = {
         "err_short_file_in_use": "File in use",
         "err_short_tiktok_cookies": "TikTok cookie problem",
         "err_short_instagram_cookies": "Instagram login problem",
+        "err_short_youtube_cookies": "YouTube sign-in needed",
+        "yt_sec_auth": "Sign-in (age-restricted videos)",
+        "yt_cookies_desc": "Age-restricted and members-only videos need a signed-in YouTube account. Your browser's login cookies give the app that access.",
+        "yt_err_age": "This video is age-restricted, so YouTube wants a signed-in account. Add your browser cookies or a cookie file in the YouTube settings (Sign-in). Tutorial: {}",
+        "yt_err_dpapi": "This browser's cookies can't be read (Windows security feature). Use Firefox or a cookie file. Tutorial: {}",
+        "yt_err_no_browser": "Browser or YouTube login not found. Pick another browser or use a cookie file. Tutorial: {}",
         "err_short_unknown":   "Unknown error",
         # Panel titles
         "download_queue":      "Download Queue",
@@ -717,6 +726,12 @@ STRINGS: dict[str, dict[str, str]] = {
         "err_short_file_in_use": "Datei in Benutzung",
         "err_short_tiktok_cookies": "TikTok-Cookie-Problem",
         "err_short_instagram_cookies": "Instagram-Anmeldeproblem",
+        "err_short_youtube_cookies": "YouTube-Anmeldung n\u00f6tig",
+        "yt_sec_auth": "Anmeldung (Videos mit Altersfreigabe)",
+        "yt_cookies_desc": "Videos mit Altersbeschr\u00e4nkung und Mitglieder-Videos brauchen ein angemeldetes YouTube-Konto. Die Login-Cookies deines Browsers geben der App diesen Zugang.",
+        "yt_err_age": "Dieses Video hat eine Altersbeschr\u00e4nkung, YouTube verlangt deshalb ein angemeldetes Konto. Hinterlege Browser-Cookies oder eine Cookie-Datei in den YouTube-Einstellungen (Anmeldung). Anleitung: {}",
+        "yt_err_dpapi": "Die Cookies dieses Browsers sind nicht lesbar (Windows-Sicherheitsfeature). Nutze Firefox oder eine Cookie-Datei. Anleitung: {}",
+        "yt_err_no_browser": "Browser oder YouTube-Login nicht gefunden. W\u00e4hle einen anderen Browser oder eine Cookie-Datei. Anleitung: {}",
         "err_short_unknown":   "Unbekannter Fehler",
         # Panel titles
         "download_queue":      "Download-Warteschlange",

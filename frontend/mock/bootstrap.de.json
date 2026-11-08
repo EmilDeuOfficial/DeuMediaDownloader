@@ -1,6 +1,6 @@
 {
   "app_name": "DeuMediaDownloader",
-  "version": "7.4",
+  "version": "7.4.1",
   "lang": "de",
   "strings": {
     "spotify_url": "Spotify URL",
@@ -136,6 +136,12 @@
     "err_short_file_in_use": "Datei in Benutzung",
     "err_short_tiktok_cookies": "TikTok-Cookie-Problem",
     "err_short_instagram_cookies": "Instagram-Anmeldeproblem",
+    "err_short_youtube_cookies": "YouTube-Anmeldung nötig",
+    "yt_sec_auth": "Anmeldung (Videos mit Altersfreigabe)",
+    "yt_cookies_desc": "Videos mit Altersbeschränkung und Mitglieder-Videos brauchen ein angemeldetes YouTube-Konto. Die Login-Cookies deines Browsers geben der App diesen Zugang.",
+    "yt_err_age": "Dieses Video hat eine Altersbeschränkung, YouTube verlangt deshalb ein angemeldetes Konto. Hinterlege Browser-Cookies oder eine Cookie-Datei in den YouTube-Einstellungen (Anmeldung). Anleitung: {}",
+    "yt_err_dpapi": "Die Cookies dieses Browsers sind nicht lesbar (Windows-Sicherheitsfeature). Nutze Firefox oder eine Cookie-Datei. Anleitung: {}",
+    "yt_err_no_browser": "Browser oder YouTube-Login nicht gefunden. Wähle einen anderen Browser oder eine Cookie-Datei. Anleitung: {}",
     "err_short_unknown": "Unbekannter Fehler",
     "download_queue": "Download-Warteschlange",
     "log_panel": "Protokoll",
@@ -170,7 +176,7 @@
     "soundcloud_desc": "Tracks, Sets\nund Profile",
     "open_instagram": "Instagram öffnen",
     "instagram_desc": "Reels, Beiträge\nund Storys",
-    "spotify_win_title": "DeuMediaDownloader  v7.4",
+    "spotify_win_title": "DeuMediaDownloader  v7.4.1",
     "youtube_win_title": "YouTube Downloader",
     "tiktok_win_title": "TikTok Downloader",
     "soundcloud_win_title": "SoundCloud Downloader",
@@ -326,6 +332,8 @@
     "yt_normalize": false,
     "yt_rate_limit": "",
     "yt_open_folder": true,
+    "yt_cookies_browser": "",
+    "yt_cookies_file": "",
     "tt_format_video": "MP4 (1080p)",
     "tt_format_audio": "MP3 (320 kbps)",
     "tt_media_type": "Video",
@@ -789,6 +797,7 @@
     "wiki": {
       "tiktok_cookies": "https://github.com/EmilDeuOfficial/DeuMediaDownloader/wiki/TikTok-Cookies",
       "instagram_cookies": "https://github.com/EmilDeuOfficial/DeuMediaDownloader/wiki/Instagram-Cookies",
+      "youtube_cookies": "https://github.com/EmilDeuOfficial/DeuMediaDownloader/wiki/YouTube-Cookies",
       "spotify_api": "https://github.com/EmilDeuOfficial/DeuMediaDownloader/wiki/Spotify-API-Setup"
     }
   },
